@@ -1,0 +1,1 @@
+# define case structure constraints
