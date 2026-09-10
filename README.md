@@ -8,8 +8,8 @@ Case-centered Investigation Workspace For Manufacturing quality engineers with I
 [Done] Python / UV init
 [Done] Git / Github init
 [Done] Case Setting
-[] Python Case Model
-[] Sample Cases
+[Done] Python Case Model
+[Onegoing] Sample Cases
 [] PostgreSQL Schema
 [] Database
 [] Synthetic Dataset
