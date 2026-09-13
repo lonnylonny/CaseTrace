@@ -48,8 +48,7 @@ Case 是一次完整调查；Detail 是 Case × Production Lot × Detection Even
 | detection_stage | IQC / In-process / OQC / Customer / Other |
 | detection_time | 异常发现/反馈日期，date |
 | abnormal_types[] | 现有 failure_mode_id 的无序集合，至少一个、内部不重复 |
-| affected_qty | 整条 Detail 的处置范围数量，正整数；不按异常拆分，不仅指确认不良数量 |
-| affected_unit | 固定 ea（颗） |
+| affected_qty | 整条 Detail 的处置范围数量，正整数，单位固定为 ea（颗），不另存单位字段；不按异常拆分，不仅指确认不良数量 |
 | disposition | 最终处置文本，允许 hold、sort、rework、release 等组合 |
 
 原因和措施不拆独立实体。abnormal_types 通过 Detail—FailureMode 关系表存储，(detail_id, failure_mode_id) 组合唯一；Detail 去重另按 CR-11 比较完整异常集合。
@@ -78,7 +77,7 @@ Group 是显式建立、记录关联理由的 Case 集合，可用于技术复�
 | CaseGroup 字段 | 定义 |
 |---|---|
 | group_id | 主键 |
-| group_type | CR-42 的五个类型 |
+| group_type | 多选列表（list[str]），至少选择 CR-42 中的一个类型 |
 | description | 这组 Case 的整体说明 |
 | other_type_description | Other 分组类型的解释；CR-43 |
 

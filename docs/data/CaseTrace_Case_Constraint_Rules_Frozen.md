@@ -29,8 +29,8 @@
 | CR-21 | Hard | detection_time ≥ production_time。 |
 | CR-22 | Hard boundary | 同批不同发现/反馈事件可有不同 detection_time。 |
 | CR-23 | Hard | affected_qty 为正整数。 |
-| CR-24 | Hard | affected_qty、affected_unit 均必填；单位仅为 ea（颗）。 |
-| CR-25 | Hard | 每条 Detail 只记录一组数量/单位口径。 |
+| CR-24 | Hard | affected_qty 必填，单位固定为 ea（颗），不另存单位字段。 |
+| CR-25 | Hard | 每条 Detail 只记录一个 affected_qty，使用固定的颗数口径。 |
 | CR-26 | Hard semantic | affected_qty 是该 Detail 纳入处置范围的数量，不是仅指确认不良的颗数。 |
 | CR-27 | Hard | disposition 是非空的最终处置文本，可组合多种处置。 |
 | CR-28 | Hard | root_cause 必须有明确结案结论；允许 NDF / 未确认原因，不得空白。 |
@@ -47,11 +47,11 @@
 | CR-39 | Hard | Membership 引用的 Case 和 Group 必须存在。 |
 | CR-40 | Hard | Membership 以 (group_id, case_id) 唯一标识，同一组合不得重复。 |
 | CR-41 | Hard | 每条 Membership 的 association_reason 非空。 |
-| CR-42 | Hard | group_type 仅为 repeat_case / project / customer_request / management_request / other。 |
-| CR-43 | Hard | group_type=other 时，other_type_description 非空并解释分组类型；description 描述这组 Case，不能代替该字段。 |
+| CR-42 | Hard | group_type 为非空多选列表，每个值仅为 repeat_case / project / customer_request / management_request / other。 |
+| CR-43 | Hard | group_type 包含 other 时，other_type_description 非空并解释分组类型；description 描述这组 Case，不能代替该字段。 |
 | CR-44 | Hard semantic | repeat_case 必须有明确确认的异常复发关系，通常表现为重复或高度相关的发生原因、Root Cause 或失效机制。设备、材料批号、wafer lot、参数调整等 Evidence 可作为判断依据，但任一字段相同都不能自动建组。 |
 | CR-45 | Hard boundary | repeat_case 可跨 Customer、Product。 |
 | CR-46 | Hard boundary | same_root_cause、same_customer_product、common_failure_event 不作为 group_type 或新增子类型；相关信息写入 description 或 association_reason。 |
-| CR-47 | Hard boundary | project、customer_request、management_request 允许管理目的分组，除通用 Group 结构规则外，不追加技术关联条件。 |
+| CR-47 | Hard boundary | project、customer_request、management_request 允许管理目的分组，这些类型本身除通用 Group 结构规则外，不追加技术关联条件；同时选择 repeat_case 时仍须满足 CR-44。 |
 
 本文件不规定候选原因/措施来源、采样权重或频率、记录数上限、固定的发现阶段时间间隔；生成限制由 GR 规定。无 lot_total_qty 字段，不建立与其比较的约束。Group 始终显式建立，不根据字段相似度自动推导。Dataset Composition、Ground Truth 和 SQL 实现不属于本文件。
