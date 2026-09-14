@@ -1,11 +1,15 @@
 
 # Validator 实现清单
 
-本文件整理实现职责与顺序，不新增业务规则，也不表示校验器已经实现。规则变更应更新下列权威来源，本清单只维护实现映射：
+本文件整理实现职责与顺序，不新增业务规则。规则变更应更新下列权威来源，本清单只维护实现映射：
 
 - [字段、枚举与主数据关系](CaseTrace_Data_Structure_V2_No_Scenario.md)
 - [CR 业务约束](CaseTrace_Case_Constraint_Rules_Frozen.md)
 - [GR 生成限制](CaseTrace_Case_Generation_Rules_V1.md)
+
+当前进度：已实现五类对象的本地字段检查及 `validate_records()`；`validate_relations()` 已覆盖 Dataset 内实体 ID 唯一性、引用与归属、按子记录 case_id 检查 Case 最少 Detail/Evidence 数量、Membership 组合唯一性及 Group 成员数量，并调用 `check_detail_consistency()` 检查同批号固定属性和事件重复（CR-08～11），调用 `check_detail_references()` 检查 Product/Failure Mode 引用、Case 客户一致性和异常路线适配（CR-04、05、15、16）。入口自动先做字段检查，并明确报告因前置错误而未执行的阶段。枚举定义集中在 `src/casetrace/data/constants.py`。`validate_generation()` 已覆盖可确定的 GR 检查：GR-01 每 Case Detail 数量上限、GR-02 每 Detail 异常数量上限、GR-04 Dataset 复用批号数量、GR-06 每 Detail 数量上限；该入口提供完整生成上下文后才能判断的规则（GR-03、07～10）和分布类要求（GR-02 比例、GR-05 时间间隔）尚未实现。完整主数据导入校验和语义审查也尚未实现，当前通过结果不代表这些部分通过。
+
+推荐调用顺序是 `validate_relations()` 通过后再调用 `validate_generation()`：两者都做字段守门，但关系、一致性、主数据检查和 GR 检查各自只执行一次。`validate_generation()` 不重复关系与主数据检查，因此不能用来替代 CR 入口。
 
 ## 1. 最小代码组织
 
@@ -31,7 +35,7 @@
 | ------------------ | --------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | CaseDetail         | 文本字段、date 类型、发现日期关系、严格的正整数数量、发现阶段枚举、异常列表及元素类型/非空/内部重复 | 结构 §2、§5；CR-06、07、11、14、19～24、27 |
 | EvidenceCheckpoint | ID、结果、类型和 relevance；Other 的名称条件                                                        | 结构 §3；CR-32～34                          |
-| Case               | ID、必填和可选文本；两个子记录 ID 列表的类型、元素及最少数量                                        | 结构 §2；CR-01、12、28～30                  |
+| Case               | ID、必填和可选文本；子记录最少数量交由关系入口检查                                        | 结构 §2；CR-12、28、29                  |
 | CaseGroup          | ID、description、类型列表及逐项枚举；包含 other 的说明条件                                          | 结构 §4；CR-42、43、46                      |
 | Membership         | 两个引用 ID 和入组理由                                                                              | 结构 §4；CR-41                              |
 
@@ -46,21 +50,31 @@
 
 | 检查组                     | 最小实现思路                                                                                                             | 来源                                |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
-| 实体 ID 与 Membership 身份 | 分别检查 ID 和 (group_id, case_id)；确认唯一后才构造字典，避免重复数据被覆盖                                             | CR-03、40                           |
-| 引用与归属                 | Detail/Evidence 查 Case，Membership 查 Case/Group；检查 Case 两份 ID 列表引用有效且子记录归属正确                        | CR-02、03、31、39                   |
-| Case 子记录一致性          | 按子记录 case_id 分组，与 Case 中保存的 ID 集合核对，防止遗漏或串挂；按实际记录计数                                      | CR-01～03、30、31；当前模型双向表示 |
+| 实体 ID 与 Membership 身份 | 分别检查 ID 和 (group_id, case_id)；实体索引遇到重复 ID 保留首条并报错，确认唯一后才供关系检查使用                       | CR-03、40                           |
+| 引用与归属                 | Detail/Evidence 按 case_id 查 Case，Membership 查 Case/Group                        | CR-02、03、31、39                   |
+| Case 子记录最少数量          | 按子记录 case_id 收集实际有 Detail/Evidence 的 Case，分别检查每个 Case 至少一个                                      | CR-01、02、30、31 |
 | Group 成员数量             | 按 group_id 收集有效的不同 case_id，再检查最少数量                                                                       | CR-38～40                           |
 | Product、客户和异常路线    | 使用 product_id→customer_id、product_id→route、failure_mode_id→适用路线映射；先检查引用，再检查同 Case 客户和路线适配 | CR-04、05、15、16                   |
-| Lot 固定属性               | 一个 production_lot 字典同时保存 (product_id, customer_lot, production_time)，逐条比较                                   | CR-08～10                           |
+| Lot 固定属性               | 按 production_lot 保存首条 Detail，后续记录逐项比较其 product_id、customer_lot、production_time；首条仅用于比较和定位，不作为真值判定 | CR-08～10                           |
 | Detail 事件去重            | 使用 (case_id, production_lot, detection_stage, detection_time, frozenset(abnormal_types)) 作为键                        | CR-11                               |
 
 异常列表内部重复在字段阶段检查，再用 frozenset 实现无序比较；不能先去重再假装原始数据合法。
 
-Case.detail_ids 和 evidence_checkpoint_ids 当前是运行时模型中的冗余关系表示，本轮保留并核对一致性。数据库按子记录 case_id 存储一对多关系，不要求在 Case 表复制 ID 列表。集合比较也不意味着自动修改输入列表。
+Case 按冻结结构只保留结案字段，不再保存冗余的 detail_ids 和 evidence_checkpoint_ids。内存模型和数据库均以子记录 case_id 作为唯一关系来源，避免新增、移动子记录时同步两份关系。Case 构造函数因此不再接收这两个列表，已有调用方须同步调整。
 
-关系入口必须拿到完整校验范围。CaseBundle 只有一个 Case，不能据此判定跨 Case 的 Group 不足两个成员，也不能证明 Dataset 内唯一性或 Lot 一致性。使用五份完整实体列表即可，当前不必再新增容器类。
+关系入口必须拿到完整校验范围。单个 Case 的子集不能判断跨 Case 的 Group 成员数，也不能证明 Dataset 内唯一性或 Lot 一致性。直接使用五份完整实体列表，已移除未使用且容易混淆范围的 CaseBundle，不新增替代容器。
 
 主数据自身的客户归属、BOM、路线工序等导入检查按结构 §1、§5 独立进行；Case validator 使用已验证映射。主数据缺失应报告未完成检查，不能用空映射或跳过来表示通过。
+
+`validate_relations()` 现在要求显式提供下列三个参数；`validate_records()` 的参数不变：
+
+| 参数 | 类型 | 参考数据来源 |
+|---|---|---|
+| product_customers | dict[str, str] | customer_product_map，按 product_id 索引 customer_id |
+| product_routes | dict[str, str] | products 的 product_id → package_route |
+| failure_mode_routes | dict[str, set[str]] | failure_modes 的 failure_mode_id → applicable_package 路线集合 |
+
+映射必须由同一份完整、已校验的主数据构造。`check_reference_maps()` 只检查映射接口形状和两份 Product 映射的覆盖一致性，不能发现构造字典前已被覆盖的重复记录，也不替代客户/路线外键和 BOM 导入校验。Excel 的 applicable_package 使用分号分隔，读取层负责拆分、去除分隔空白并核对路线；ID 保持文本以保留前导零。本轮未实现 Excel 导入模块，测试使用人工小映射。
 
 ## 4. CR 中无需新增拒绝分支的边界
 
@@ -71,6 +85,8 @@ Case.detail_ids 和 evidence_checkpoint_ids 当前是运行时模型中的冗余
 | CR-45～47     | 不因跨客户/产品或纯管理目的拒绝 Group；非法类型由枚举检查覆盖            |
 
 ## 5. 生成限制单独检查
+
+当前状态：GR-01（仅上限）、GR-02（仅异常数量上限）、GR-04、GR-06 已实现，位置为 `validators.py` 的 `check_case_detail_count()`、`check_detail_generation_limits()`、`check_production_lot_reuse()`，由 `validate_generation()` 汇总；GR-01、GR-02、GR-06 的下限分别由 CR-01、CR-14、CR-23 覆盖，不重复实现。GR-02 比例、GR-05 间隔分布、GR-03 和 GR-07～GR-10 需要生成上下文或分布统计，尚未实现。
 
 | 规则      | 处理方式                                                                                                |
 | --------- | ------------------------------------------------------------------------------------------------------- |
@@ -95,8 +111,20 @@ B07 的实际设备、材料和批号等事实使用生成上下文核对，并�
 ## 7. 最小实现与验证顺序
 
 1. 实现字段入口：合法输入、纯空白、错误类型、bool 数量、日期相同/倒置、Other 条件、异常列表重复。
-2. 实现关系入口：重复 ID、悬空引用、子记录串挂/遗漏、Group 不同成员数、客户混合、路线不适配、Lot 属性冲突、异常顺序交换后的事件重复。
-3. 实现生成入口：数量边界、Detail 数量、复用批号统计；CR 合法但超出 GR 范围的输入应只在 GR 阶段失败。
+2. 实现关系入口：重复 ID、悬空引用、子记录缺失/移动归属后的最少数量、Group 不同成员数、客户混合、路线不适配、Lot 属性冲突、异常顺序交换后的事件重复。
+3. 实现生成入口：数量边界、Detail 数量、复用批号统计；CR 合法但超出 GR 范围的输入应只在 GR 阶段失败。（已完成：GR-01 上限、GR-02 异常数量上限、GR-04、GR-06，测试见 `tests/data/test_generation.py`；分布统计尚未实现。）
 4. 接入语义审查信息后再报告完整审查结果。在此之前只能报告确定性检查的覆盖范围。
 
 测试使用独立构造的小样例，不依赖真实主数据文件，也不使用 Locked Test 调整规则。涉及主数据时提供最小人工映射。
+
+## 8. Mock Case 生成的前置状态
+
+冻结资料已提供客户归属、产品路线、固定 BOM、Failure Mode 原因/措施候选及设备知识，权威来源仍是 `data/reference/` 的 Excel 和本目录的结构、CR、GR 文档。当前 `src/casetrace` 只有数据模型、确定性校验和提示状态的命令入口，尚不能自动生成并验收业务有效的 mock Case。
+
+缺口按依赖顺序为：
+
+1. 主数据读取与导入校验：读取 Excel、保留文本 ID、拆分候选和适用路线，并检查客户归属、BOM 与引用；已有映射形状检查不能替代此层。
+2. 可复现的 Python 生成流程：按 GR 确定结构化事实、复用批号及固定属性、原因/措施候选、B07 调查事实，并保留随机种子、来源与生成上下文。主数据中的候选知识不等于可直接采样的集合，须结合路线、固定 BOM 和已有生成边界筛选。
+3. 文本生成和验收：根据既定事实组织文本，接入 confirmed/NDF 判定、原因—证据—措施及来源审查，组合 CR、GR 与待审查状态；不能把两个入口均返回空列表当成完整验收。
+
+“少量”“通常半年内”等尚未量化的口径留给生成配置及分布报告，不擅自增加硬性拒绝阈值。少量人工开发样例可先用现有模型构造并人工审查；自动批量生成仍需上述能力。

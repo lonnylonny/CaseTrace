@@ -1,2 +1,6 @@
+"""CaseTrace：辅助技术异常调查的历史案例检索系统。"""
+
+
 def main() -> None:
-    print("Hello from casetrace!")
+    """保留已注册的命令入口，明确当前实现范围。"""
+    print("CaseTrace：当前提供数据模型与确定性校验，尚未实现 Case 生成或检索命令。")

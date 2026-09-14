@@ -1,4 +1,8 @@
-# define case structure
+"""V1 已结案 Case 的内存记录，字段以 docs/data 的冻结结构为准。
+
+Dataclass 只承载数据，类型注解不会执行校验；构造后交给 validators 检查。
+ID 均使用字符串，保留 Failure Mode ID 的前导零。
+"""
 
 from dataclasses import dataclass
 from datetime import date
@@ -6,96 +10,62 @@ from datetime import date
 
 @dataclass
 class CaseDetail:
+    """一个 Case 中某生产批的一次发现／反馈事件；同批可有多次事件。"""
 
-    detail_id : str
-    #非空且唯一
-    case_id : str
-    #非空，必须是case表中存在的case_id，只能是一个
-    product_id : str
-    #非空，引用一个有效 Product；不同 Detail 可以引用同一 Product
-    customer_lot : str
-    #非空
-    production_lot : str
-    #非空
-    production_time : date
-    #非空，必须是日期
-    detection_stage : str
-    #非空，枚举见数据结构文档 §2；不引用生产工序表
-    detection_time  : date
-    #必须是 date，且不早于 production_time（CR-21）
-    abnormal_types : list[str]
-    #非空，元素引用 failure_modes，内部不重复；允许多异常
-    affected_qty : int
-    #处置范围数量，单位固定 ea（颗）；正整数（CR-23），生成上限见 GR-06
-    disposition : str
-    #非空
+    detail_id: str
+    case_id: str
+    product_id: str  # 客户从 Product 推导，Case 不重复保存客户或产品。
+    customer_lot: str
+    production_lot: str
+    production_time: date  # 投批日期。
+    detection_stage: str  # 发现阶段，不是发生工序；枚举见 constants.py。
+    detection_time: date  # 发现／反馈日期，不得早于投批日期。
+    abnormal_types: list[str]  # Failure Mode ID 的无序集合，至少一个、内部不重复。
+    affected_qty: int  # 纳入处置范围的颗数（ea），不是仅确认不良的数量。
+    disposition: str  # 最终处置文本，可组合多种处置。
+
 
 @dataclass
 class EvidenceCheckpoint:
+    """Case 级调查项，不直接归属 Detail；实际生产事实写入 result（结构 §6）。"""
 
-    checkpoint_id : str
-    #非空且唯一
-    case_id : str
-    #非空，必须是case表中存在的case_id，只能是一个
-    checkpoint_type : str
-    #非空，使用数据结构文档 §3 的固定枚举
-    custom_name : str | None
-    #checkpoint_type 为 Other 时必须是非空文本（CR-34）
-    result : str
-    #非空
-    relevance : str
-    #非空
+    checkpoint_id: str
+    case_id: str
+    checkpoint_type: str
+    custom_name: str | None  # Other 类型时必须填写具体调查名称。
+    result: str
+    relevance: str  # related 标签本身不能证明结果支持 Root Cause。
+
 
 @dataclass
 class Case:
+    """一次完整调查的结案记录。
 
-    case_id : str
-    #非空且唯一
-    abnormal_description : str
-    #非空
-    root_cause : str
-    #非空
-    corrective_action  : str
-    #非空
-    investigation_others : str | None
-    #可为空
-    detail_ids : list[str]
-    #非空，必须是case_detail表中存在的detail_id，可多选
-    evidence_checkpoint_ids : list[str]
-    #非空，必须是evidence_checkpoint表中存在的checkpoint_id，可多选
+    Detail／Evidence 仅通过各自的 case_id 关联；这里不重复保存子记录 ID 列表。
+    最少子记录数量必须在完整 Dataset 上检查，不能由单个 Case 对象保证。
+    """
+
+    case_id: str
+    abnormal_description: str
+    root_cause: str  # 允许 NDF，但必须有明确结案结论。
+    corrective_action: str  # 包括 NDF 在内，均须有具体措施。
+    investigation_others: str | None
+
 
 @dataclass
 class CaseGroup:
+    """显式建立的 Case 分组；通过 Membership 关联至少两个不同 Case。"""
 
-    group_id  : str
-    #非空且唯一
-    group_type : list[str]
-    #非空多选列表，允许值见 CR-42
-    description : str
-    #非空
-    other_type_description : str | None
-    #group_type 包含 other 时必须是非空文本（CR-43）
-    #和case属于n：n关系，通过membership进行关联
+    group_id: str
+    group_type: list[str]  # 多选；包含 repeat_case 时还需要复发关系审查。
+    description: str
+    other_type_description: str | None  # 包含 other 时必填，description 不能替代。
+
 
 @dataclass
 class Membership:
+    """Case 入组关系，以 (group_id, case_id) 唯一标识，不另设 membership_id。"""
 
-    #用于构建关系表，用于多对多关系
-
-    group_id : str
-    #非空，必须是case_group表中存在的group_id，只能是一个
-    case_id : str
-    #非空，必须是case表中存在的case_id，只能是一个
-    association_reason : str
-    #非空
-
-@dataclass
-class CaseBundle:
-
-#用于将case、case_group、membership、case_detail、evidence_checkpoint等表进行组合，形成一个完整的case结构
-
-    case : Case
-    groups : list[CaseGroup]
-    memberships: list[Membership]
-    details: list[CaseDetail]
-    evidences: list[EvidenceCheckpoint]
+    group_id: str
+    case_id: str
+    association_reason: str
