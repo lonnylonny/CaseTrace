@@ -70,6 +70,21 @@ When a confirmed decision changes, update the most specific authoritative source
 
 Adjust assistance to the request.
 
+### Delivery Pace and Collaboration
+
+This is the user's first formal AI application engineering project. Prioritize a small,
+working retrieval and evaluation workflow. The simulated manufacturing environment only
+needs enough consistency to support meaningful cases and credible Ground Truth.
+
+* The assistant owns the main plan, task breakdown, basic setup, and critical implementation.
+* Briefly explain important design choices, implement directly, then walk the user through the result. Confirm meaningful changes of direction through short interactions; handle routine reversible setup directly.
+* Work toward one runnable, reviewable deliverable at a time. Keep explanations tied to the current task.
+* Use a small set of manually reviewed development examples before investing in bulk generation or exhaustive domain validation.
+* Preserve point-in-time correctness, source traceability, and Development / Locked Test separation throughout.
+* Add domain detail only when its absence would affect the current demo or evaluation credibility. Keep existing frozen rules in force unless explicitly revised.
+* Prepare bounded handoffs for repetitive work when useful, including inputs, output format, and acceptance criteria. The user chooses when to delegate to another agent; do not launch agents automatically.
+* Keep planning concise. Produce detailed reports only when requested.
+
 When the user is **learning or implementing something themselves**:
 
 * explain the relevant concept or design first;

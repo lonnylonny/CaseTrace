@@ -74,7 +74,7 @@ Case 按冻结结构只保留结案字段，不再保存冗余的 detail_ids 和
 | product_routes | dict[str, str] | products 的 product_id → package_route |
 | failure_mode_routes | dict[str, set[str]] | failure_modes 的 failure_mode_id → applicable_package 路线集合 |
 
-映射必须由同一份完整、已校验的主数据构造。`check_reference_maps()` 只检查映射接口形状和两份 Product 映射的覆盖一致性，不能发现构造字典前已被覆盖的重复记录，也不替代客户/路线外键和 BOM 导入校验。Excel 的 applicable_package 使用分号分隔，读取层负责拆分、去除分隔空白并核对路线；ID 保持文本以保留前导零。本轮未实现 Excel 导入模块，测试使用人工小映射。
+映射必须由同一份完整、已校验的主数据构造。`check_reference_maps()` 只检查映射接口形状和两份 Product 映射的覆盖一致性，不能发现构造字典前已被覆盖的重复记录，也不替代客户/路线外键和 BOM 导入校验。Excel 的 applicable_package 使用分号分隔，读取层负责拆分、去除分隔空白并核对路线；ID 保持文本以保留前导零。已新增 `reference.py` 读取演示所需的 Product、Customer、Route 和 Failure Mode 子集，检查必需文本、重复 ID、客户归属覆盖与路线引用；尚未覆盖完整 BOM、设备和工序导入。自动测试使用人工小映射及最小人工 Excel。
 
 ## 4. CR 中无需新增拒绝分支的边界
 
@@ -104,6 +104,8 @@ Case 按冻结结构只保留结案字段，不再保存冗余的 detail_ids 和
 
 CR-13、26、36、44 单列语义审查；CR-27～29、34、43 除结构检查外还包含文本含义要求。CR-37 只产生复核提示，不作为硬错误。
 
+演示入口使用草稿中保留的来源信息，核对所选 Failure Mode 的原始原因／措施候选，并对标记 confirmed 的草稿检查至少一个 related Evidence。这只是固定草稿的机械核对，不证明文本语义支持，也不是通用的改写验收器。
+
 CR-35 分两步：先取得明确的 confirmed/NDF 结案判定，再对 confirmed Case 检查是否有 related Evidence，并审查支持关系。当前 root_cause 只有自由文本，不能通过搜索“NDF”几个字符可靠判定，也不能把 related 标签当成语义支持的证明。结案判定及候选来源可由生成上下文或人工审查提供，不擅自增加永久字段。没有这些信息时标记待审查。
 
 B07 的实际设备、材料和批号等事实使用生成上下文核对，并审查 Evidence.result 是否准确表达；不从任意自由文本做简单提取后声称完整验证。
@@ -119,11 +121,11 @@ B07 的实际设备、材料和批号等事实使用生成上下文核对，并�
 
 ## 8. Mock Case 生成的前置状态
 
-冻结资料已提供客户归属、产品路线、固定 BOM、Failure Mode 原因/措施候选及设备知识，权威来源仍是 `data/reference/` 的 Excel 和本目录的结构、CR、GR 文档。当前 `src/casetrace` 只有数据模型、确定性校验和提示状态的命令入口，尚不能自动生成并验收业务有效的 mock Case。
+冻结资料已提供客户归属、产品路线、固定 BOM、Failure Mode 原因/措施候选及设备知识，权威来源仍是 `data/reference/` 的 Excel 和本目录的结构、CR、GR 文档。当前已有模型、确定性校验、主数据子集读取及 `casetrace demo` 本地 BM25 演示。`data/dev/demo.json` 保存 6 条固定的开发草稿、来源和查询；草稿待人工审阅，尚无自动批量生成器或完整业务验收。
 
 缺口按依赖顺序为：
 
-1. 主数据读取与导入校验：读取 Excel、保留文本 ID、拆分候选和适用路线，并检查客户归属、BOM 与引用；已有映射形状检查不能替代此层。
+1. 完整主数据导入校验：演示已读取必要子集并保留文本 ID、检查客户归属与路线引用；BOM、设备和工序关系的完整校验按实际需要补齐。
 2. 可复现的 Python 生成流程：按 GR 确定结构化事实、复用批号及固定属性、原因/措施候选、B07 调查事实，并保留随机种子、来源与生成上下文。主数据中的候选知识不等于可直接采样的集合，须结合路线、固定 BOM 和已有生成边界筛选。
 3. 文本生成和验收：根据既定事实组织文本，接入 confirmed/NDF 判定、原因—证据—措施及来源审查，组合 CR、GR 与待审查状态；不能把两个入口均返回空列表当成完整验收。
 
