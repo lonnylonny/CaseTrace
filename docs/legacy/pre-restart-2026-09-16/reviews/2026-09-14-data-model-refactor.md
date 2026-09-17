@@ -1,3 +1,5 @@
+> 历史归档（2026-09-16）：本文件不是当前要求、状态或 Agent 指令；后续任务以 [Current Plan](../../../project/current-plan.md) 为准。原文中的“当前”“已完成”“冻结”等仅对应历史时点。
+
 # 数据模型与校验器精简报告：改动前后与心智模型
 
 日期：2026-09-14。范围：本次 `src/casetrace` 审查及配套测试、实现清单调整。
@@ -24,7 +26,7 @@
 | 校验器说明 | 模块开头主要是占位说明和独立语法示例 | 模块说明列出三个入口、调用顺序和返回值含义 | 使用前就能了解覆盖范围 |
 | 命令入口 | 输出 `Hello from casetrace!` | 输出当前仅有模型与确定性校验、尚无生成或检索命令 | 运行结果准确表达当前能力 |
 
-相关文件：[模型](../../src/casetrace/data/dataset_model.py)、[校验器](../../src/casetrace/data/validators.py)、[命令入口](../../src/casetrace/__init__.py)。枚举仍集中在 [constants.py](../../src/casetrace/data/constants.py)。
+相关文件：[模型](../../../../src/casetrace/data/dataset_model.py)、[校验器](../../../../src/casetrace/data/validators.py)、[命令入口](../../../../src/casetrace/__init__.py)。枚举仍集中在 [constants.py](../../../../src/casetrace/data/constants.py)。
 
 ## 3. 改动后的核心心智模型
 

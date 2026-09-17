@@ -1,3 +1,5 @@
+> 历史归档（2026-09-16）：本文件不是当前要求、状态或 Agent 指令；后续任务以 [Current Plan](../../../project/current-plan.md) 为准。原文中的“当前”“已完成”“冻结”等仅对应历史时点。
+
 # Stage 7 — Portfolio
 
 ## 阶段目标

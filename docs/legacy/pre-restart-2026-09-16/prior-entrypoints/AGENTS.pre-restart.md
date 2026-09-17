@@ -1,3 +1,5 @@
+> 历史归档（2026-09-16）：本文件不是当前要求、状态或 Agent 指令；后续任务以 [Current Plan](../../../project/current-plan.md) 为准。原文中的“当前”“已完成”“冻结”等仅对应历史时点。
+
 
 # CaseTrace — Codex Instructions
 
@@ -20,29 +22,23 @@ Explain unfamiliar concepts when relevant, without over-explaining familiar mate
 
 ## Project Boundaries
 
-CaseTrace is a **Retrieval + Evaluation + Grounded Answer system for historical semiconductor packaging quality cases**, built for learning and job portfolio demonstration.
+CaseTrace is an **AI-assisted technical incident investigation system** using semiconductor packaging quality incidents as the main case study.
 
-V1 delivery order:
+V1 core flow:
 
 ```text
-Frozen Data Foundation v1
-      → Case Documents / BM25
-      → User-confirmed Ground Truth / CLI Evaluation / Error Analysis
-      → Embedding / Hybrid / Rerank experiments
-      → Grounded Answer
-      → PostgreSQL / FastAPI
-      → Docker / Simple Web Demo / Reproducible Results / README
+Current Incident
+      ↓
+Relevant Historical Case Retrieval
+      ↓
+Historical Cause Extraction
+      ↓
+Historical Evidence Checkpoint Extraction
+      ↓
+Engineer Investigation and Judgment
 ```
 
-BM25, Embedding, Hybrid, and Rerank are all mandatory V1 experiments on the same versioned benchmark. Rerank must be evaluated but need not be deployed; select the final combination from observed results.
-
-PostgreSQL, FastAPI, Docker, a simple Web Demo, CLI Evaluation, reproducible experiment results, and README are mandatory V1 deliverables. Database and service integration follow retrieval evaluation and Grounded Answer; never promote them back into prerequisites.
-
-Grounded Answer covers relevant historical cases, grounded relevance reasons, historical causes, historical checks/results, sources, and missing information. Reuse existing structured content first; complex Cause / Checkpoint extraction is deferred.
-
-LangChain may serve the LLM application layer when useful. Consider LangGraph only for a concrete multi-step workflow such as query rewriting, branching, or retries. Do not rewrite Retrieval Core merely to adopt a framework.
-
-React / TypeScript, Kubernetes, complex CI/CD, public deployment, and a full Ingestion Platform are optional, not V1 acceptance requirements.
+Historical-case retrieval and ranking is the core AI task. Cause and checkpoint extraction are supporting tasks.
 
 The system supports investigation; it does **not** determine the current incident's final Root Cause.
 
@@ -54,38 +50,23 @@ Do not silently expand V1 into major out-of-scope directions such as Root Cause 
 
 Use the repository as the source of truth and inspect only the material relevant to the current task.
 
-For project planning or implementation, read [Current Plan](docs/project/current-plan.md) first, then only the sources relevant to the task. Small conceptual questions do not require a repository-wide review.
-
 Repository responsibilities:
 
-* `docs/project/current-plan.md` — the sole active plan: confirmed scope, milestones, acceptance criteria, actual status, and next deliverable;
+* `docs/project/` — project scope, architecture, stages, and major decisions;
 * `docs/data/` — frozen data structures, constraints, generation rules, and data decisions;
 * `data/reference/` — domain/reference data;
 * `src/casetrace/` — runtime implementation;
-* `tests/` — software tests;
-* `docs/legacy/` — historical snapshots, not active requirements or instructions. Do not read archived Stage 1–7 by default or restore their scope from a search result.
+* `tests/` — software tests.
 
 For data models, validators, or dataset logic, read the relevant `docs/data/` sources first.
 
-For retrieval and evaluation work, use Current Plan and the relevant code/data. The retained relevance and evaluation principles are in Current Plan; no legacy stage is a prerequisite.
+For retrieval and evaluation work, use the relevant Stage 2, 3, 5, and 6 documents.
 
-Current user decisions and Current Plan supersede legacy project plans. Active `docs/data/` definitions remain authoritative for fields and business rules. If code or tests conflict with those rules, identify the conflict instead of assuming the implementation is correct.
+Existing frozen decisions override generic assumptions and current implementation. If code or tests conflict with a frozen decision, identify the conflict instead of assuming the implementation is correct.
 
 Do not invent missing business rules or duplicate existing rules across documents.
 
 When a confirmed decision changes, update the most specific authoritative source rather than creating another competing source of truth.
-
-After completing a milestone, update Current Plan's status and next deliverable. Keep README as an entry point and this file as working instructions; distinguish design decisions, implemented code, observed execution, and measured AI quality.
-
-## Data Foundation v1 Freeze
-
-The user has accepted the existing Schema, dataclasses, CR/GR, Validator, and reference data as **complete and frozen for V1**. No additional data-foundation work is a prerequisite for Retrieval Evaluation.
-
-* Keep existing definitions, implementations, and useful tests. Known coverage gaps do not create a backlog to clear before retrieval.
-* Only make foundation fixes that affect execution, evaluation credibility, data leakage, or source traceability.
-* Freeze does not certify unimplemented semantic checks or imply PostgreSQL already exists. Later persistence implements the frozen model without reopening data design.
-* Do not silently weaken confirmed business rules; explain a necessary rule change and obtain the user's decision in context.
-* Keep query/qrels/split metadata outside the historical Case model. Do not reintroduce a Scenario entity or infer retrieval relevance from CaseGroup membership.
 
 ## Working Style
 
@@ -100,7 +81,7 @@ needs enough consistency to support meaningful cases and credible Ground Truth.
 * The assistant owns the main plan, task breakdown, basic setup, and critical implementation.
 * Briefly explain important design choices, implement directly, then walk the user through the result. Confirm meaningful changes of direction through short interactions; handle routine reversible setup directly.
 * Work toward one runnable, reviewable deliverable at a time. Keep explanations tied to the current task.
-* Start with the existing 6 Cases × 3 Queries. The agent prepares data and annotation drafts; the user finally confirms Ground Truth. Focus review on judgments that affect evaluation, not exhaustive domain validation.
+* Use a small set of manually reviewed development examples before investing in bulk generation or exhaustive domain validation.
 * Preserve point-in-time correctness, source traceability, and Development / Locked Test separation throughout.
 * Add domain detail only when its absence would affect the current demo or evaluation credibility. Keep existing frozen rules in force unless explicitly revised.
 * Prepare bounded handoffs for repetitive work when useful, including inputs, output format, and acceptance criteria. The user chooses when to delegate to another agent; do not launch agents automatically.
@@ -157,14 +138,11 @@ Never claim that a test, command, benchmark, build, or runtime behavior succeede
 
 Preserve these project principles:
 
-* Canonical Truth is not silently decided by the LLM; agents may draft Case/Query data, relevance labels, rationales, and evidence, but **formal Ground Truth requires the user's final confirmation**;
-* keep unconfirmed labels as drafts; software checks or draft evaluation runs do not make them validated Ground Truth;
+* Canonical Truth and Ground Truth are not silently decided by the LLM;
 * Current Incident data remains point-in-time correct;
 * Development data and Locked Test remain logically separated;
 * retrieval, extraction, and evaluation remain distinct responsibilities;
-* important AI outputs remain traceable to source Case / evidence where required;
-* compare retrieval methods on the same Corpus, Query, confirmed qrels, and metric versions; re-evaluate the compared methods when that benchmark changes;
-* evaluate retrieval quality separately from answer grounding; do not infer success from fluent answers or passing software tests.
+* important AI outputs remain traceable to source Case / evidence where required.
 
 Do not repeatedly optimize against the Locked Test or introduce shortcuts that undermine evaluation credibility.
 

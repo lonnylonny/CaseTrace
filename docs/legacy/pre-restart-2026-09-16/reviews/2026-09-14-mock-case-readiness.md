@@ -1,10 +1,12 @@
+> 历史归档（2026-09-16）：本文件不是当前要求、状态或 Agent 指令；后续任务以 [Current Plan](../../../project/current-plan.md) 为准。原文中的“当前”“已完成”“冻结”等仅对应历史时点。
+
 # Mock Case 生成前置条件报告：缺少的能力、约束实现与信息
 
 日期：2026-09-14。范围：V1 已结案 mock Case 的构造与验收，不扩展到完整检索 Benchmark。
 
 本报告是当前代码和资料的审查快照。它区分已经冻结的规则、尚未实现的检查，以及仍需选择的生成配置；不新增业务规则或硬性阈值。
 
-依据：[冻结结构](../data/CaseTrace_Data_Structure_V2_No_Scenario.md)、[CR](../data/CaseTrace_Case_Constraint_Rules_Frozen.md)、[GR](../data/CaseTrace_Case_Generation_Rules_V1.md)、[审计确认](../data/CaseTrace_Structure_Logic_Audit_Confirmation.md)、[实现清单](../data/CaseTrace_Validator_Implementation_Plan.md) 和 [主数据 Excel](../../data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx)。
+依据：[冻结结构](../data/CaseTrace_Data_Structure_V2_No_Scenario.md)、[CR](../data/CaseTrace_Case_Constraint_Rules_Frozen.md)、[GR](../data/CaseTrace_Case_Generation_Rules_V1.md)、[审计确认](../data/CaseTrace_Structure_Logic_Audit_Confirmation.md)、[实现清单](../data/CaseTrace_Validator_Implementation_Plan.md) 和 [主数据 Excel](../../../../data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx)。
 
 ## 1. 结论
 

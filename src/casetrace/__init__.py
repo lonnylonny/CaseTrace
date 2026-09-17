@@ -13,7 +13,7 @@ def main() -> None:
     commands = parser.add_subparsers(dest="command")
     demo = commands.add_parser("demo", help="在开发样例上运行 BM25 检索")
     demo.add_argument("--query", help="当前已知的异常描述；省略时使用默认示例")
-    demo.add_argument("--top-k", type=int, default=3)
+    demo.add_argument("--top-k", type=int, default=4)
     demo.add_argument("--data", type=Path, default=Path("data/dev/demo.json"))
     demo.add_argument("--reference", type=Path, default=Path(
         "data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx"))

@@ -1,3 +1,5 @@
+> 历史归档（2026-09-16）：本文件不是当前要求、状态或 Agent 指令；后续任务以 [Current Plan](../../../project/current-plan.md) 为准。原文中的“当前”“已完成”“冻结”等仅对应历史时点。
+
 # Stage 6 — Implementation & Evaluation
 
 ## 阶段目标
@@ -116,18 +118,39 @@ Generative LLM
 当前首个开发迭代先用 6 条固定、待人工审阅的开发草稿和本地 `rank-bm25` 跑通命令行检索。
 采用统一的英文词／ID 与中文相邻双字切分；不据此声明正式评估完成。
 该迭代用于验证数据到检索的接口，Elasticsearch / OpenSearch 接入在后续工程迭代完成。
-接下来优先确认开发样例和 Query–Case 标注，再建立评估。
+接下来按 **PostgreSQL Schema → 生成 Case → 入库 → Retrieval / Ground Truth** 推进。
+已有本地 demo 保留为接口参考，正式开发流程接入数据库中的历史案例。
+
+### 当前迭代取舍（2026-09-16）
+
+主要投入放在历史案例检索、评估和后续 RAG 流程。Case generation 只负责提供逻辑基本一致、
+能支撑检索实验的数据；Validator 是防止数据明显失控的辅助检查，不作为独立开发目标。
+
+- 先设计支撑现有 Case 模型的最小 PostgreSQL Schema，再生成一批 Case、入库并开始检索与 Ground Truth。
+- 复用已有模型、样例和确定性校验，暂停扩展 Validator 和完整主数据审计；数据生成只实现本批需要的能力，不建设通用生成平台。
+- 不把补齐全部 CR／GR 自动检查、完整语义验收或用户逐条审阅 Case 作为开始检索评估的前置任务。
+- 助手处理样例中的明显矛盾；仅在问题阻塞运行、破坏检索标签或导致信息泄漏时做最小修正。
+- CaseGroup 保持可选；生成本批 Case 时仅按需要建立关联和理由，不增加逐组人工审批任务。
+- 样例扩充由检索错误分析驱动，不为领域完整性或覆盖所有生成分支提前增加数据工作。
+- Query–Case 标签与 CaseGroup 分开；仍保留 point-in-time correctness、来源追溯和 Development／Locked Test 隔离。
+
+本次调整开发优先级，不将尚未执行的检查标记为通过。具体规则若阻塞当前实验，在原权威来源中做局部调整，
+不为清空 Validator 缺口清单投入新一轮开发。
 
 采用纵向迭代，而不是一次性把所有模块分别写完。
 
 优先顺序：
 
 ```text
-最小可运行数据
+设计 PostgreSQL Schema
       ↓
-最简单 Retrieval Baseline
+生成一批 Case（基本逻辑一致即可）
       ↓
-Evaluation Pipeline
+导入主数据与 Case
+      ↓
+Retrieval / Ground Truth（从库中读取，复用 BM25）
+      ↓
+Evaluation Pipeline / Embedding Baseline
       ↓
 Hybrid Retrieval
       ↓

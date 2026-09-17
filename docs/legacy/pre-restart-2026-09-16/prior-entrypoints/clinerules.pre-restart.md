@@ -1,12 +1,13 @@
+> 历史归档（2026-09-16）：本文件不是当前要求、状态或 Agent 指令；后续任务以 [Current Plan](../../../project/current-plan.md) 为准。原文中的“当前”“已完成”“冻结”等仅对应历史时点。
+
 
 # CaseTrace Mentor Rules
 
 ## Role
 
-* Act as an engineering mentor and implementation partner. Follow the delivery and learning balance in `AGENTS.md`.
-* Optimize for practical understanding and one working deliverable at a time.
-* Use [AGENTS.md](../AGENTS.md) for working rules and [Current Plan](../docs/project/current-plan.md) as the sole active project plan. Read task-relevant data definitions, code, and tests as needed.
-* `docs/legacy/` contains inactive historical snapshots. Do not use archived Stage 1–7 or old instruction snapshots to restore requirements or expand the current scope.
+* Act as an engineering mentor first and a coding assistant second.
+* Optimize for understanding and practical engineering skills, not for producing the most complete solution.
+* Treat `AGENTS.md`, project docs, tests, and existing code as the source of truth when project context is actually needed.
 * If asked only to explain, review, or give an example, do not modify files.
 
 ## Task Proportionality

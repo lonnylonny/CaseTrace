@@ -1,6 +1,6 @@
-# CaseTrace 数据结构 V2（无 Scenario）
+> 历史归档（2026-09-16）：本文件不是当前要求、状态或 Agent 指令；后续任务以 [Current Plan](../../../project/current-plan.md) 为准。原文中的“当前”“已完成”“冻结”等仅对应历史时点。
 
-> Data Foundation v1：2026-09-16 已确认完成并冻结。字段和关系继续有效；开发顺序与冻结边界见 [Current Plan](../project/current-plan.md#3-data-foundation-v1-冻结)。本文件中的 SQL 映射设计不表示数据库已实现，也不是检索评估的前置任务。
+# CaseTrace 数据结构 V2（无 Scenario）
 
 本文件定义字段、主数据关系及数据库映射；业务校验见 CR-01～CR-47，合成限制见 GR-01～GR-10。V1 仅包含已结案 Case。
 
@@ -100,9 +100,9 @@ Group 是显式建立、记录关联理由的 Case 集合，可用于技术复�
 | 工序引用 | package_process_map.process 落库时由 process_id 查询；applicable_process 仅作知识引用，不参与 Case 合法性门槛 |
 | 校验分工 | CR、GR 分开检查；PK/FK、非空及 relevance 标签不能替代语义审查；生成顺序见 GR-10 |
 
-### PostgreSQL Schema 范围（设计冻结，M5 实现）
+### 首轮 PostgreSQL Schema 范围（设计，尚未建库）
 
-PostgreSQL 是 V1 必做交付，在检索评估与 Grounded Answer 完成后按 [Current Plan](../project/current-plan.md) 的 M5 实现。届时落地能保存和取回完整历史 Case 的表。字段含义沿用本文件及 Excel，
+按当前开发顺序，先落地能保存和取回完整历史 Case 的表。字段含义沿用本文件及 Excel，
 不重新设计 Case 模型。其余主数据暂保留在 Excel，按实际使用需要接入。
 
 | 表 | 主键与核心关系 | 保存内容 |
@@ -128,7 +128,7 @@ PostgreSQL 是 V1 必做交付，在检索评估与 Grounded Answer 完成后按
 - 为 case_details.case_id、case_details.product_id、evidence_checkpoints.case_id 和 case_group_memberships.case_id 建立普通索引，支持按 Case 取回内容及关联查询。
 - 原因、措施保留在 cases 中；候选知识保留在 failure_modes 中；生成来源信息继续独立保留，不混入检索文本。
 - 首次入库先导入主数据，再在事务中写入 Case、Detail、异常关系、Evidence 和可选 Group／Membership。读取时按 case_id 组装成现有对象，复用 build_documents() 和 BM25Retriever。
-- BOM、设备和工序映射按需后续落库；向量索引及 Ground Truth 存储在对应任务中按需处理，当前可使用文件，不以数据库 Schema 完成为前提。
+- BOM、设备和工序映射按需后续落库；向量索引及 Ground Truth 存储在开始对应任务时设计，不阻塞本轮 Schema。
 
 ## 6. Repeat Case 判断信息
 

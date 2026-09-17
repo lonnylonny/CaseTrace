@@ -1,6 +1,6 @@
-# CaseTrace 审计确认记录
+> 历史归档（2026-09-16）：本文件不是当前要求、状态或 Agent 指令；后续任务以 [Current Plan](../../../project/current-plan.md) 为准。原文中的“当前”“已完成”“冻结”等仅对应历史时点。
 
-> 本文件保留数据设计的历史确认记录；“尚未实现”等状态仅对应当时审计时点，不代表当前进度。Data Foundation v1 已于 2026-09-16 确认完成并冻结；当前状态见 [Current Plan](../project/current-plan.md)，校验覆盖见 [Validator 说明](CaseTrace_Validator_Implementation_Plan.md)。
+# CaseTrace 审计确认记录
 
 ## 已确认决定
 
