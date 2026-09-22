@@ -1,0 +1,22 @@
+评估输入：data/evaluation/dev-v2/qrels.json（dev-qrels-v2 / development / 确认日 2026-09-19）
+语料 6 条；结果已写入 results/dev-v2-bm25.json
+
+Q001  正例：C001、C002、C003、C004
+  完整排名：C001 > C003 > C004 > C002 > C005 > C006
+Q002  正例：C005
+  完整排名：C005 > C002 > C006 > C001 > C004
+Q003  正例：C006
+  完整排名：C006 > C005 > C002 > C001 > C004
+
+recall@1     0.7500  参与 3 条
+recall@3     0.9167  参与 3 条
+recall@4     1.0000  参与 3 条
+precision@1  1.0000  参与 3 条
+precision@3  0.5556  参与 3 条
+precision@4  0.5000  参与 3 条
+ndcg@1       1.0000  参与 3 条
+ndcg@3       1.0000  参与 3 条
+ndcg@4       1.0000  参与 3 条
+mrr@4        1.0000  参与 3 条
+
+结果 schema：evaluation-result-v1；git 状态：脏工作区；BM25 分数不是相关概率，读数不代表已确认的质量结论。

@@ -18,6 +18,15 @@ def reference_path(tmp_path):
         "customer_product_map": [("product_id", "customer_id"), ("P1", "CUS1")],
         "customers": [("customer_id",), ("CUS1",)],
         "package_routes": [("package_route",), ("LF_WB",)],
+        "process_master": [
+            ("process_id", "process"), ("P004", "Wire Bond"), ("P007", "Molding"),
+            ("P013", "Storage & Transportation"),
+        ],
+        "package_process_map": [
+            ("package_route", "process_id", "process"),
+            ("LF_WB", "P004", "Wire Bond"), ("LF_WB", "P007", "Molding"),
+            ("LF_WB", "P013", "Storage & Transportation"),
+        ],
     }
     workbook = Workbook()
     workbook.remove(workbook.active)
@@ -40,6 +49,7 @@ def demo_path(tmp_path):
         payload["cases"].append(dict(
             case_id=case_id, abnormal_description="焊线脱落", root_cause="表面污染",
             corrective_action="改善清洁", investigation_others=None,
+            abnormal_processes=["P004"],
         ))
         payload["details"].append(dict(
             detail_id=f"D{number}", case_id=case_id, product_id="P1", customer_lot="CL1",

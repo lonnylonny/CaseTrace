@@ -1,0 +1,27 @@
+........................................................ [ 20%]
+....................................................................................................................................... [ 68%]
+..................................................................F..... [ 94%]
+................                                                         [100%]
+=================================== FAILURES ===================================
+__ test_v2_preserves_old_snapshot_queries_and_only_confirmed_label_correction __
+
+    def test_v2_preserves_old_snapshot_queries_and_only_confirmed_label_correction():
+        root = Path(__file__).resolve().parents[1]
+        old_path = root / "data/evaluation/dev-v1/qrels.json"
+        old = json.loads(old_path.read_bytes())
+        snapshot = root / "data/evaluation/dev-v1/dataset.snapshot.json"
+        previous_data = json.loads(snapshot.read_bytes())
+        new = json.loads((root / "data/evaluation/dev-v2/qrels.json").read_bytes())
+        current_data = json.loads((root / new["sources"]["dataset"]["path"]).read_bytes())
+    
+        assert hashlib.sha256(snapshot.read_bytes()).hexdigest() == old["sources"]["dataset"]["sha256"]
+>       assert hashlib.sha256(old_path.read_bytes()).hexdigest() == "c0175226433332e1ac592e0850248fe7bd4dbde9173d3c8f0773c2d1602a245e"
+E       AssertionError: assert 'e92e5bb1f84d...cd4194e9fe933' == 'c01752264333...3c2d1602a245e'
+E         
+E         - c0175226433332e1ac592e0850248fe7bd4dbde9173d3c8f0773c2d1602a245e
+E         + e92e5bb1f84d0e69b3a05753664b57b689bf330059c6a11cf1ccd4194e9fe933
+
+tests/test_benchmark_migration.py:19: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_benchmark_migration.py::test_v2_preserves_old_snapshot_queries_and_only_confirmed_label_correction
+1 failed, 278 passed, 169 subtests passed in 2.32s

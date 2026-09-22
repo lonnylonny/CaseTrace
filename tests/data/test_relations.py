@@ -13,7 +13,7 @@ def make_dataset():
     cases, details, evidences = [], [], []
     for number in [1, 2]:
         case_id = f"C{number}"
-        cases.append(Case(case_id, "异常", "NDF", "加强监控", None))
+        cases.append(Case(case_id, "异常", "NDF", "加强监控", None, abnormal_processes=["P004"]))
         details.append(CaseDetail(
             detail_id=f"D{number}", case_id=case_id, product_id="P1",
             customer_lot=f"CL{number}", production_lot=f"PL{number}",
@@ -28,6 +28,7 @@ def make_dataset():
         memberships=[Membership("G1", "C1", "项目成员"), Membership("G1", "C2", "项目成员")],
         product_customers={"P1": "CUS1"}, product_routes={"P1": "LF_WB"},
         failure_mode_routes={"001": {"LF_WB"}},
+        processes={"P004": "Wire Bond"}, route_processes={"LF_WB": {"P004"}},
     )
 
 

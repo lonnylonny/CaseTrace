@@ -91,12 +91,13 @@ class TestDetailConsistency(unittest.TestCase):
 
     def dataset(self, second):
         return dict(
-            cases=[Case("C1", "异常", "NDF", "加强监控", None)],
+            cases=[Case("C1", "异常", "NDF", "加强监控", None, abnormal_processes=["P004"])],
             details=[self.first, second],
             evidences=[EvidenceCheckpoint("E1", "C1", "QC", None, "检查结果", "uncertain")],
             groups=[], memberships=[],
             product_customers={"P1": "CUS1"}, product_routes={"P1": "LF_WB"},
             failure_mode_routes={"001": {"LF_WB"}, "002": {"LF_WB"}},
+            processes={"P004": "Wire Bond"}, route_processes={"LF_WB": {"P004"}},
         )
 
     def test_relations_entry_runs_consistency_checks(self):

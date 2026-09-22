@@ -27,6 +27,8 @@ def load_demo(path: Path) -> tuple[dict, dict]:
             if not isinstance(row, dict):
                 raise ValueError(f"{name} 中的每条记录必须是 JSON 对象")
             values = dict(row)
+            if name == "cases" and "abnormal_processes" not in values:
+                raise ValueError(f"Case[{values.get('case_id', '?')}] | abnormal_processes | 缺少必填字段")
             if name == "details":
                 for field in ("production_time", "detection_time"):
                     values[field] = date.fromisoformat(values[field])
@@ -42,7 +44,9 @@ def build_documents(records: dict, reference: ReferenceData) -> dict[str, str]:
     """
     parts = {
         case.case_id: [case.abnormal_description, case.root_cause,
-                       case.corrective_action, case.investigation_others or ""]
+                       case.corrective_action, case.investigation_others or "",
+                       *(text for process_id in sorted(case.abnormal_processes)
+                         for text in (process_id, reference.processes[process_id]))]
         for case in records["cases"]
     }
     for detail in records["details"]:
@@ -61,16 +65,26 @@ def build_documents(records: dict, reference: ReferenceData) -> dict[str, str]:
     return {case_id: "\n".join(texts) for case_id, texts in parts.items()}
 
 
-def run_demo(data_path: Path, reference_path: Path, *, query: str | None, top_k: int) -> dict:
+def load_validated_dataset(
+    data_path: Path, reference_path: Path,
+) -> tuple[dict, dict, ReferenceData]:
+    """读取开发样例与主数据，执行已实现的确定性校验。
+
+    返回实体记录、原始 payload 和主数据；不检查来源记录，也不构建检索文本。
+    demo 与评估共用这条路径，保证两者看到的是同一份已校验语料。
+    """
     records, payload = load_demo(data_path)
     reference = load_reference(reference_path)
     errors = validate_relations(**records, **reference.validator_maps())
     if not errors:
         errors = validate_generation(**records)
     if errors:
-        raise ValueError("样例未通过确定性校验：\n" + "\n".join(errors))
+        raise ValueError("数据集未通过确定性校验：\n" + "\n".join(errors))
+    return records, payload, reference
 
-    # 来源记录仅用于检查已选择的候选，不能进入检索文本成为额外的匹配线索。
+
+def check_source_records(records: dict, payload: dict, reference: ReferenceData) -> None:
+    """来源记录仅用于核对已选择的候选，不能进入检索文本成为额外的匹配线索。"""
     for case in records["cases"]:
         source = payload["sources"][case.case_id]
         case_modes = {mode_id for detail in records["details"] if detail.case_id == case.case_id
@@ -91,6 +105,11 @@ def run_demo(data_path: Path, reference_path: Path, *, query: str | None, top_k:
             if selected not in getattr(case, field):
                 raise ValueError(f"{case.case_id} 的 {field} 与演示来源记录不一致")
 
+
+def run_demo(data_path: Path, reference_path: Path, *, query: str | None, top_k: int) -> dict:
+    records, payload, reference = load_validated_dataset(data_path, reference_path)
+    check_source_records(records, payload, reference)
+
     if query is None:
         query = payload["queries"][0]["text"]
     retriever = BM25Retriever(build_documents(records, reference))
@@ -101,6 +120,8 @@ def run_demo(data_path: Path, reference_path: Path, *, query: str | None, top_k:
         results.append({
             "case_id": hit.case_id, "score": hit.score, "matched_terms": hit.matched_terms,
             "abnormal_description": case.abnormal_description, "root_cause": case.root_cause,
+            "abnormal_processes": sorted(case.abnormal_processes),
+            "abnormal_process_names": [reference.processes[key] for key in sorted(case.abnormal_processes)],
             "evidences": [
                 {"checkpoint_id": item.checkpoint_id, "result": item.result}
                 for item in records["evidences"] if item.case_id == hit.case_id

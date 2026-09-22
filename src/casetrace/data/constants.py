@@ -9,4 +9,6 @@ CHECKPOINT_TYPES = (
 
 RELEVANCE_VALUES = ("related", "not_related", "uncertain")
 
-GROUP_TYPES = ("repeat_case", "project", "customer_request", "management_request", "other")
+GROUP_TYPES = (
+    "repeat_case", "same_abnormal_process", "project", "customer_request", "management_request", "other",
+)

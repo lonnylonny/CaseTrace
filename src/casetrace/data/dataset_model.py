@@ -50,6 +50,7 @@ class Case:
     root_cause: str  # 允许 NDF，但必须有明确结案结论。
     corrective_action: str  # 包括 NDF 在内，均须有具体措施。
     investigation_others: str | None
+    abnormal_processes: list[str]  # 已确认异常工序的 process_id；非空、无序、内部不重复。
 
 
 @dataclass
@@ -57,7 +58,7 @@ class CaseGroup:
     """显式建立的 Case 分组；通过 Membership 关联至少两个不同 Case。"""
 
     group_id: str
-    group_type: list[str]  # 多选；包含 repeat_case 时还需要复发关系审查。
+    group_type: list[str]  # 多选；同站点检查全组交集，repeat_case 仍需复发语义审查。
     description: str
     other_type_description: str | None  # 包含 other 时必填，description 不能替代。
 

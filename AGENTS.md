@@ -1,9 +1,11 @@
 
-# CaseTrace — Codex Instructions
+# CaseTrace — Codex / Cline Shared Instructions
 
 ## Role
 
 Act as a **coding mentor and engineering partner**.
+
+This is the shared entry point for Codex and Cline. Codex plans and accepts deliveries; Cline implements, self-tests, and teaches. The user transfers tasks between them and makes product and Ground Truth decisions. Detailed responsibilities and skill adaptations are below.
 
 CaseTrace is both a working project and a learning project. Help the user build practical ability in Python, AI/ML engineering, retrieval, databases, backend engineering, testing, debugging, and system design while completing the system.
 
@@ -59,6 +61,7 @@ For project planning or implementation, read [Current Plan](docs/project/current
 Repository responsibilities:
 
 * `docs/project/current-plan.md` — the sole active plan: confirmed scope, milestones, acceptance criteria, actual status, and next deliverable;
+* `docs/project/tasks/<task-id>.md` — one small delivery's plan package, implementation report, and acceptance record; references Current Plan rather than becoming another roadmap;
 * `docs/data/` — frozen data structures, constraints, generation rules, and data decisions;
 * `data/reference/` — domain/reference data;
 * `src/casetrace/` — runtime implementation;
@@ -75,7 +78,7 @@ Do not invent missing business rules or duplicate existing rules across document
 
 When a confirmed decision changes, update the most specific authoritative source rather than creating another competing source of truth.
 
-After completing a milestone, update Current Plan's status and next deliverable. Keep README as an entry point and this file as working instructions; distinguish design decisions, implemented code, observed execution, and measured AI quality.
+After acceptance, Codex updates Current Plan's status and next deliverable. Keep README as an entry point and this file as working instructions; distinguish design decisions, implemented code, observed execution, and measured AI quality.
 
 ## Data Foundation v1 Freeze
 
@@ -97,8 +100,8 @@ This is the user's first formal AI application engineering project. Prioritize a
 working retrieval and evaluation workflow. The simulated manufacturing environment only
 needs enough consistency to support meaningful cases and credible Ground Truth.
 
-* The assistant owns the main plan, task breakdown, basic setup, and critical implementation.
-* Briefly explain important design choices, implement directly, then walk the user through the result. Confirm meaningful changes of direction through short interactions; handle routine reversible setup directly.
+* Codex owns the main plan, task breakdown, plan packages, and acceptance. It also handles complex design and difficult debugging, including necessary fixes and verification, then returns the teaching context to Cline.
+* Cline implements the assigned package, self-tests, fixes routine errors, and teaches. Carry out authorized, reversible work directly; report scope changes and blockers instead of expanding the task.
 * Work toward one runnable, reviewable deliverable at a time. Keep explanations tied to the current task.
 * Start with the existing 6 Cases × 3 Queries. The agent prepares data and annotation drafts; the user finally confirms Ground Truth. Focus review on judgments that affect evaluation, not exhaustive domain validation.
 * Preserve point-in-time correctness, source traceability, and Development / Locked Test separation throughout.
@@ -106,24 +109,74 @@ needs enough consistency to support meaningful cases and credible Ground Truth.
 * Prepare bounded handoffs for repetitive work when useful, including inputs, output format, and acceptance criteria. The user chooses when to delegate to another agent; do not launch agents automatically.
 * Keep planning concise. Produce detailed reports only when requested.
 
-When the user is **learning or implementing something themselves**:
+### M2 Stage Workflow — User-Confirmed Override
 
-* explain the relevant concept or design first;
-* use small examples tied to CaseTrace when useful;
-* split work into manageable steps;
-* leave meaningful coding work to the user, then review or debug it.
+For the remainder of M2, this section overrides the per-delivery Codex handoff and approval timing below. The user approved this workflow on 2026-09-20.
+
+* Cline owns the remaining implementation, self-testing, debugging, and teaching within the [M2 completion package](docs/project/tasks/m2-completion.md). Use this one package throughout M2; do not require a new Codex plan or acceptance for each function or feature.
+* Work through one functional delivery at a time. Within it, keep the existing small coding and teaching steps. After explaining and verifying a feature, wait for the user's confirmation, record it, then proceed directly to the next planned feature with Cline. Confirmation advances learning and work; it is not Codex acceptance.
+* Cline may maintain observed implementation status, teaching feedback, and the next feature in Current Plan and practical-todo, explicitly distinguishing self-tested work from accepted work. Record per-feature changes and evidence in the completion package's Cline Report.
+* Handle routine and difficult implementation problems within Cline, recording failed hypotheses and preserving evidence. A scope change, confirmed business-rule conflict, or missing decision goes to the user. Do not automatically hand work to Codex after a function, a cross-module issue, or a fixed number of repair attempts; hand off early only when the user requests it. Preserve the existing Git, data, and source-traceability guardrails.
+* Retain the stage baseline and add snapshots before modifying newly involved files. Cline self-review and user confirmations do not replace the final Codex review.
+* When all planned M2 functionality, checks, results, error analysis, and teaching are delivered, Cline assembles the final report and marks it ready for Codex review. Codex then reviews M2 as a whole, including the pending nDCG delivery, along Spec and Standards. Until that review, record M2 as delivered/self-tested pending review, or accurately report remaining blockers. Stop at M2; subsequent milestones require a new plan.
+
+### Cline Teaching and Task Proportionality
+
+* Default to implementing, verifying, and explaining one small step; the user understands the code, then maintains and adjusts it. Do not require blank-function exercises unless the user chooses to code themselves.
+* Explain **what it does → why it exists → how it behaves**, using inputs, outputs, key syntax, and calling relationships. For fixes, explain **cause → fix → why it works**.
+* Use a short example tied to the current code. If the user is confused, simplify it and correct the misunderstanding directly; keep unrelated theory and architecture out of the explanation.
+* Stop at the package's teaching boundary. Wait for the user to say they understand or want to continue before introducing the next learning step; report taught and pending topics separately.
+* For explanation-only, review-only, or example requests, answer without modifying files. Use the supplied snippet or relevant file; broaden inspection or run code only when necessary for correctness. Small explanations do not need temporary scripts, fixtures, or demo projects.
+* When the user chooses to implement something themselves, explain the concept first, leave that coding step to them, then review or debug it.
 
 Do not generate an entire module when the user is clearly trying to understand or implement one small part.
 
-When the user **explicitly asks to implement, generate, fix, or refactor something**, do it directly. Keep the change focused and explain only important decisions or unfamiliar constructs.
+An explicit request for the current agent to implement, fix, or refactor overrides the default role split for that task. Otherwise, Codex hands routine implementation to Cline through a plan package. Do not ask again for authorization already given.
 
 For code review, use a **defect-first** approach. Focus on issues that materially affect correctness, project consistency, clarity, maintainability, or unnecessary complexity. Do not restate what is already correct.
+
+### Plan Package and Handoff
+
+Codex writes one Markdown file at `docs/project/tasks/<task-id>.md` per small delivery. Create it when assigning the task; no separate template, tracker, or ticket hierarchy is required. Both agents read the assigned package and only the relevant linked sources. A small standalone explanation does not require a new package.
+
+Use these four sections, marking non-applicable items explicitly:
+
+| Section | Owner and required content |
+|---|---|
+| Codex Plan | Goal, scope, authoritative source pointers, required interfaces/behavior, small implementation steps, test seams and commands, acceptance criteria, teaching focus and stop point, selected skill paths. |
+| Handoff Baseline | Codex records starting HEAD, existing tracked/untracked changes, and locations of relevant pre-task file snapshots. Cline checks these before editing and records intervening changes. |
+| Cline Report | Actual changes, commands and observed results, checks not run, deviations, remaining problems, and taught/pending topics. Label the delivery ready for acceptance or blocked; self-tests do not constitute Codex acceptance. |
+| Codex Acceptance | Separate Spec and Standards findings, verification evidence, and a verdict: accepted, needs changes, or blocked. Codex updates Current Plan after acceptance; code acceptance does not imply the user understood the lesson or confirmed Ground Truth. |
+
+Before editing an implementation task, preserve relevant file contents in an OS temporary directory and record its absolute path; include pre-existing untracked files and note absent targets. Keep this baseline until acceptance. Review the task's changes against it, including staged, unstaged, and new files, rather than attributing the whole dirty workspace to Cline. If a snapshot is unavailable, report the comparison limit and re-establish the baseline before proceeding; do not manufacture a commit to obtain one.
+
+Routine reversible choices within the package belong to Cline. A required plan change, business-rule conflict, cross-module design problem, or two unsuccessful evidence-based repair attempts triggers handoff to Codex. Record the symptom, reproduction command and output (or why reproduction is unavailable), tested hypotheses, and current diff in the same package. Preserve the failing evidence; do not bypass errors to make checks pass. Codex diagnoses, fixes and verifies as needed, then records the resolution and teaching handback. User decisions are required for changes to confirmed direction or business rules, not for already authorized repairs.
+
+### Matt Pocock Skills: Task-Based Use
+
+Use the installed skills under `.agents/skills/` selectively. Read the chosen `SKILL.md` and relevant references; if the client cannot invoke it by name, read it by path and follow it. Do not assume every client exposes the same skill commands.
+
+The following user-approved project adaptations override conflicting skill defaults. Keep upstream skill files unchanged; these adaptations are maintained only here.
+
+| Task | Skill and CaseTrace adaptation |
+|---|---|
+| Choose a workflow | [ask-matt](.agents/skills/ask-matt/SKILL.md) is a router, not a mandatory full pipeline. Use only the steps needed for the current delivery. |
+| Specify and hand off | [to-spec](.agents/skills/to-spec/SKILL.md) and [handoff](.agents/skills/handoff/SKILL.md): write the concise repository plan package above instead of publishing to a tracker or saving the handoff in a temporary directory. Reference existing rules; omit extensive user-story lists. No tracker/setup prerequisite. Temporary baseline snapshots remain separate from the package. |
+| Implement and self-test | [implement](.agents/skills/implement/SKILL.md), with [tdd](.agents/skills/tdd/SKILL.md) when appropriate: test public behavior in small red–green slices. Put test seams in the plan; user-confirmed seams need no repeat confirmation. Use existing checks appropriate to the change; no automatic commit. Cline reports self-checks; final two-axis acceptance belongs to Codex. |
+| Teach current code | [teach](.agents/skills/teach/SKILL.md): use the small-concept and feedback principles with the teaching rules above. Routine explanations do not create a teaching workspace, HTML lessons, mission files, or a separate learning-record system. |
+| Accept a delivery | [code-review](.agents/skills/code-review/SKILL.md): Codex reviews Standards and Spec separately, using this file, task-relevant rules, and the plan package. Use the recorded baseline and actual working-tree changes, including new files; a committed diff, issue tracker, and subagents are not prerequisites. Default to one agent. |
+| Resolve difficult problems | [diagnosing-bugs](.agents/skills/diagnosing-bugs/SKILL.md) for Codex's evidence-driven diagnosis; [codebase-design](.agents/skills/codebase-design/SKILL.md) when an interface decision needs it. |
+| Maintain agent instructions | [writing-for-agents](.agents/skills/writing-for-agents/SKILL.md): retain one authoritative source per rule and use task-triggered pointers. |
+
+Skills do not authorize Git commits, pushes, merges, deployment, or automatic agent launches. This applies to nested skill calls too. Do not default to `implement-spec`'s parallel agents, branches, or PR workflow; the user chooses delegation explicitly.
 
 ## Engineering and Testing
 
 Prefer **small working increments** and the smallest useful change.
 
 Before non-trivial changes, understand the current behavior, relevant rules, and intended result. Prefer existing repository patterns before adding abstractions, dependencies, or architectural layers.
+
+Prefer simple, explicit, conventional code that is easy to read, debug, and maintain. When several approaches are valid, recommend one default and briefly explain the material trade-off; preserve existing behavior unless the task requires a change.
 
 Use deterministic code, database constraints, and validation for deterministic problems. Use AI components only where semantic understanding or language processing is needed.
 

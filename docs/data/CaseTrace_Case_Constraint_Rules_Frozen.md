@@ -4,7 +4,7 @@
 
 适用于 V1 已结案 Case。字段、枚举、数据库映射及用于复发判断的 B07 实际生产信息见《CaseTrace_Data_Structure_V2_No_Scenario.md》；合成范围见《CaseTrace_Case_Generation_Rules_V1.md》。不设置 Scenario。
 
-保留 CR-01～CR-47 编号及原类型：Hard 为硬约束，Hard semantic 包含语义判断，Hard boundary 定义允许范围，Soft 仅提示复核。
+保留 CR-01～CR-47 编号及原类型；2026-09-19 用户确认异常站点修订，新增 CR-48～CR-51。Hard 为硬约束，Hard semantic 包含语义判断，Hard boundary 定义允许范围，Soft 仅提示复核。
 
 | ID | 类型 | 规则 |
 |---|---|---|
@@ -25,7 +25,7 @@
 | CR-15 | Hard | abnormal_types 直接引用现有 failure_modes，不另建异常分类。 |
 | CR-16 | Hard | 所选异常须适用于 Product 的封装路线。 |
 | CR-17 | Hard boundary | 一个 Detail 可包含多个 Failure Mode。 |
-| CR-18 | Hard boundary | applicable_process 仅为知识属性，不参与 Case 合法性校验，也不要求 Case 指定或匹配唯一发生工序。 |
+| CR-18 | Hard boundary | failure_modes.applicable_process 仅为候选知识，不参与 Case 合法性校验，不要求 abnormal_processes 与其匹配，也不自动复制候选工序。Case 自身的已确认异常工序按 CR-48～50 检查，允许多选。 |
 | CR-19 | Hard | production_time 必填，含义固定为投批时间。 |
 | CR-20 | Hard | detection_time 必填，统一表示异常发现/反馈时间。 |
 | CR-21 | Hard | detection_time ≥ production_time。 |
@@ -49,11 +49,15 @@
 | CR-39 | Hard | Membership 引用的 Case 和 Group 必须存在。 |
 | CR-40 | Hard | Membership 以 (group_id, case_id) 唯一标识，同一组合不得重复。 |
 | CR-41 | Hard | 每条 Membership 的 association_reason 非空。 |
-| CR-42 | Hard | group_type 为非空多选列表，每个值仅为 repeat_case / project / customer_request / management_request / other。 |
+| CR-42 | Hard | group_type 为非空多选列表，每个值仅为 repeat_case / same_abnormal_process / project / customer_request / management_request / other。 |
 | CR-43 | Hard | group_type 包含 other 时，other_type_description 非空并解释分组类型；description 描述这组 Case，不能代替该字段。 |
 | CR-44 | Hard semantic | repeat_case 必须有明确确认的异常复发关系，通常表现为重复或高度相关的发生原因、Root Cause 或失效机制。设备、材料批号、wafer lot、参数调整等 Evidence 可作为判断依据，但任一字段相同都不能自动建组。 |
 | CR-45 | Hard boundary | repeat_case 可跨 Customer、Product。 |
 | CR-46 | Hard boundary | same_root_cause、same_customer_product、common_failure_event 不作为 group_type 或新增子类型；相关信息写入 description 或 association_reason。 |
-| CR-47 | Hard boundary | project、customer_request、management_request 允许管理目的分组，这些类型本身除通用 Group 结构规则外，不追加技术关联条件；同时选择 repeat_case 时仍须满足 CR-44。 |
+| CR-47 | Hard boundary | project、customer_request、management_request 允许管理目的分组，这些类型本身除通用 Group 结构规则外，不追加技术关联条件；同时选择 repeat_case 或 same_abnormal_process 时分别仍须满足 CR-44、CR-51。 |
+| CR-48 | Hard | Case.abnormal_processes 是必填、非空的 process_id 字符串列表，至少一个、内部不重复；顺序不表达优先级。 |
+| CR-49 | Hard | 每个异常工序必须引用有效 process_master.process_id，并属于 Case 经 Detail 涉及的产品路线工序并集；每项只须适用于至少一个涉及产品，不表示所有产品均涉及该站点。 |
+| CR-50 | Hard semantic | abnormal_processes 仅记录调查确认涉及异常的工序，须与 Case / Evidence 事实一致，不能将检出阶段或候选知识当作已确认站点。允许原因 NDF，但站点仍须确认；站点未知的记录暂不纳入正式 Case。 |
+| CR-51 | Hard | group_type 含 same_abnormal_process 时，全组成员的 abnormal_processes 交集必须非空；两两有交集不能替代全组公共交集。允许跨客户、产品，不要求异常表现或根因相同；仍须显式建立并填写入组理由，不自动推导 repeat_case 或检索相关性。 |
 
 本文件不规定候选原因/措施来源、采样权重或频率、记录数上限、固定的发现阶段时间间隔；生成限制由 GR 规定。无 lot_total_qty 字段，不建立与其比较的约束。Group 始终显式建立，不根据字段相似度自动推导。Dataset Composition、Ground Truth 和 SQL 实现不属于本文件。

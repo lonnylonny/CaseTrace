@@ -45,7 +45,7 @@ class TestRecordFields(unittest.TestCase):
     def setUp(self):
         self.detail = CaseDetail("D1", "C1", "P1", "CL1", "PL1", date(2026, 9, 1),
                                  "OQC", date(2026, 9, 2), ["001"], 1, "全部报废")
-        self.case = Case("C1", "异常描述", "NDF", "加强监控", None)
+        self.case = Case("C1", "异常描述", "NDF", "加强监控", None, abnormal_processes=["P004"])
         self.evidence = EvidenceCheckpoint("E1", "C1", "QC", None, "检查结果", "uncertain")
         self.group = CaseGroup("G1", ["project"], "项目调查", None)
         self.membership = Membership("G1", "C1", "属于该项目")

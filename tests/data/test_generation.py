@@ -29,7 +29,7 @@ def make_detail(
 
 
 def make_case(case_id):
-    return Case(case_id, "异常", "NDF", "加强监控", None)
+    return Case(case_id, "异常", "NDF", "加强监控", None, abnormal_processes=["P004"])
 
 
 class TestCaseDetailCount(unittest.TestCase):
@@ -160,6 +160,7 @@ class TestValidateGeneration(unittest.TestCase):
         self.reference = dict(
             product_customers={"P1": "CUS1"}, product_routes={"P1": "LF_WB"},
             failure_mode_routes={"001": {"LF_WB"}},
+            processes={"P004": "Wire Bond"}, route_processes={"LF_WB": {"P004"}},
         )
 
     def generation_errors(self):

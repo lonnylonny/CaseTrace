@@ -101,10 +101,12 @@ class TestDetailReferences(unittest.TestCase):
 
     def dataset(self):
         return dict(
-            cases=[Case("C1", "异常", "NDF", "加强监控", None)],
+            cases=[Case("C1", "异常", "NDF", "加强监控", None, abnormal_processes=["P004"])],
             details=[self.first, self.second],
             evidences=[EvidenceCheckpoint("E1", "C1", "QC", None, "检查结果", "uncertain")],
             groups=[], memberships=[], **self.reference,
+            processes={"P004": "Wire Bond"},
+            route_processes={"LF_WB": {"P004"}, "SUBSTRATE_FC": {"P004"}},
         )
 
     def test_relations_entry_runs_reference_checks(self):
@@ -112,8 +114,9 @@ class TestDetailReferences(unittest.TestCase):
         self.assertEqual(validate_relations(**dataset), [])
         dataset["details"][1] = replace(self.second, product_id="P3")
         errors = validate_relations(**dataset)
-        self.assertEqual(len(errors), 1)
+        self.assertEqual(len(errors), 2)
         self.assertTrue(errors[0].startswith("CR-04 |"))
+        self.assertIn("异常工序与同站点分组检查未执行", errors[-1])
 
     def test_relation_failure_explicitly_skips_reference_checks(self):
         dataset = self.dataset()
@@ -124,7 +127,7 @@ class TestDetailReferences(unittest.TestCase):
 
     def test_management_group_can_span_customers(self):
         dataset = self.dataset()
-        dataset["cases"].append(Case("C2", "异常", "NDF", "加强监控", None))
+        dataset["cases"].append(Case("C2", "异常", "NDF", "加强监控", None, abnormal_processes=["P004"]))
         dataset["details"][1] = replace(self.second, case_id="C2", product_id="P3")
         dataset["evidences"].append(replace(dataset["evidences"][0], checkpoint_id="E2", case_id="C2"))
         dataset["groups"] = [CaseGroup("G1", ["project"], "管理项目", None)]

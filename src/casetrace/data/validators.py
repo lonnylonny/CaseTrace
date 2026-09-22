@@ -182,6 +182,12 @@ def validate_case_fields(case: Case, *, location: str) -> list[str]:
     errors.extend(check_optional_text(
         case.investigation_others, field="investigation_others", location=location, rule="结构 §2",
     ))
+    process_errors = check_text_list(
+        case.abnormal_processes, field="abnormal_processes", location=location, rule="CR-48",
+    )
+    errors.extend(process_errors)
+    if not process_errors and len(set(case.abnormal_processes)) != len(case.abnormal_processes):
+        errors.append(f"CR-48 | {location} | abnormal_processes | 内部不得重复")
     return errors
 
 
@@ -424,15 +430,67 @@ def check_detail_references(
     return errors
 
 
+def check_process_maps(
+    *, processes: dict[str, str], route_processes: dict[str, set[str]],
+    product_routes: dict[str, str],
+) -> list[str]:
+    """检查工序映射形状、引用与产品路线覆盖；product_routes 须已通过主数据检查。"""
+    errors: list[str] = []
+    for name, mapping in (("processes", processes), ("route_processes", route_processes)):
+        if not isinstance(mapping, dict) or not mapping:
+            errors.append(f"主数据 | Reference | {name} | 必须是非空字典")
+            continue
+        for key, value in mapping.items():
+            location = f"{name}[{key!r}]"
+            errors.extend(check_required_text(key, field="id", location=location, rule="主数据"))
+            if name == "processes":
+                errors.extend(check_required_text(value, field="process", location=location, rule="主数据"))
+            elif not isinstance(value, set) or not value:
+                errors.append(f"主数据 | {location} | processes | 必须是非空工序字符串集合 set")
+            else:
+                for process_id in sorted(value, key=repr):
+                    errors.extend(check_required_text(
+                        process_id, field="processes", location=location, rule="主数据",
+                    ))
+    if errors:
+        return errors
+    for route in sorted(set(product_routes.values()) - route_processes.keys()):
+        errors.append(f"主数据 | Route[{route}] | processes | 缺少工序映射")
+    for route, process_ids in route_processes.items():
+        for process_id in sorted(process_ids - processes.keys()):
+            errors.append(f"主数据 | Route[{route}] | processes | 引用了未知工序 {process_id}")
+    return errors
+
+
+def check_case_processes(
+    cases: list[Case], details: list[CaseDetail], *, processes: dict[str, str],
+    product_routes: dict[str, str], route_processes: dict[str, set[str]],
+) -> list[str]:
+    """字段、关系、产品引用和主数据映射须有效；仅核对 CR-49，不推断确认事实。"""
+    allowed_by_case = {case.case_id: set() for case in cases}
+    for detail in details:
+        allowed_by_case[detail.case_id].update(route_processes[product_routes[detail.product_id]])
+    errors: list[str] = []
+    for case in cases:
+        for index, process_id in enumerate(case.abnormal_processes):
+            location = f"CR-49 | Case[{case.case_id}] | abnormal_processes[{index}]"
+            if process_id not in processes:
+                errors.append(f"{location} | Process[{process_id}] 不存在")
+            elif process_id not in allowed_by_case[case.case_id]:
+                errors.append(f"{location} | Process[{process_id}] 不属于本 Case 产品路线的工序并集")
+    return errors
+
+
 def validate_relations(
     *, cases: list[Case], details: list[CaseDetail], evidences: list[EvidenceCheckpoint],
     groups: list[CaseGroup], memberships: list[Membership],
     product_customers: dict[str, str], product_routes: dict[str, str],
     failure_mode_routes: dict[str, set[str]],
+    processes: dict[str, str], route_processes: dict[str, set[str]],
 ) -> list[str]:
     """检查完整 Dataset 的字段、实体关系、Detail 一致性及主数据关联。
 
-    三份主数据映射必传；映射格式检查不代替完整主数据导入校验。当前不覆盖 GR 或语义。
+    五份主数据映射必传；映射格式检查不代替完整主数据导入校验。当前不覆盖 GR 或语义。
     不可用单个 Case 的子集判断跨 Case 的 Group 成员数或批号一致性。
     """
     errors = validate_records(
@@ -506,6 +564,34 @@ def validate_relations(
         details, product_customers=product_customers, product_routes=product_routes,
         failure_mode_routes=failure_mode_routes,
     ))
+    if errors:
+        errors.append("依赖 | Dataset | abnormal_processes | 主数据关联检查未通过，异常工序与同站点分组检查未执行")
+        return errors
+    errors.extend(check_process_maps(
+        processes=processes, route_processes=route_processes, product_routes=product_routes,
+    ))
+    if errors:
+        errors.append("依赖 | Reference | abnormal_processes | 工序映射无效，异常工序与同站点分组检查未执行")
+        return errors
+    errors.extend(check_case_processes(
+        cases, details, processes=processes, product_routes=product_routes,
+        route_processes=route_processes,
+    ))
+    process_groups = [group for group in groups if "same_abnormal_process" in group.group_type]
+    if errors:
+        if process_groups:
+            errors.append("依赖 | Dataset | groups | 异常工序检查未通过，同站点分组检查未执行")
+        return errors
+    for group in process_groups:
+        member_processes = [
+            set(cases_by_id[case_id].abnormal_processes)
+            for case_id in sorted(members_by_group[group.group_id])
+        ]
+        # 成员数与引用已经通过检查；必须全组共有，不能以两两交集替代。
+        if not set.intersection(*member_processes):
+            errors.append(
+                f"CR-51 | CaseGroup[{group.group_id}] | memberships | 全组成员须至少共享一个已确认异常工序"
+            )
     return errors
 
 

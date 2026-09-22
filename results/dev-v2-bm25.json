@@ -1,0 +1,500 @@
+{
+  "schema_version": "evaluation-result-v1",
+  "generated_at": "2026-09-22T05:12:51+00:00",
+  "benchmark": {
+    "qrels_path": "data/evaluation/dev-v2/qrels.json",
+    "qrels_version": "dev-qrels-v2",
+    "qrels_sha256": "9112d64cac25e8af0b7b183ca0d083de2c460dc6427cf1c57785f4e0fdfc38b7",
+    "confirmed_on": "2026-09-19",
+    "split": "development",
+    "dataset": {
+      "path": "data/dev/demo.json",
+      "sha256": "6923d382ba082f72beb922737e9b169313c1a236662f6a57a8a322e0879689f7"
+    },
+    "reference": {
+      "path": "data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx",
+      "sha256": "f5001bddd3dff43342a2569ceda836ddb4f5c0caca942c1c4d043d99a9131c85"
+    },
+    "dataset_review_status": "draft_pending_human_review",
+    "latest_detection": "2026-06-15",
+    "history_snapshot": "本版沿用已确认的历史快照约定：全部历史 Case 在每条 Query 的 known_at 之前已结案并完整可用；未实现通用时间过滤，时点检查只用模型中存在的日期字段。"
+  },
+  "retrieval": {
+    "method": "bm25_okapi",
+    "implementation": "rank_bm25.BM25Okapi",
+    "tokenizer": "casetrace.retrieval.bm25.tokenize",
+    "document_builder": "casetrace.demo.build_documents",
+    "corpus_size": 6,
+    "requested_top_k": 6,
+    "parameters": {
+      "k1": 1.5,
+      "b": 0.75,
+      "epsilon": 0.25
+    },
+    "note": "保留 BM25 实际返回的全部条目，不补分数、不补名次；分数不是相关概率。"
+  },
+  "metrics": {
+    "ks": [
+      1,
+      3,
+      4
+    ],
+    "reciprocal_rank_k": 4,
+    "summary_metric_keys": [
+      "recall@1",
+      "recall@3",
+      "recall@4",
+      "precision@1",
+      "precision@3",
+      "precision@4",
+      "ndcg@1",
+      "ndcg@3",
+      "ndcg@4",
+      "mrr@4"
+    ],
+    "definitions": {
+      "recall@k": "前 k 条中的相关 Case 数 / 该 Query 的全部正例数；返回不足 k 条用实际条目；无正例为 None。",
+      "precision@k": "前 k 条中的相关 Case 数 / k；返回不足 k 条时分母仍为 k；无正例为 0.0。",
+      "ndcg@k": "二值 gain，按原排名累加 1/log2(rank+1)；IDCG 用第 1 至 min(k, 正例数) 名；无正例为 None。",
+      "rr@4": "前 4 条中首个相关结果的 1/rank；前 4 条无命中为 0.0；无正例为 None。",
+      "mrr@4": "逐 Query rr@4 对参与 Query 的等权平均；没有参与 Query 时为 None。"
+    },
+    "no_relevant_policy": "无正例 Query 单列：Recall / nDCG / RR@4 为 None 并从各自均值中排除，Precision 的 0.0 按函数口径纳入其均值；每个指标分别记录参与的 Query 与排除原因，没有可参与 Query 时汇总为 None。",
+    "comparison_note": "各方法必须在同一 Corpus、Query、已确认 qrels 与指标口径下比较；数据或标注变化后整体重跑。"
+  },
+  "queries": [
+    {
+      "query_id": "Q001",
+      "query_text": "PROD_001 在 OQC 发现焊线脱落，拉力检查显示焊点剥离，原因尚未确认。",
+      "known_at": "2026-09-15",
+      "relevant_case_ids": [
+        "C001",
+        "C002",
+        "C003",
+        "C004"
+      ],
+      "ranked": [
+        {
+          "rank": 1,
+          "case_id": "C001",
+          "score": 5.144507617276434,
+          "matched_terms": [
+            "oqc",
+            "prod_001",
+            "剥离",
+            "力检",
+            "发现",
+            "拉力",
+            "检查",
+            "焊点",
+            "焊线",
+            "现焊",
+            "确认",
+            "线脱",
+            "脱落"
+          ]
+        },
+        {
+          "rank": 2,
+          "case_id": "C003",
+          "score": 3.462028465251698,
+          "matched_terms": [
+            "剥离",
+            "拉力",
+            "检查",
+            "点剥",
+            "焊点",
+            "焊线",
+            "现焊",
+            "确认",
+            "脱落"
+          ]
+        },
+        {
+          "rank": 3,
+          "case_id": "C004",
+          "score": 2.480211598660341,
+          "matched_terms": [
+            "oqc",
+            "剥离",
+            "发现",
+            "拉力",
+            "显示",
+            "查显",
+            "检查",
+            "焊点",
+            "焊线",
+            "现焊",
+            "确认"
+          ]
+        },
+        {
+          "rank": 4,
+          "case_id": "C002",
+          "score": 1.6462881693700615,
+          "matched_terms": [
+            "prod_001",
+            "剥离",
+            "发现",
+            "显示",
+            "检查",
+            "焊线",
+            "确认"
+          ]
+        },
+        {
+          "rank": 5,
+          "case_id": "C005",
+          "score": 0.9555555968664879,
+          "matched_terms": [
+            "oqc",
+            "发现",
+            "检查",
+            "确认"
+          ]
+        },
+        {
+          "rank": 6,
+          "case_id": "C006",
+          "score": 0.7321379095146355,
+          "matched_terms": [
+            "发现",
+            "显示",
+            "检查",
+            "确认"
+          ]
+        }
+      ],
+      "scores": {
+        "recall@1": 0.25,
+        "precision@1": 1.0,
+        "ndcg@1": 1.0,
+        "recall@3": 0.75,
+        "precision@3": 1.0,
+        "ndcg@3": 1.0,
+        "recall@4": 1.0,
+        "precision@4": 1.0,
+        "ndcg@4": 1.0,
+        "rr@4": 1.0
+      }
+    },
+    {
+      "query_id": "Q002",
+      "query_text": "声学扫描发现塑封空洞 molding void，需要查找历史调查记录。",
+      "known_at": "2026-09-15",
+      "relevant_case_ids": [
+        "C005"
+      ],
+      "ranked": [
+        {
+          "rank": 1,
+          "case_id": "C005",
+          "score": 16.972538210854076,
+          "matched_terms": [
+            "molding",
+            "void",
+            "发现",
+            "塑封",
+            "声学",
+            "学扫",
+            "封空",
+            "扫描",
+            "描发",
+            "现塑",
+            "空洞"
+          ]
+        },
+        {
+          "rank": 2,
+          "case_id": "C002",
+          "score": 1.819043483780474,
+          "matched_terms": [
+            "发现",
+            "记录",
+            "调查"
+          ]
+        },
+        {
+          "rank": 3,
+          "case_id": "C006",
+          "score": 0.9051033693000803,
+          "matched_terms": [
+            "发现",
+            "记录"
+          ]
+        },
+        {
+          "rank": 4,
+          "case_id": "C001",
+          "score": 0.3014601163971336,
+          "matched_terms": [
+            "发现"
+          ]
+        },
+        {
+          "rank": 5,
+          "case_id": "C004",
+          "score": 0.21330683183384547,
+          "matched_terms": [
+            "发现"
+          ]
+        }
+      ],
+      "scores": {
+        "recall@1": 1.0,
+        "precision@1": 1.0,
+        "ndcg@1": 1.0,
+        "recall@3": 1.0,
+        "precision@3": 0.3333333333333333,
+        "ndcg@3": 1.0,
+        "recall@4": 1.0,
+        "precision@4": 0.25,
+        "ndcg@4": 1.0,
+        "rr@4": 1.0
+      }
+    },
+    {
+      "query_id": "Q003",
+      "query_text": "客户收货后发现 BGA 锡球缺失，托盘边缘有碰伤痕迹。",
+      "known_at": "2026-09-15",
+      "relevant_case_ids": [
+        "C006"
+      ],
+      "ranked": [
+        {
+          "rank": 1,
+          "case_id": "C006",
+          "score": 20.54756443896673,
+          "matched_terms": [
+            "bga",
+            "发现",
+            "后发",
+            "客户",
+            "户收",
+            "托盘",
+            "收货",
+            "球缺",
+            "痕迹",
+            "盘边",
+            "碰伤",
+            "缺失",
+            "货后",
+            "边缘",
+            "锡球"
+          ]
+        },
+        {
+          "rank": 2,
+          "case_id": "C005",
+          "score": 1.2128559916180515,
+          "matched_terms": [
+            "发现",
+            "边缘"
+          ]
+        },
+        {
+          "rank": 3,
+          "case_id": "C002",
+          "score": 0.6916627661055974,
+          "matched_terms": [
+            "发现",
+            "客户"
+          ]
+        },
+        {
+          "rank": 4,
+          "case_id": "C001",
+          "score": 0.3014601163971336,
+          "matched_terms": [
+            "发现"
+          ]
+        },
+        {
+          "rank": 5,
+          "case_id": "C004",
+          "score": 0.21330683183384547,
+          "matched_terms": [
+            "发现"
+          ]
+        }
+      ],
+      "scores": {
+        "recall@1": 1.0,
+        "precision@1": 1.0,
+        "ndcg@1": 1.0,
+        "recall@3": 1.0,
+        "precision@3": 0.3333333333333333,
+        "ndcg@3": 1.0,
+        "recall@4": 1.0,
+        "precision@4": 0.25,
+        "ndcg@4": 1.0,
+        "rr@4": 1.0
+      }
+    }
+  ],
+  "summary": {
+    "query_count": 3,
+    "no_relevant_query_ids": [],
+    "metrics": {
+      "recall@1": {
+        "value": 0.75,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "recall@3": {
+        "value": 0.9166666666666666,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "recall@4": {
+        "value": 1.0,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "precision@1": {
+        "value": 1.0,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "precision@3": {
+        "value": 0.5555555555555555,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "precision@4": {
+        "value": 0.5,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "ndcg@1": {
+        "value": 1.0,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "ndcg@3": {
+        "value": 1.0,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "ndcg@4": {
+        "value": 1.0,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "mrr@4": {
+        "value": 1.0,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      }
+    }
+  },
+  "reproducibility": {
+    "python": "3.12.3",
+    "packages": {
+      "casetrace": "0.1.0",
+      "rank-bm25": "0.2.2",
+      "openpyxl": "3.1.5"
+    },
+    "git_head": "1e691bca0e32f8edb9dc9ab05b6ce37793ab6b87",
+    "git_dirty": true,
+    "git_status_paths": [
+      ".agents/",
+      ".clinerules/rules.md",
+      "AGENTS.md",
+      "CONTEXT.md",
+      "README.md",
+      "data/dev/demo.json",
+      "data/evaluation/",
+      "docs/data/CaseTrace_Case_Constraint_Rules_Frozen.md",
+      "docs/data/CaseTrace_Case_Generation_Rules_V1.md",
+      "docs/data/CaseTrace_Data_Structure_V2_No_Scenario.md",
+      "docs/data/CaseTrace_Structure_Logic_Audit_Confirmation.md",
+      "docs/data/CaseTrace_Validator_Implementation_Plan.md",
+      "docs/project/current-plan.md",
+      "docs/project/m2-agent-handoff.md",
+      "docs/project/practical-todo.md",
+      "docs/project/tasks/",
+      "results/",
+      "skills-lock.json",
+      "src/casetrace/__init__.py",
+      "src/casetrace/data/constants.py",
+      "src/casetrace/data/dataset_model.py",
+      "src/casetrace/data/reference.py",
+      "src/casetrace/data/validators.py",
+      "src/casetrace/demo.py",
+      "src/casetrace/evaluation/benchmark.py",
+      "src/casetrace/evaluation/metrics.py",
+      "src/casetrace/evaluation/runner.py",
+      "tests/conftest.py",
+      "tests/data/test_abnormal_processes.py",
+      "tests/data/test_detail_consistency.py",
+      "tests/data/test_generation.py",
+      "tests/data/test_record_fields.py",
+      "tests/data/test_reference_loader.py",
+      "tests/data/test_references.py",
+      "tests/data/test_relations.py",
+      "tests/evaluation/",
+      "tests/test_benchmark_migration.py",
+      "tests/test_cli_evaluate.py",
+      "tests/test_demo.py"
+    ],
+    "source_files": {
+      "src/casetrace/__init__.py": "938fe804e20e46af1e2623bdab439fd991f8d79cbd65d226ec2cd574f10840b5",
+      "src/casetrace/data/constants.py": "6ceca4b9cd2716b6f960a2022b4bb30de82a6ab9e1de45209d4e6010d1e358fd",
+      "src/casetrace/data/dataset_model.py": "bace7dba979338725d6bd9e1e58068e5bcc7d37eddc34e8b3fa77e80711f138e",
+      "src/casetrace/data/reference.py": "6d8e1a3861031698d79519f83f7ee07adcc78ea86883f94370ff71bf92235fa1",
+      "src/casetrace/data/validators.py": "073297b5957f87b50f490b1abad007bfdc5e6acd823b524980334d01150210cb",
+      "src/casetrace/evaluation/runner.py": "8c9d89739f334eeddcae4374ca1525ea1cdb0b3fef4568fcb033f1fa2cea8a31",
+      "src/casetrace/evaluation/benchmark.py": "b18f96ea1e105b52407dec190a7417a8dba7b3289bafe8aeefafd14a57926cb7",
+      "src/casetrace/evaluation/metrics.py": "47e55310fc9ebf9b4afd406295f6833b2c5cfe7db9ca3e5dbb414464e080d191",
+      "src/casetrace/demo.py": "27b92bc46db1522ba9e113861bcfb69fdae9fe6d52115e2c91842fe502fa2714",
+      "src/casetrace/retrieval/bm25.py": "e21e00f76bae8cf6301a94c4e15886326d3f583064fd6df9e71c8859e63523c0",
+      "pyproject.toml": "a7562713a0afd4e2fef26a137f7790b171f9b30f6cdcbd784a306e65b21517f0",
+      "uv.lock": "6ae96bf9c5f00a00bff624b644c044a93af40f91579e8f1047215ff62ebbd052"
+    },
+    "notes": [
+      "工作区未提交：仅 HEAD 不足以复现，source_files 与 uv.lock 的 SHA-256 是本次实际使用的代码与依赖记录。",
+      "generated_at 只说明记录生成时间，不能作为排名或分数是否可重复的比较字段。"
+    ]
+  }
+}

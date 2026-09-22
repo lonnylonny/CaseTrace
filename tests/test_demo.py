@@ -32,10 +32,13 @@ def test_real_demo_cli_returns_stable_traceable_results(query_index, monkeypatch
     assert len({hit["case_id"] for hit in result["results"]}) == len(result["results"])
 
     cases = {case["case_id"]: case for case in payload["cases"]}
+    reference = load_reference(project_root / "data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx")
     for hit in result["results"]:
         case = cases[hit["case_id"]]
         assert hit["abnormal_description"] == case["abnormal_description"]
         assert hit["root_cause"] == case["root_cause"]
+        assert hit["abnormal_processes"] == sorted(case["abnormal_processes"])
+        assert hit["abnormal_process_names"] == [reference.processes[key] for key in hit["abnormal_processes"]]
         assert hit["evidences"] == [
             {"checkpoint_id": item["checkpoint_id"], "result": item["result"]}
             for item in payload["evidences"] if item["case_id"] == hit["case_id"]
@@ -50,6 +53,49 @@ def test_demo_returns_traceable_sources_without_certifying_ground_truth(demo_pat
     hit = result["results"][0]
     assert hit["case_id"] == "C1"
     assert hit["evidences"][0]["checkpoint_id"] == "E1"
+
+
+def test_documents_include_only_selected_processes_in_stable_order(demo_path, reference_path):
+    records, _ = load_demo(demo_path)
+    reference = load_reference(reference_path)
+    records["cases"][0].abnormal_processes = ["P013", "P004"]
+    records["groups"] = [{"description": "GROUP_REASON_LEAK"}]
+    records["memberships"] = [{"association_reason": "MEMBERSHIP_LEAK"}]
+    records["qrels"] = [{"rationale": "QRELS_LEAK"}]
+    documents = build_documents(records, reference)
+    assert documents["C1"].count("P004") == 1
+    assert documents["C1"].count("Wire Bond") == 1
+    assert "P013" in documents["C1"] and "Storage & Transportation" in documents["C1"]
+    assert "P007" not in documents["C1"] and "Molding" not in documents["C1"]
+    assert all("LEAK" not in text for text in documents.values())
+    records["cases"][0].abnormal_processes.reverse()
+    assert build_documents(records, reference) == documents
+    assert records["cases"][0].abnormal_processes == ["P004", "P013"]
+
+
+def test_process_query_returns_selected_ids_and_names(demo_path, reference_path):
+    result = run_demo(demo_path, reference_path, query="P004", top_k=2)
+    assert len(result["results"]) == 2
+    for hit in result["results"]:
+        assert hit["abnormal_processes"] == ["P004"]
+        assert hit["abnormal_process_names"] == ["Wire Bond"]
+    assert run_demo(demo_path, reference_path, query="P007", top_k=2)["results"] == []
+
+
+def test_old_case_json_is_rejected_without_guessing_process(demo_path):
+    payload = json.loads(demo_path.read_text())
+    del payload["cases"][0]["abnormal_processes"]
+    demo_path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(ValueError, match="Case\\[C1\\].*abnormal_processes.*必填"):
+        load_demo(demo_path)
+
+
+def test_cli_displays_abnormal_process(demo_path, reference_path, monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", [
+        "casetrace", "demo", "--data", str(demo_path), "--reference", str(reference_path),
+    ])
+    main()
+    assert "异常站点：Wire Bond (P004)" in capsys.readouterr().out
 
 
 def test_query_and_annotation_metadata_never_enter_documents(demo_path, reference_path):

@@ -7,42 +7,60 @@
       "abnormal_description": "OQC 拉力检查发现焊线脱落，焊点从 die pad 界面剥离，表现为 wire bond lift。",
       "root_cause": "结案确认：die pad或lead/substrate bond finger污染/氧化。",
       "corrective_action": "加强wafer pad和载体bond finger来料/清洁管控。",
-      "investigation_others": null
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P004"
+      ]
     },
     {
       "case_id": "C002",
       "abnormal_description": "客户反馈引脚润湿不良，焊料未充分铺展；异常位置位于外部引脚表面。",
       "root_cause": "结案确认：引脚表面污染/氧化。",
       "corrective_action": "防止引脚污染氧化。",
-      "investigation_others": null
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P013"
+      ]
     },
     {
       "case_id": "C003",
       "abnormal_description": "在线拉力测试出现焊点剥离，焊线从 pad 脱落；异常位于第一焊点界面。",
       "root_cause": "结案确认：die pad或lead/substrate bond finger污染/氧化。",
       "corrective_action": "加强wafer pad和载体bond finger来料/清洁管控。",
-      "investigation_others": null
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P004"
+      ]
     },
     {
       "case_id": "C004",
       "abnormal_description": "OQC 拉力测试发现焊线断裂；断点集中在第二焊点颈部，pad 界面保持完整。",
       "root_cause": "结案确认：neck/stitch区域成形不良。",
       "corrective_action": "优化Wire Bond参数与loop。",
-      "investigation_others": null
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P004"
+      ]
     },
     {
       "case_id": "C005",
       "abnormal_description": "OQC 声学扫描发现塑封空洞 molding void，空洞集中在封装边缘区域。",
       "root_cause": "结案确认：mold vent/vacuum不足。",
       "corrective_action": "改善vent/vacuum。",
-      "investigation_others": null
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P007"
+      ]
     },
     {
       "case_id": "C006",
       "abnormal_description": "客户收货后发现 BGA 锡球缺失，缺球位置靠近托盘边缘，邻近锡球有机械碰伤。",
       "root_cause": "结案确认：运输/搬运机械碰伤或掉球。",
       "corrective_action": "改善搬运和运输防护。",
-      "investigation_others": null
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P013"
+      ]
     }
   ],
   "details": [
@@ -151,7 +169,7 @@
       "case_id": "C002",
       "checkpoint_type": "Other",
       "custom_name": "引脚表面与润湿检查",
-      "result": "外部引脚表面检查发现氧化和污染；去除污染后的对照样品润湿改善，内部焊线检查未发现剥离。",
+      "result": "入库前留样引脚表面检查正常；仓储记录显示防潮管控失效，出库留样及客退样品出现同类氧化和污染。去除污染后的对照样品润湿改善，内部焊线检查未发现剥离。调查确认异常涉及 Storage & Transportation 工序中的仓储阶段。",
       "relevance": "related"
     },
     {
@@ -187,8 +205,33 @@
       "relevance": "related"
     }
   ],
-  "groups": [],
-  "memberships": [],
+  "groups": [
+    {
+      "group_id": "G001",
+      "group_type": [
+        "same_abnormal_process"
+      ],
+      "description": "Wire Bond 异常站点关联：汇集焊点剥离与颈部断裂的历史调查记录。",
+      "other_type_description": null
+    }
+  ],
+  "memberships": [
+    {
+      "group_id": "G001",
+      "case_id": "C001",
+      "association_reason": "焊点界面剥离，已确认异常涉及 P004 / Wire Bond。"
+    },
+    {
+      "group_id": "G001",
+      "case_id": "C003",
+      "association_reason": "第一焊点界面剥离，已确认异常涉及 P004 / Wire Bond。"
+    },
+    {
+      "group_id": "G001",
+      "case_id": "C004",
+      "association_reason": "第二焊点颈部成形不良及断裂，已确认异常涉及 P004 / Wire Bond。"
+    }
+  ],
   "sources": {
     "C001": {
       "sheet": "failure_modes",
@@ -204,7 +247,14 @@
       "root_cause": "引脚表面污染/氧化",
       "corrective_action": "防止引脚污染氧化",
       "closure_status": "confirmed",
-      "review_status": "draft_pending_human_review"
+      "review_status": "draft_pending_human_review",
+      "simulation_revision": {
+        "date": "2026-09-19",
+        "description": "为补齐异常站点新增模拟事实：入库前留样正常、仓储防潮失控、出库留样同类氧化；这些事实不属于旧版 E002。",
+        "evidence_ids": [
+          "E002"
+        ]
+      }
     },
     "C003": {
       "sheet": "failure_modes",
