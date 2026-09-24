@@ -1,6 +1,6 @@
 # 评估结果记录（M2 · dev-v2 · BM25）
 
-本目录保存 M2 第一轮 BM25 自动评估的正式产物与运行记录。这里的内容是**当前语料与参数下的观测读数**，不是已确认的检索质量结论，也不是对真实生产泛化能力的声明。系统提供历史调查参考，不判断当前异常的最终 Root Cause。
+本目录保存 M2 第一轮 BM25 自动评估的正式产物与运行记录、M3-01 SD4 的 BM25 独立回归结果（见第 8 节），以及 M3-02 首次 Embedding 接入与 BM25 同版本对照（见第 9 节）。这里的内容是**当前语料与参数下的观测读数**，不是已确认的检索质量结论，也不是对真实生产泛化能力的声明。系统提供历史调查参考，不判断当前异常的最终 Root Cause。
 
 ## 1. 本次运行
 
@@ -88,6 +88,7 @@ uv run casetrace evaluate --output results/dev-v2-bm25.json
 - 先比较第 4 节的源码与依赖哈希、以及第 1 节的 HEAD。源码哈希识别运行版本，不是源码备份；复现还需保留对应源码。哈希有变化时先查明原因，不能仅凭 HEAD 判断代码一致。
 - 报告写入采用「同目录临时文件 + 原子替换」，失败不会留下半份结果；因此**不要**用 `generated_at` 或运行耗时判断排名是否可重复——它们只说明记录生成时间。
 - 只要输入哈希、源码哈希与参数一致，重复运行的排名、分数与指标必须一致（本次已实测，见第 6 节）。
+- **注意（M3-01 SD4 追加）：** 本节的命令对应 M2 的 `evaluation-result-v1` 产物。当前源码已升级为 v2（顶层多出 `timing`，见第 8 节），按本节命令重跑会改变该文件的格式与自身 `source_files` 哈希；日常回归请使用第 8 节的产物路径，按字节复现 M2 文件须使用第 4 节记录的源码版本。
 
 ## 6. 已跑检查与未跑项
 
@@ -110,3 +111,105 @@ uv run casetrace evaluate --output results/dev-v2-bm25.json
 - **M2 已验收**：两处分析文字已纠正，源码清单缺口已修复；最终 Spec / Standards 结论见 [M2 完成包](../docs/project/tasks/m2-completion.md#2026-09-22-最终验收与交接)。旧归档哈希失败按用户决定作为非阻塞历史限制保留，后续沿用当前 dev-v2；未改旧哈希或失败测试。
 - 观察（不影响本次读数）：`dev-v2-bm25.json` 由 `tempfile.NamedTemporaryFile` 创建，权限为 `-rw-------`（600），与目录内其它文件（664）不同。是否调整属于后续可选项，本轮未改动代码。
 - 数据校验通过不代表检索标签或检索质量正确；字段展示也不代表已经实现 Grounded Answer。
+
+## 8. M3-01 SD4 独立回归结果（`evaluation-result-v2`，2026-09-23）
+
+M3-01（多方法评估入口）接入 CLI `--method` 后，用当前源码重跑一次 BM25 回归并独立保存，**不覆写 M2 的 `dev-v2-bm25.json`**（该文件仍对应 `evaluation-result-v1`）。本节的读数与第 1～3 节的 M2 读数完全一致，变化只在结果格式（新增耗时记录）。
+
+| 项目 | 值 |
+|---|---|
+| 运行日期 | 2026-09-23（本地，UTC+8）；报告内 `generated_at` = `2026-09-23T02:19:58+00:00` |
+| 命令 | `uv run casetrace evaluate --method bm25 --output results/dev-v2-bm25-m3-01.json` |
+| 产物 | `dev-v2-bm25-m3-01.json`，14,741 B，SHA-256 `013738a2d238ecdb01aa0e57295799009ef1160af4f9b3f8236cd6b495f10108` |
+| 结果 schema | `evaluation-result-v2`（= v1 + 顶层 `timing`） |
+| 输入与口径 | 与 M2 相同：同一 `data/evaluation/dev-v2/qrels.json`（`dev-qrels-v2` / `development`）、同一 BM25 参数（`k1=1.5` / `b=0.75` / `epsilon=0.25`）与分词、同一 K=1/3/4 与 `rr@4` / `mrr@4` 口径 |
+| 排名与读数 | 与第 3 节逐项相同：Q001 `C001 > C003 > C004 > C002 > C005 > C006`、Q002 `C005 > C002 > C006 > C001 > C004`、Q003 `C006 > C005 > C002 > C001 > C004`；`recall@1 0.7500`、`recall@4 1.0000`、`mrr@4 1.0000`（其余同第 3 节） |
+
+### 8.1 格式变动（v1 → v2）与对照结论
+
+- **唯一新增顶层 `timing`**；其余顶层键的名称、数量与内容口径不变。
+- 只读脚本逐字段对照 M2 正式结果：`benchmark`、`retrieval`、`metrics`、`queries`、`summary` 五个面板**全部一致**（含逐 Query 完整排名、BM25 分数、命中词项与全部指标与汇总）。因此格式升级没有改变任何事实字段。
+- `reproducibility.source_files` 如实变化：新增 `src/casetrace/retrieval/base.py`；`src/casetrace/__init__.py`、`src/casetrace/evaluation/runner.py`、`src/casetrace/retrieval/bm25.py` 的哈希随 M3-01 实现更新。这不属于读数差异。
+
+### 8.2 `timing` 的内容与测量边界
+
+| 字段 | 本次读数 | 覆盖范围 |
+|---|---|---|
+| `index_build_seconds` | 0.00195 s | 历史检索文本构建 + 检索器构造（建索引）；不含输入校验、逐 Query 计分与报告组装 |
+| `per_query[].seconds` | Q001 0.00037 / Q002 0.00026 / Q003 0.00022 s | 该 Query 的检索、返回 ID 守卫与指标计算（qrels 只在此步进场）；按 Query 顺序逐条计分，不并发 |
+| `queries_total_seconds` | 0.00085 s | 上面三条之和 |
+| `total_seconds` | 0.02311 s | 进入 `run_evaluation` 到跨 Query 汇总完成；不含复现字段的 git 查询与文件哈希、写文件与终端输出 |
+
+- 时钟为 `time.perf_counter`（单调，不受系统时间调整影响），单位为秒；报告内同时写明 `boundaries` 与 `comparison_note`，读者不必猜每个数字包住了哪一步。
+- **耗时与 `generated_at` 不参与确定性比较**：比较排名、分数与指标时必须忽略这两个字段。单次读数不足以评价方法效率；同版本方法比较耗时需固定硬件、冷启动与缓存条件并重复测量。
+
+### 8.3 已跑检查与未跑项
+
+- 全套测试：`uv run pytest -q` → **289 passed、169 subtests passed、1 failed**；唯一失败仍是 `tests/test_benchmark_migration.py:19` 的旧 dev-v1 归档哈希断言（既有历史限制，与本次无关）。
+- 定向测试：`uv run pytest -q tests/evaluation/test_runner.py tests/test_cli_evaluate.py tests/retrieval/test_bm25.py tests/test_demo.py` → **60 passed**；其中确定性比较已按 v2 改为剔除 `generated_at` 与 `timing`，并新增 `timing` 形状与"耗时不得进入 metrics / queries / summary"的回归。
+- `uv run casetrace demo` → exit 0；`uv run casetrace evaluate --method bm25 --output results/dev-v2-bm25-m3-01.json` → exit 0（终端首行含 `检索方法：bm25_okapi`）。
+- 重复运行实测：同一输入连续两次运行，`benchmark` / `retrieval` / `metrics` / `queries` / `summary` 完全一致；仅 `generated_at`、`timing.*` 变化，另有 `reproducibility.git_status_paths` 多出一项 `results/dev-v2-bm25-m3-01.json` —— 第 1 次运行发生在该产物文件存在之前，第 2 次运行时它已在工作区，属如实记录执行时点的工作区状态，不是排名或分数差异。
+- 本产物自身的 `reproducibility.git_status_paths` **不含** `results/dev-v2-bm25-m3-01.json`（生成时该文件尚未写入），与 `write_report`「先写临时文件再原子替换」的顺序一致。
+- 未跑：Embedding / Hybrid / Rerank 实验（M3-02 起）、Locked Test 对比（M6）。
+- 权限观察（沿用第 7 节记录）：本文件由 `write_report` 的临时文件创建，权限为 `-rw-------`（600），与目录内其它文件（664）不同；是否调整仍属后续可选项，本轮未改代码。
+
+## 9. M3-02 首次 Embedding 结果与 BM25 同版本对照（`evaluation-result-v2`，2026-09-24）
+
+M3-02 在 M3-01 的入口上首次接入语义检索，并在同一 dev-v2 上重跑 BM25 作为对照。**不覆写** M2 的 `dev-v2-bm25.json` 与 M3-01 的 `dev-v2-bm25-m3-01.json`。
+2026-09-25（本地）按 Codex findings 修正后重新生成过这两份产物（缓存键补入依赖版本与 dtype、报告文案更正），排名、分数与指标逐位未变，哈希以下表为准；改了什么见 [9.3](#93-codex-findings-修正轮2026-09-25本地)。
+
+| 项目 | BM25（对照） | Embedding（首次接入） |
+|---|---|---|
+| 命令 | `uv run casetrace evaluate --method bm25 --output results/dev-v2-bm25-m3-02.json` | `uv run casetrace evaluate --method embedding --output results/dev-v2-embedding-m3-02.json` |
+| 产物 | `dev-v2-bm25-m3-02.json`，15,520 B，SHA-256 `df2c2f5d218bc55328483116fec06f11799176b20dfd0eb32cbc8883dd9c0e06` | `dev-v2-embedding-m3-02.json`，15,773 B，SHA-256 `98aaf6e95971a28f81c8a3fc12f08acf3bfce15d4c63e7a66af70a4e5b054ab0` |
+| `generated_at` | `2026-09-24T16:05:02+00:00` | `2026-09-24T16:04:55+00:00` |
+| 检索实现 | `rank_bm25.BM25Okapi`（`k1=1.5` / `b=0.75` / `epsilon=0.25`；分词未变） | `BAAI/bge-small-zh-v1.5` @ revision `7999e1d3…`；CPU / float32；Query 加 instruction、文档不加；逐行 L2 归一化后点积；`max_seq_length=512`（未触发截断）；`retrieval.libraries` 记录 numpy 2.5.3 / sentence-transformers 6.1.0 / transformers 5.17.0 / torch 2.14.0+cpu |
+| 缓存条件 | 无 | **hit**：`.cache/embeddings/d2374a3b295754f151002b8e3d5b38613c169700f6c3bed1e2e7727ab0464497.json`，68,640 B，SHA-256 `388ef8d1f6519cdb5fd99617a5bf15c0c247a60cc24ee9f4f3a34a5373e3d4a0`（该目录已被 `.gitignore` 忽略；同目录仍留有 SD4 时点的旧键 `0fcdd55f….json`，键已不匹配、不再被使用） |
+| 结果 schema | `evaluation-result-v2` | `evaluation-result-v2`（额外含 `timing.method_details` 与 `retrieval.cache`） |
+| HEAD / 工作区 | `b8aaea4151b74d4b2bf80255a5cc22b5105a7205` / 脏（未提交） | 同左 |
+
+读数（观测值，非质量结论；正例来自已确认 qrels，未作修改）：
+
+| Query | BM25 | Embedding |
+|---|---|---|
+| Q001（4 正例） | C001 > C003 > C004 > C002 > C005 > C006 | C001 > C003 > C004 > C006 > C005 > C002 |
+| Q002（1 正例） | C005 > C002 > C006 > C001 > C004 | C005 > C004 > C001 > C003 > C006 > C002 |
+| Q003（1 正例） | C006 > C005 > C002 > C001 > C004 | C006 > C004 > C002 > C001 > C003 > C005 |
+
+汇总对照：`recall@1` 0.7500、`recall@3` 0.9167、`precision@1` 1.0000、`precision@3` 0.5556、`ndcg@1` / `ndcg@3` 1.0000、`mrr@4` 1.0000 **两者相同**；差异只在 K=4：`recall@4` 1.0000 → 0.9167、`precision@4` 0.5000 → 0.4167、`ndcg@4` 1.0000 → 0.9440，全部来自 Q001 的同产品正例 C002 由第 4 名降到第 6 名。
+
+耗时（修正轮重生成时的观测值，不可作效率结论）：BM25 `index_build 0.0017 s` / `total 0.0210 s`（逐 Query 0.0003 / 0.0002 / 0.0002 s）；Embedding `hit` 时 `index_build 4.6685 s`（模型加载 4.6644 s + 文档编码 0 s + 缓存读取 0.0012 s）/ `total 4.7198 s`（逐 Query 0.0128 / 0.0095 / 0.0089 s）；同一环境改用独立缓存目录做 `miss` 对照：模型加载 4.7662 s + 文档编码 0.2052 s，`index_build 4.9823 s` / `total 5.0320 s`（逐 Query 0.0106 / 0.0092 / 0.0099 s）。硬件为 i7-8550U / 31 GB，全程 CPU 与离线（`local_files_only=True`）。
+
+完整对照、机制观察与「问题 → 下一步实验」见 [dev-v2-bm25-vs-embedding-m3-02.md](dev-v2-bm25-vs-embedding-m3-02.md)。
+
+### 9.1 数值复现条件（实测）
+
+- 重复运行（BM25 两次、Embedding 两次）：`benchmark` / `retrieval` / `metrics` / `queries` / `summary` 五个事实面板**完全一致**；只有 `generated_at`、`timing.*` 与 `reproducibility.git_status_paths` 变化。后运行的那次会多出**先写出的结果文件本身**（本对照 27 → 28 条），属如实记录执行时点的工作区状态。2026-09-25 修正轮重生成时复测仍然成立（正式产物与 `/tmp` 重复运行五面板逐项相等，见 9.3）。
+- **缓存 `hit` 与 `miss` 不是逐位相同**：排名顺序与全部汇总指标一致，分数的末位浮点差逐 Query ≤ 3.331e-16。成因是缓存行范数不是精确 `1.0`（实测 `0.9999999999999999` 与 `1.0000000000000002`），读取时会再归一化一次。因此「缓存只影响耗时不影响结果」**仅在排名与指标层面成立**，这一点已写进对照分析。
+- Embedding 的模型权重位于 HuggingFace 缓存（`~/.cache/huggingface/…`），与本项目的向量缓存是两套东西；约 4.8 s 的模型加载无法由本项目缓存省掉。
+
+### 9.2 已跑检查与未跑项
+
+- 全套测试：`uv run pytest -q` → **320 passed、169 subtests passed、1 failed**；唯一失败仍是 `tests/test_benchmark_migration.py:19` 的旧 dev-v1 归档哈希断言（既有历史限制，不归因于 M3-02）。比首轮验收时的 315 passed 多 5 例，即修正轮新增的缓存键与损坏缓存的回归用例。
+- 定向测试：`uv run pytest -q tests/retrieval/test_embedding.py tests/evaluation tests/test_cli_evaluate.py tests/test_demo.py` → **164 passed**。
+- `uv run casetrace demo` → exit 0（demo 仍只跑 BM25）；两条 `evaluate` 命令 → exit 0；`uv run casetrace evaluate --method hybrid --output /tmp/…` → **exit 2 且不留文件**（未知方法不落盘）。
+- 未跑：Hybrid（M3-04）、Rerank（M3-05）、针对性参数实验（M3-06）、Locked Test 对比（M6）。
+- 权限观察：两个新产物权限同为 `-rw-------`（600），与既有产物一致，本轮未改代码。
+
+### 9.3 Codex findings 修正轮（2026-09-25 本地）
+
+首轮 Codex 验收为 **needs changes**（Spec 2 项 + Standards 3 项）。修正轮只动缓存键、缓存读取的容错与自描述文案，**没有改检索算法、参数、标签与指标口径**：
+
+| finding | 修正 | 证据 |
+|---|---|---|
+| Spec ① 缓存键未绑定依赖版本与 dtype | `EmbeddingRetriever._encoding_config()` 增加 `libraries`（numpy / sentence-transformers / transformers / torch）、`model_output_dtype`、`working_dtype`；三者之外的既有字段不变 | 快照对照：旧 config 无这三项，新 config 含 `{'numpy': '2.5.3', 'sentence-transformers': '6.1.0', 'transformers': '5.17.0', 'torch': '2.14.0+cpu'}`；新增回归 `test_cache_config_records_dependency_versions_and_dtypes`、`test_dependency_version_change_invalidates_cache` |
+| Spec ② 合法 JSON 但 `vectors` 类型非法时抛未捕获 `TypeError` | `_read_cache()` 的向量转换改为捕获 `(TypeError, ValueError, OverflowError)`，一律判 `corrupt` 并重新编码 | 快照对照：旧实现抛 `TypeError: float() argument must be a string or a real number, not 'dict'`；新实现 `status=corrupt`、写明原因并重新编码（`test_valid_json_with_invalid_vector_payload_is_corrupt`，3 组非法内容） |
+| Standards ① 缓存 note 与实测不符 | `describe().cache.note` 改为「不改变排名与指标；命中缓存的向量经 JSON 往返与再次归一化，可能有末位浮点差（M3-02 实测 ≤3.331e-16）」 | 新产物 `retrieval.cache.note` 即该文案 |
+| Standards ② 耗时细分字段路径写错 | `TIMING_BOUNDARIES` 改为「细分见顶层 `timing.method_details`」 | 新产物 `timing.boundaries[0]` 已更正 |
+| Standards ③ 包头与 SD2 状态文字过期 | 任务包头、SD2 表格与状态行统一为「已完成 / 待复验」 | [M3-02 包](../docs/project/tasks/m3-02-embedding.md) |
+
+修正后重生成（命令见上表；Embedding 先跑一次 `miss` 写入新键，再跑一次 `hit` 作为正式产物）：
+
+- 旧产物（SD4 时点）→ 新产物：BM25 `e953e772…5910`（15,373 B）→ `df2c2f5d…0e06`（15,520 B）；Embedding `8450bb5b…6856`（15,482 B）→ `98aaf6e9…4ab0`（15,773 B）。M2 `bc457e95…f26d` 与 M3-01 `013738a2…0108` 仍未覆写。
+- 与 SD4 时点产物逐面板比较：`benchmark` / `metrics` / `summary` **完全相等**；`queries` 排名顺序一致、分数最大 `|Δ| = 0.000e+00`；差异只在 `retrieval`（新缓存键、`libraries` 四项、note 文案）与 `timing`（新耗时、boundaries 文案）。
+- 新缓存文件 `d2374a3b….json`（68,640 B，SHA-256 `388ef8d1…e4a0`）由本次 `miss` 运行写出，正式产物为同键 `hit`；SD4 时点的 `0fcdd55f….json`（68,463 B）保留为派生数据，键已不匹配、不再被使用。

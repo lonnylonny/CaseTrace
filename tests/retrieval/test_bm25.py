@@ -1,6 +1,7 @@
 import pytest
 
-from casetrace.retrieval.bm25 import BM25Retriever, tokenize
+from casetrace.retrieval.base import SearchHit
+from casetrace.retrieval.bm25 import BM25Retriever, SearchHit as Bm25SearchHit, tokenize
 
 
 def test_tokenize_mixed_text_preserves_ids_and_normalizes_case():
@@ -47,3 +48,25 @@ def test_empty_documents_and_invalid_top_k_are_rejected():
     for top_k in [0, -1, True, 1.5]:
         with pytest.raises(ValueError):
             retriever.search("wire", top_k=top_k)
+
+
+def test_search_hit_is_the_shared_contract_type():
+    # 原有导入路径仍然可用，但类型只有一处定义；词项信息允许缺失。
+    assert Bm25SearchHit is SearchHit
+    assert SearchHit("C1", 0.5).matched_terms is None
+
+
+def test_describe_reports_parameters_from_the_actual_index():
+    retriever = BM25Retriever({"C1": "wire lift", "C2": "molding void"})
+
+    described = retriever.describe()
+
+    assert described["method"] == "bm25_okapi"
+    assert described["implementation"] == "rank_bm25.BM25Okapi"
+    assert described["tokenizer"] == "casetrace.retrieval.bm25.tokenize"
+    assert described["parameters"] == {
+        "k1": float(retriever.index.k1),
+        "b": float(retriever.index.b),
+        "epsilon": float(retriever.index.epsilon),
+    }
+    assert described["note"]

@@ -1,0 +1,471 @@
+{
+  "schema_version": "evaluation-result-v2",
+  "generated_at": "2026-09-24T16:04:55+00:00",
+  "benchmark": {
+    "qrels_path": "data/evaluation/dev-v2/qrels.json",
+    "qrels_version": "dev-qrels-v2",
+    "qrels_sha256": "9112d64cac25e8af0b7b183ca0d083de2c460dc6427cf1c57785f4e0fdfc38b7",
+    "confirmed_on": "2026-09-19",
+    "split": "development",
+    "dataset": {
+      "path": "data/dev/demo.json",
+      "sha256": "6923d382ba082f72beb922737e9b169313c1a236662f6a57a8a322e0879689f7"
+    },
+    "reference": {
+      "path": "data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx",
+      "sha256": "f5001bddd3dff43342a2569ceda836ddb4f5c0caca942c1c4d043d99a9131c85"
+    },
+    "dataset_review_status": "draft_pending_human_review",
+    "latest_detection": "2026-06-15",
+    "history_snapshot": "本版沿用已确认的历史快照约定：全部历史 Case 在每条 Query 的 known_at 之前已结案并完整可用；未实现通用时间过滤，时点检查只用模型中存在的日期字段。"
+  },
+  "retrieval": {
+    "method": "embedding",
+    "implementation": "casetrace.retrieval.embedding.SentenceTransformerEncoder",
+    "model": "BAAI/bge-small-zh-v1.5",
+    "model_revision": "7999e1d3359715c523056ef9478215996d62a620",
+    "device": "cpu",
+    "dimension": 512,
+    "max_seq_length": 512,
+    "local_files_only": true,
+    "vector_dtype": {
+      "model_output": "float32",
+      "working": "float64",
+      "note": "归一化、点积与缓存都使用工作矩阵的精度；模型输出精度单独记录。"
+    },
+    "normalization": "逐行 L2 归一化后点积，等价余弦相似度（由本模块强制，不依赖编码器）",
+    "query_instruction": "为这个句子生成表示以用于检索相关文章：",
+    "document_instruction": null,
+    "truncation": "超过模型 max_seq_length 的文本由 sentence-transformers 截断；dev-v2 是否触发截断的实测记录见 M3-02 SD1 证据与结果说明",
+    "libraries": {
+      "numpy": "2.5.3",
+      "sentence-transformers": "6.1.0",
+      "transformers": "5.17.0",
+      "torch": "2.14.0+cpu"
+    },
+    "cache": {
+      "enabled": true,
+      "directory": "/home/lonny/Projects/casetrace/.cache/embeddings",
+      "file": "d2374a3b295754f151002b8e3d5b38613c169700f6c3bed1e2e7727ab0464497.json",
+      "key": "d2374a3b295754f151002b8e3d5b38613c169700f6c3bed1e2e7727ab0464497",
+      "note": "缓存只跳过文档编码，不改变排名与指标；命中缓存的向量经 JSON 往返与再次归一化，可能与本次实时编码有末位浮点差（M3-02 实测 ≤3.331e-16，排名与指标一致）；失效由缓存键（配置 + 文本哈希 + Case ID）保证。"
+    },
+    "note": "相似度不是相关概率；语义方法不提供命中词项，matched_terms 为 None。",
+    "document_builder": "casetrace.demo.build_documents",
+    "corpus_size": 6,
+    "requested_top_k": 6
+  },
+  "timing": {
+    "unit": "seconds",
+    "clock": "time.perf_counter",
+    "index_build_seconds": 4.668549206107855,
+    "per_query": [
+      {
+        "query_id": "Q001",
+        "seconds": 0.012988039059564471
+      },
+      {
+        "query_id": "Q002",
+        "seconds": 0.009590264176949859
+      },
+      {
+        "query_id": "Q003",
+        "seconds": 0.008935736957937479
+      }
+    ],
+    "queries_total_seconds": 0.03151404019445181,
+    "total_seconds": 4.71979994722642,
+    "boundaries": [
+      "index_build：覆盖历史检索文本构建与检索器构造（建索引）；不含输入校验、逐 Query 计分与报告组装。需要编码的方法（embedding）还包含模型加载与文档编码，命中缓存时只包含缓存读取；细分见顶层 timing.method_details。",
+      "per_query：每条 Query 一次，覆盖该 Query 的检索、返回 ID 守卫与指标计算（qrels 只在此步进场）；按 Query 顺序逐条计分，不并发。",
+      "total：从本次 run_evaluation 进入计到跨 Query 汇总完成；覆盖输入校验、建索引、逐 Query 计分与汇总，不含复现字段的 git 查询与文件哈希、写文件与终端输出。"
+    ],
+    "comparison_note": "耗时与 generated_at 只描述本次运行，不参与确定性比较：比较排名、分数与指标时必须忽略这两个字段。单次读数不足以评价方法效率；同版本方法比较耗时需固定硬件、冷启动与缓存条件并重复测量。",
+    "method_details": {
+      "cache": {
+        "status": "hit",
+        "reason": null
+      },
+      "timing": {
+        "model_load_seconds": 4.6643859061878175,
+        "document_encode_seconds": 0.0,
+        "cache_read_seconds": 0.0012165820226073265,
+        "per_query_encode_seconds": [
+          0.012843300122767687,
+          0.009473060024902225,
+          0.008850990794599056
+        ],
+        "note": "随机器、冷启动与缓存状态变化；比较方法时必须忽略。"
+      }
+    }
+  },
+  "metrics": {
+    "ks": [
+      1,
+      3,
+      4
+    ],
+    "reciprocal_rank_k": 4,
+    "summary_metric_keys": [
+      "recall@1",
+      "recall@3",
+      "recall@4",
+      "precision@1",
+      "precision@3",
+      "precision@4",
+      "ndcg@1",
+      "ndcg@3",
+      "ndcg@4",
+      "mrr@4"
+    ],
+    "definitions": {
+      "recall@k": "前 k 条中的相关 Case 数 / 该 Query 的全部正例数；返回不足 k 条用实际条目；无正例为 None。",
+      "precision@k": "前 k 条中的相关 Case 数 / k；返回不足 k 条时分母仍为 k；无正例为 0.0。",
+      "ndcg@k": "二值 gain，按原排名累加 1/log2(rank+1)；IDCG 用第 1 至 min(k, 正例数) 名；无正例为 None。",
+      "rr@4": "前 4 条中首个相关结果的 1/rank；前 4 条无命中为 0.0；无正例为 None。",
+      "mrr@4": "逐 Query rr@4 对参与 Query 的等权平均；没有参与 Query 时为 None。"
+    },
+    "no_relevant_policy": "无正例 Query 单列：Recall / nDCG / RR@4 为 None 并从各自均值中排除，Precision 的 0.0 按函数口径纳入其均值；每个指标分别记录参与的 Query 与排除原因，没有可参与 Query 时汇总为 None。",
+    "comparison_note": "各方法必须在同一 Corpus、Query、已确认 qrels 与指标口径下比较；数据或标注变化后整体重跑。"
+  },
+  "queries": [
+    {
+      "query_id": "Q001",
+      "query_text": "PROD_001 在 OQC 发现焊线脱落，拉力检查显示焊点剥离，原因尚未确认。",
+      "known_at": "2026-09-15",
+      "relevant_case_ids": [
+        "C001",
+        "C002",
+        "C003",
+        "C004"
+      ],
+      "ranked": [
+        {
+          "rank": 1,
+          "case_id": "C001",
+          "score": 0.7942803650477452,
+          "matched_terms": null
+        },
+        {
+          "rank": 2,
+          "case_id": "C003",
+          "score": 0.781883686399942,
+          "matched_terms": null
+        },
+        {
+          "rank": 3,
+          "case_id": "C004",
+          "score": 0.7090408188300037,
+          "matched_terms": null
+        },
+        {
+          "rank": 4,
+          "case_id": "C006",
+          "score": 0.5525047210876274,
+          "matched_terms": null
+        },
+        {
+          "rank": 5,
+          "case_id": "C005",
+          "score": 0.5321038478305836,
+          "matched_terms": null
+        },
+        {
+          "rank": 6,
+          "case_id": "C002",
+          "score": 0.5112177245106828,
+          "matched_terms": null
+        }
+      ],
+      "scores": {
+        "recall@1": 0.25,
+        "precision@1": 1.0,
+        "ndcg@1": 1.0,
+        "recall@3": 0.75,
+        "precision@3": 1.0,
+        "ndcg@3": 1.0,
+        "recall@4": 0.75,
+        "precision@4": 0.75,
+        "ndcg@4": 0.8318724637288826,
+        "rr@4": 1.0
+      }
+    },
+    {
+      "query_id": "Q002",
+      "query_text": "声学扫描发现塑封空洞 molding void，需要查找历史调查记录。",
+      "known_at": "2026-09-15",
+      "relevant_case_ids": [
+        "C005"
+      ],
+      "ranked": [
+        {
+          "rank": 1,
+          "case_id": "C005",
+          "score": 0.7341576431614308,
+          "matched_terms": null
+        },
+        {
+          "rank": 2,
+          "case_id": "C004",
+          "score": 0.426181055545481,
+          "matched_terms": null
+        },
+        {
+          "rank": 3,
+          "case_id": "C001",
+          "score": 0.4214014310824136,
+          "matched_terms": null
+        },
+        {
+          "rank": 4,
+          "case_id": "C003",
+          "score": 0.39390648102084497,
+          "matched_terms": null
+        },
+        {
+          "rank": 5,
+          "case_id": "C006",
+          "score": 0.3554483644557834,
+          "matched_terms": null
+        },
+        {
+          "rank": 6,
+          "case_id": "C002",
+          "score": 0.33789231217092236,
+          "matched_terms": null
+        }
+      ],
+      "scores": {
+        "recall@1": 1.0,
+        "precision@1": 1.0,
+        "ndcg@1": 1.0,
+        "recall@3": 1.0,
+        "precision@3": 0.3333333333333333,
+        "ndcg@3": 1.0,
+        "recall@4": 1.0,
+        "precision@4": 0.25,
+        "ndcg@4": 1.0,
+        "rr@4": 1.0
+      }
+    },
+    {
+      "query_id": "Q003",
+      "query_text": "客户收货后发现 BGA 锡球缺失，托盘边缘有碰伤痕迹。",
+      "known_at": "2026-09-15",
+      "relevant_case_ids": [
+        "C006"
+      ],
+      "ranked": [
+        {
+          "rank": 1,
+          "case_id": "C006",
+          "score": 0.8454592176824075,
+          "matched_terms": null
+        },
+        {
+          "rank": 2,
+          "case_id": "C004",
+          "score": 0.545104672098377,
+          "matched_terms": null
+        },
+        {
+          "rank": 3,
+          "case_id": "C002",
+          "score": 0.5378352543042559,
+          "matched_terms": null
+        },
+        {
+          "rank": 4,
+          "case_id": "C001",
+          "score": 0.5335143038835477,
+          "matched_terms": null
+        },
+        {
+          "rank": 5,
+          "case_id": "C003",
+          "score": 0.5312140897378871,
+          "matched_terms": null
+        },
+        {
+          "rank": 6,
+          "case_id": "C005",
+          "score": 0.47219735561714715,
+          "matched_terms": null
+        }
+      ],
+      "scores": {
+        "recall@1": 1.0,
+        "precision@1": 1.0,
+        "ndcg@1": 1.0,
+        "recall@3": 1.0,
+        "precision@3": 0.3333333333333333,
+        "ndcg@3": 1.0,
+        "recall@4": 1.0,
+        "precision@4": 0.25,
+        "ndcg@4": 1.0,
+        "rr@4": 1.0
+      }
+    }
+  ],
+  "summary": {
+    "query_count": 3,
+    "no_relevant_query_ids": [],
+    "metrics": {
+      "recall@1": {
+        "value": 0.75,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "recall@3": {
+        "value": 0.9166666666666666,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "recall@4": {
+        "value": 0.9166666666666666,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "precision@1": {
+        "value": 1.0,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "precision@3": {
+        "value": 0.5555555555555555,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "precision@4": {
+        "value": 0.4166666666666667,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "ndcg@1": {
+        "value": 1.0,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "ndcg@3": {
+        "value": 1.0,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "ndcg@4": {
+        "value": 0.9439574879096275,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      },
+      "mrr@4": {
+        "value": 1.0,
+        "included_query_ids": [
+          "Q001",
+          "Q002",
+          "Q003"
+        ],
+        "excluded": []
+      }
+    }
+  },
+  "reproducibility": {
+    "python": "3.12.3",
+    "packages": {
+      "casetrace": "0.1.0",
+      "rank-bm25": "0.2.2",
+      "openpyxl": "3.1.5",
+      "numpy": "2.5.3",
+      "sentence-transformers": "6.1.0",
+      "transformers": "5.17.0",
+      "torch": "2.14.0+cpu"
+    },
+    "git_head": "b8aaea4151b74d4b2bf80255a5cc22b5105a7205",
+    "git_dirty": true,
+    "git_status_paths": [
+      ".clinerules/rules.md",
+      ".gitignore",
+      "AGENTS.md",
+      "docs/project/current-plan.md",
+      "docs/project/practical-todo.md",
+      "docs/project/research/",
+      "docs/project/tasks/m3-01-evaluation-entry.md",
+      "docs/project/tasks/m3-02-embedding.md",
+      "docs/project/tasks/m3-03-expand-mock-datasets.md",
+      "docs/project/tasks/m3-04-hybrid.md",
+      "docs/project/tasks/m3-05-rerank.md",
+      "docs/project/tasks/m3-06-targeted-experiments.md",
+      "docs/project/tasks/m3-07-selection.md",
+      "pyproject.toml",
+      "results/README.md",
+      "results/dev-v2-bm25-m3-01.json",
+      "results/dev-v2-bm25-m3-02.json",
+      "results/dev-v2-bm25-vs-embedding-m3-02.md",
+      "results/dev-v2-embedding-m3-02.json",
+      "src/casetrace/__init__.py",
+      "src/casetrace/evaluation/runner.py",
+      "src/casetrace/retrieval/base.py",
+      "src/casetrace/retrieval/bm25.py",
+      "src/casetrace/retrieval/embedding.py",
+      "tests/evaluation/test_runner.py",
+      "tests/retrieval/test_bm25.py",
+      "tests/retrieval/test_embedding.py",
+      "tests/test_cli_evaluate.py",
+      "uv.lock"
+    ],
+    "source_files": {
+      "src/casetrace/__init__.py": "0abe53c105dbb593d6d1099625e3f8380fee723046e4d62ff45b68fe80a81992",
+      "src/casetrace/data/constants.py": "6ceca4b9cd2716b6f960a2022b4bb30de82a6ab9e1de45209d4e6010d1e358fd",
+      "src/casetrace/data/dataset_model.py": "bace7dba979338725d6bd9e1e58068e5bcc7d37eddc34e8b3fa77e80711f138e",
+      "src/casetrace/data/reference.py": "6d8e1a3861031698d79519f83f7ee07adcc78ea86883f94370ff71bf92235fa1",
+      "src/casetrace/data/validators.py": "073297b5957f87b50f490b1abad007bfdc5e6acd823b524980334d01150210cb",
+      "src/casetrace/evaluation/runner.py": "c230cdc59aa53802cde04ea9e8ebef9673563360950b89a10f8f2c65522daa26",
+      "src/casetrace/evaluation/benchmark.py": "b18f96ea1e105b52407dec190a7417a8dba7b3289bafe8aeefafd14a57926cb7",
+      "src/casetrace/evaluation/metrics.py": "47e55310fc9ebf9b4afd406295f6833b2c5cfe7db9ca3e5dbb414464e080d191",
+      "src/casetrace/demo.py": "27b92bc46db1522ba9e113861bcfb69fdae9fe6d52115e2c91842fe502fa2714",
+      "src/casetrace/retrieval/base.py": "b6947cc67c17b8ed2be0202b22f7725cc7b7b4db46475ce534130914d652c533",
+      "src/casetrace/retrieval/bm25.py": "a3b785968f66f7ec31438133e105c8d2da9948e91d4050161aa2d9eb4a6b8dc9",
+      "src/casetrace/retrieval/embedding.py": "18ff108f79bac07f52ead3870cb24bf3f17c1e4c3582d26e5292a86078057e48",
+      "pyproject.toml": "dd1ba241127611fce5e316c8552aa8e6ca8f05d79ba28001bdeb3ce91eada377",
+      "uv.lock": "02a7407aa8b7357df62564f9c859b3954fd8d6ded95ff66ebee97ec99f074b6a"
+    },
+    "notes": [
+      "工作区未提交：仅 HEAD 不足以复现，source_files 与 uv.lock 的 SHA-256 是本次实际使用的代码与依赖记录。",
+      "generated_at 只说明记录生成时间，不能作为排名或分数是否可重复的比较字段。"
+    ]
+  }
+}

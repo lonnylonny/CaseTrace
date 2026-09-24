@@ -1,4 +1,4 @@
-"""验证评估运行器的排名覆盖、防泄漏、逐 Query 指标口径与跨 Query 汇总；只读真实数据。"""
+"""验证评估运行器的排名覆盖、防泄漏、逐 Query 指标口径、跨 Query 汇总与耗时记录；只读真实数据。"""
 
 import dataclasses
 import hashlib
@@ -11,12 +11,14 @@ import pytest
 from casetrace.demo import build_documents
 from casetrace.evaluation.benchmark import PROJECT_ROOT, load_benchmark
 from casetrace.evaluation.runner import (
+    DEFAULT_METHOD,
     METRIC_KS,
     MRR_KEY,
     NO_RELEVANT_REASON,
     RECIPROCAL_RANK_K,
     REPRODUCIBILITY_SOURCE_FILES,
     RESULT_SCHEMA_VERSION,
+    RETRIEVER_FACTORIES,
     RR_KEY,
     SCORE_KEYS,
     SUMMARY_METRIC_KEYS,
@@ -28,7 +30,7 @@ from casetrace.evaluation.runner import (
     run_evaluation,
     write_report,
 )
-from casetrace.retrieval.bm25 import SearchHit
+from casetrace.retrieval.base import SearchHit
 
 QRELS_RELATIVE = "data/evaluation/dev-v2/qrels.json"
 
@@ -47,6 +49,13 @@ def _hits(*case_ids):
     return [SearchHit(case_id, 1.0, ["stub"]) for case_id in case_ids]
 
 
+def _without_run_metadata(report):
+    """剔除不参与确定性比较的运行元数据：记录生成时间与机器相关的耗时。"""
+    report.pop("generated_at")
+    report.pop("timing")
+    return report
+
+
 class StubRetriever:
     """按给定顺序返回固定排名，用于在不受 BM25 分数影响时验证运行器口径。"""
 
@@ -57,6 +66,10 @@ class StubRetriever:
     def search(self, query, *, top_k):
         self.requested_top_k = top_k
         return self._hits[:top_k]
+
+    def describe(self):
+        return {"method": "stub", "implementation": "tests.StubRetriever",
+                "note": "固定排名替身，不读任何文本"}
 
 
 def test_ranking_requests_the_whole_corpus(benchmark):
@@ -83,6 +96,26 @@ def test_retriever_corpus_must_match_validated_cases(benchmark, monkeypatch):
     )
     with pytest.raises(ValueError, match="不一致"):
         build_retriever(benchmark)
+
+
+def test_contract_retriever_needs_only_search_and_describe(benchmark):
+    # 评估器只依赖公共契约：能按 Query 返回 SearchHit 并声明自己的元数据。
+    retriever = StubRetriever(_hits("C001", "C005"))
+
+    evaluation = evaluate_query(benchmark, retriever, _query(benchmark, "Q001"))
+
+    assert retriever.describe()["method"] == "stub"
+    assert [item.case_id for item in evaluation.ranked] == ["C001", "C005"]
+    # Q001 有 4 个已确认正例，第 1 名命中其中的 C001；口径与 M2 相同，替身不改变计分。
+    assert evaluation.scores["recall@1"] == 0.25
+
+
+def test_ranked_case_keeps_missing_terms_as_none(benchmark):
+    retriever = StubRetriever([SearchHit("C001", 0.5)])
+
+    ranked = rank_query(benchmark, retriever, _query(benchmark, "Q001"))
+
+    assert ranked[0].matched_terms is None
 
 
 def test_single_query_scores_match_hand_calculation(benchmark):
@@ -418,13 +451,139 @@ def test_report_reproducibility_section_is_verifiable():
     assert any("generated_at" in note for note in reproducibility["notes"])
 
 
-def test_run_evaluation_is_deterministic_apart_from_timestamp():
+def test_run_evaluation_is_deterministic_apart_from_run_metadata():
     first = run_evaluation(PROJECT_ROOT / QRELS_RELATIVE)
     second = run_evaluation(PROJECT_ROOT / QRELS_RELATIVE)
 
-    assert first.pop("generated_at")
-    assert second.pop("generated_at")
-    assert first == second
+    assert first["generated_at"] and first["timing"]
+    assert _without_run_metadata(first) == _without_run_metadata(second)
+
+
+def test_explicit_default_method_matches_the_implicit_default():
+    default = run_evaluation(PROJECT_ROOT / QRELS_RELATIVE)
+    explicit = run_evaluation(PROJECT_ROOT / QRELS_RELATIVE, method=DEFAULT_METHOD)
+
+    assert _without_run_metadata(default) == _without_run_metadata(explicit)
+
+
+def test_report_timing_records_boundaries_and_stays_out_of_scores():
+    report = run_evaluation(PROJECT_ROOT / QRELS_RELATIVE)
+
+    timing = report["timing"]
+    assert timing["unit"] == "seconds" and timing["clock"] == "time.perf_counter"
+    assert timing["index_build_seconds"] >= 0
+    assert [item["query_id"] for item in timing["per_query"]] == [
+        query["query_id"] for query in report["queries"]
+    ]
+    assert all(item["seconds"] >= 0 for item in timing["per_query"])
+    assert timing["queries_total_seconds"] == pytest.approx(
+        sum(item["seconds"] for item in timing["per_query"])
+    )
+    assert timing["total_seconds"] >= timing["index_build_seconds"]
+    assert len(timing["boundaries"]) == 3 and all(timing["boundaries"])
+    assert "不参与确定性比较" in timing["comparison_note"]
+    for document in (report["metrics"], report["queries"], report["summary"]):
+        serialized = json.dumps(document, ensure_ascii=False)
+        assert "timing" not in serialized and "seconds" not in serialized
+
+
+def test_unknown_method_is_rejected_before_anything_is_built(benchmark):
+    # hybrid 尚未实现：真正的未知方法必须在建索引之前报错，且列出当前可用方法。
+    with pytest.raises(ValueError) as error:
+        build_retriever(benchmark, method="hybrid")
+
+    message = str(error.value)
+    assert "未实现的检索方法" in message and "hybrid" in message
+    assert DEFAULT_METHOD in message            # 报错必须说明当前可用的方法
+
+    with pytest.raises(ValueError, match="未实现的检索方法"):
+        run_evaluation(PROJECT_ROOT / QRELS_RELATIVE, method="hybrid")
+
+
+def test_second_method_without_terms_can_be_registered(benchmark, monkeypatch):
+    """用替身证明入口可接入第二种返回，不需要先写 Embedding。"""
+
+    class RankingOnlyRetriever:
+        """不读文本、没有词项信息，只按 Case ID 顺序排名的替身方法。"""
+
+        def __init__(self, documents):
+            self.case_ids = sorted(documents)
+
+        def search(self, query, *, top_k):
+            return [
+                SearchHit(case_id, 1.0 / rank)
+                for rank, case_id in enumerate(self.case_ids[:top_k], start=1)
+            ]
+
+        def describe(self):
+            return {
+                "method": "ranking_only_toy",
+                "implementation": "tests.evaluation.test_runner.RankingOnlyRetriever",
+                "note": "替身方法：只验证入口可替换，不代表任何真实检索效果",
+            }
+
+    monkeypatch.setitem(RETRIEVER_FACTORIES, "ranking_only_toy", RankingOnlyRetriever)
+
+    report = run_evaluation(PROJECT_ROOT / QRELS_RELATIVE, method="ranking_only_toy")
+
+    retrieval = report["retrieval"]
+    # 报告记录的是实际执行的那个方法，不是写死的常量。
+    assert retrieval["method"] == "ranking_only_toy"
+    assert "parameters" not in retrieval and "tokenizer" not in retrieval
+    assert retrieval["corpus_size"] == retrieval["requested_top_k"] == len(benchmark.case_ids)
+
+    first = report["queries"][0]
+    assert [item["case_id"] for item in first["ranked"]] == sorted(benchmark.case_ids)
+    assert all(item["matched_terms"] is None for item in first["ranked"])
+    assert report["summary"]["query_count"] == len(benchmark.queries)
+
+    # 替身只在本次测试内注册；默认入口仍然运行 BM25。
+    assert run_evaluation(PROJECT_ROOT / QRELS_RELATIVE)["retrieval"]["method"] == "bm25_okapi"
+
+
+def test_registry_ships_only_real_methods():
+    # 注册表只登记真实实现：替身方法只能通过 monkeypatch 注入；新增方法必须显式登记。
+    assert set(RETRIEVER_FACTORIES) == {"bm25", "embedding"}
+
+
+def test_embedding_method_report_records_cache_and_run_details(tmp_path, monkeypatch):
+    """用替身编码器驱动真实 EmbeddingRetriever，验证报告接入：不加载模型、不联网。"""
+    import numpy as np
+
+    from casetrace.retrieval.embedding import EmbeddingRetriever
+
+    class StubEncoder:
+        """固定 4 维的单位向量替身：只验证接线，不代表任何真实语义。"""
+
+        dimension = 4
+
+        def encode(self, texts):
+            return np.eye(4, dtype="float32")[np.arange(len(texts)) % 4]
+
+    monkeypatch.setitem(
+        RETRIEVER_FACTORIES, "embedding",
+        lambda documents: EmbeddingRetriever(
+            documents, encoder=StubEncoder(), cache_dir=tmp_path / "cache",
+        ),
+    )
+
+    report = run_evaluation(PROJECT_ROOT / QRELS_RELATIVE, method="embedding")
+
+    retrieval = report["retrieval"]
+    assert retrieval["method"] == "embedding"
+    assert retrieval["dimension"] == 4
+    assert retrieval["cache"]["enabled"] is True
+    assert {"key", "file", "directory", "note"} <= set(retrieval["cache"])
+
+    details = report["timing"]["method_details"]
+    assert details["cache"]["status"] in {"miss", "hit"}
+    assert details["timing"]["document_encode_seconds"] >= 0.0
+    assert len(details["timing"]["per_query_encode_seconds"]) == len(report["queries"])
+
+    # 运行观测值与方法配置分离：可比较的面板里不得出现秒数。
+    for document in (report["metrics"], report["queries"], report["summary"], retrieval):
+        serialized = json.dumps(document, ensure_ascii=False)
+        assert "seconds" not in serialized
 
 
 def test_report_fingerprints_cli_and_data_dependencies():
@@ -437,6 +596,7 @@ def test_report_fingerprints_cli_and_data_dependencies():
         "src/casetrace/data/dataset_model.py",
         "src/casetrace/data/reference.py",
         "src/casetrace/data/validators.py",
+        "src/casetrace/retrieval/base.py",
     }
 
     assert required <= source_files.keys()

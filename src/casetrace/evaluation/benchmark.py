@@ -18,7 +18,9 @@ from casetrace.data.dataset_model import CaseDetail
 from casetrace.data.reference import ReferenceData
 from casetrace.demo import check_source_records, load_validated_dataset
 
-EXPECTED_QRELS_VERSION = "dev-qrels-v2"
+# 受支持的 qrels 版本：新增数据版本必须显式加入本列表，不做前缀或模糊匹配。
+# 列表变化不放松其它检查：来源哈希、完整配对、确认状态与 Development 范围继续生效。
+SUPPORTED_QRELS_VERSIONS = ("dev-qrels-v2", "dev-qrels-v3")
 EXPECTED_SPLIT = "development"
 REQUIRED_REVIEW_STATUS = "human_confirmed"
 # src/casetrace/evaluation/benchmark.py → 仓库根目录。
@@ -199,10 +201,14 @@ def load_benchmark(qrels_path: Path, *, base_dir: Path | None = None) -> Benchma
     base_dir = Path(PROJECT_ROOT if base_dir is None else base_dir)
     qrels = _read_json_object(qrels_path, "qrels")
 
-    for field, expected in (("qrels_version", EXPECTED_QRELS_VERSION), ("split", EXPECTED_SPLIT)):
-        actual = qrels.get(field)
-        if actual != expected:
-            raise ValueError(f"qrels | {field} | 期望 {expected}，实际 {actual!r}")
+    qrels_version = qrels.get("qrels_version")
+    if qrels_version not in SUPPORTED_QRELS_VERSIONS:
+        raise ValueError(
+            f"qrels | qrels_version | 期望 {'、'.join(SUPPORTED_QRELS_VERSIONS)} 之一，"
+            f"实际 {qrels_version!r}"
+        )
+    if qrels.get("split") != EXPECTED_SPLIT:
+        raise ValueError(f"qrels | split | 期望 {EXPECTED_SPLIT}，实际 {qrels.get('split')!r}")
     if qrels.get("review_status") != REQUIRED_REVIEW_STATUS:
         raise ValueError(
             f"qrels | review_status | 正式评估要求 {REQUIRED_REVIEW_STATUS}，"

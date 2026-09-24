@@ -3,3 +3,5 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+# Embedding 文档向量缓存：可由文本与模型配置重建，属于派生数据，不入库。
+.cache/

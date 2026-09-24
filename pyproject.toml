@@ -10,6 +10,12 @@ requires-python = ">=3.12"
 dependencies = [
     "openpyxl>=3.1,<4",
     "rank-bm25>=0.2.2,<0.3",
+    # M3-02 Embedding 检索：sentence-transformers 负责文本编码；
+    # torch 显式声明，才能用 tool.uv.sources 把它绑定到 CPU-only 索引；
+    # numpy 由运行时直接使用，因此显式声明而不是依赖传递安装。
+    "sentence-transformers>=6.1,<7",
+    "torch>=2.2,<3",
+    "numpy>=2,<3",
 ]
 
 [project.scripts]
@@ -26,3 +32,14 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+# PyTorch 官方的 CPU-only 索引：只对 tool.uv.sources 显式绑定的包生效（这里只有 torch），
+# 其余依赖继续走默认索引。缺少 explicit 时 uv 会把该索引当作通用来源，
+# 其他包在该索引上不存在，解析会失败（实测：et-xmlfile 请求超时）。
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }

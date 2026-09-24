@@ -18,11 +18,13 @@ def main() -> None:
     demo.add_argument("--reference", type=Path, default=Path(
         "data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx"))
     demo.add_argument("--json", action="store_true", help="输出可供程序读取的 JSON")
-    evaluate = commands.add_parser("evaluate", help="在已确认的 benchmark 上评估 BM25 检索")
+    evaluate = commands.add_parser("evaluate", help="在已确认的 benchmark 上评估选定的检索方法")
     evaluate.add_argument("--qrels", type=Path, default=Path("data/evaluation/dev-v2/qrels.json"),
                           help="已确认的 qrels 文件；默认使用活动 dev-v2 版本")
     evaluate.add_argument("--output", type=Path, required=True,
                           help="结果 JSON 的保存路径；先写临时文件再原子替换")
+    evaluate.add_argument("--method", default="bm25",
+                          help="检索方法名；默认 bm25，可用方法以 runner 的 RETRIEVER_FACTORIES 为准")
     args = parser.parse_args()
     if args.command is None:
         parser.print_help()
@@ -31,14 +33,16 @@ def main() -> None:
         from casetrace.evaluation.runner import run_evaluation, write_report
 
         try:
-            report = run_evaluation(args.qrels)
+            report = run_evaluation(args.qrels, method=args.method)
             output = write_report(report, args.output)
         except (OSError, ValueError, KeyError, TypeError) as error:
             parser.error(str(error))
         benchmark = report["benchmark"]
         print(f"评估输入：{benchmark['qrels_path']}（{benchmark['qrels_version']} / "
               f"{benchmark['split']} / 确认日 {benchmark['confirmed_on']}）")
-        print(f"语料 {report['retrieval']['corpus_size']} 条；结果已写入 {output}\n")
+        retrieval = report["retrieval"]
+        print(f"检索方法：{retrieval['method']}；语料 {retrieval['corpus_size']} 条；"
+              f"结果已写入 {output}\n")
         for query in report["queries"]:
             ranking = " > ".join(item["case_id"] for item in query["ranked"]) or "（无返回）"
             positives = "、".join(query["relevant_case_ids"]) or "无正例"
@@ -57,7 +61,7 @@ def main() -> None:
             print(f"无正例 Query：{'、'.join(report['summary']['no_relevant_query_ids'])}")
         state = "脏工作区" if report["reproducibility"]["git_dirty"] else "干净"
         print(f"\n结果 schema：{report['schema_version']}；git 状态：{state}；"
-              "BM25 分数不是相关概率，读数不代表已确认的质量结论。")
+              "检索分数不是相关概率，读数不代表已确认的质量结论。")
         return
     try:
         result = run_demo(args.data, args.reference, query=args.query, top_k=args.top_k)

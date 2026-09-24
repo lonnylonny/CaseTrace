@@ -1,12 +1,14 @@
 """评估运行器：在已校验 benchmark 上建一次索引，逐 Query 排序并计算单条 Query 指标。
 
-只使用检索产生的事实（Case ID、名次、BM25 分数、命中词项）。
+只使用检索产生的事实（Case ID、名次、分数、命中词项）。
 标签和理由只参与评分，不进入历史检索文本或 Query 文本。
 aggregate 负责跨 Query 汇总：各指标对参与 Query 等权平均，无正例 Query 只排除该 Query 不适用的指标。
-run_evaluation 在一次调用内完成校验、建索引、计分、汇总和可复现报告；
+run_evaluation 在一次调用内完成校验、建索引、计分、汇总和可复现报告，并记录建索引与逐 Query 计分的耗时观测值；
+耗时附带测量边界，且只描述本次运行，不参与确定性比较。
 write_report 负责把报告落盘，先写临时文件再原子替换，失败不留半份结果。
 """
 
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from importlib.metadata import PackageNotFoundError, version
@@ -17,6 +19,7 @@ import platform
 import subprocess
 import tempfile
 from pathlib import Path
+from time import perf_counter
 
 from casetrace.demo import build_documents
 from casetrace.evaluation.benchmark import (
@@ -31,7 +34,9 @@ from casetrace.evaluation.metrics import (
     recall_at_k,
     reciprocal_rank_at_k,
 )
+from casetrace.retrieval.base import Retriever
 from casetrace.retrieval.bm25 import BM25Retriever
+from casetrace.retrieval.embedding import EmbeddingRetriever
 
 # M2 固定的评估口径：逐 Query 报告 K=1/3/4 的 Recall、Precision、nDCG，RR 只用 K=4。
 METRIC_KS = (1, 3, 4)
@@ -49,7 +54,8 @@ SUMMARY_METRIC_KEYS = _PER_QUERY_METRIC_KEYS + (MRR_KEY,)
 NO_RELEVANT_REASON = "no_relevant_case"
 
 # 结果文件的格式版本与固定口径说明；口径文字只描述已实现的行为，不额外承诺能力。
-RESULT_SCHEMA_VERSION = "evaluation-result-v1"
+# v2 在 v1 的基础上增加顶层 timing；其余字段的名称、数量与口径不变。
+RESULT_SCHEMA_VERSION = "evaluation-result-v2"
 HISTORY_SNAPSHOT = (
     "本版沿用已确认的历史快照约定：全部历史 Case 在每条 Query 的 known_at 之前已结案并完整可用；"
     "未实现通用时间过滤，时点检查只用模型中存在的日期字段。"
@@ -65,6 +71,20 @@ METRIC_DEFINITIONS = {
     "rr@4": "前 4 条中首个相关结果的 1/rank；前 4 条无命中为 0.0；无正例为 None。",
     "mrr@4": "逐 Query rr@4 对参与 Query 的等权平均；没有参与 Query 时为 None。",
 }
+# 耗时的测量边界与比较口径：耗时随机器、缓存与并发环境变化，只描述本次运行。
+TIMING_BOUNDARIES = (
+    "index_build：覆盖历史检索文本构建与检索器构造（建索引）；不含输入校验、逐 Query 计分与报告组装。"
+    "需要编码的方法（embedding）还包含模型加载与文档编码，命中缓存时只包含缓存读取；"
+    "细分见顶层 timing.method_details。",
+    "per_query：每条 Query 一次，覆盖该 Query 的检索、返回 ID 守卫与指标计算（qrels 只在此步进场）；"
+    "按 Query 顺序逐条计分，不并发。",
+    "total：从本次 run_evaluation 进入计到跨 Query 汇总完成；覆盖输入校验、建索引、逐 Query 计分与汇总，"
+    "不含复现字段的 git 查询与文件哈希、写文件与终端输出。",
+)
+TIMING_COMPARISON_NOTE = (
+    "耗时与 generated_at 只描述本次运行，不参与确定性比较：比较排名、分数与指标时必须忽略这两个字段。"
+    "单次读数不足以评价方法效率；同版本方法比较耗时需固定硬件、冷启动与缓存条件并重复测量。"
+)
 # 覆盖 CLI → 数据读取/校验 → 检索/评分的执行源码；未提交的数据模块也属于运行版本。
 # 数据文件哈希来自已校验的 benchmark，不在这里重复计算。
 REPRODUCIBILITY_SOURCE_FILES = (
@@ -77,7 +97,9 @@ REPRODUCIBILITY_SOURCE_FILES = (
     "src/casetrace/evaluation/benchmark.py",
     "src/casetrace/evaluation/metrics.py",
     "src/casetrace/demo.py",
+    "src/casetrace/retrieval/base.py",
     "src/casetrace/retrieval/bm25.py",
+    "src/casetrace/retrieval/embedding.py",
     "pyproject.toml",
     "uv.lock",
 )
@@ -90,7 +112,8 @@ class RankedCase:
     rank: int
     case_id: str
     score: float
-    matched_terms: list[str]
+    # None 表示所用检索方法不提供命中词项信息；评估器不替它编造词项。
+    matched_terms: list[str] | None
 
 
 @dataclass(frozen=True)
@@ -131,18 +154,35 @@ class EvaluationSummary:
     metrics: dict[str, MetricSummary]
 
 
-def build_retriever(benchmark: Benchmark) -> BM25Retriever:
-    """用已校验语料建一次索引；文档只来自历史记录，标签、理由与审查元数据不参与。"""
+# 可选检索方法：方法名 → 构造函数（输入 case_id → 历史检索文本）。
+# 方法名是 CLI 与报告使用的稳定标识；新增方法只在这里加一行，不改计分、汇总或落盘。
+DEFAULT_METHOD = "bm25"
+RETRIEVER_FACTORIES: dict[str, Callable[[dict[str, str]], Retriever]] = {
+    "bm25": BM25Retriever,
+    "embedding": EmbeddingRetriever,
+}
+
+
+def build_retriever(benchmark: Benchmark, *, method: str = DEFAULT_METHOD) -> Retriever:
+    """按方法名建一次检索索引并返回公共契约对象。
+
+    文档只来自历史记录，标签、理由与审查元数据不参与；未知方法在这里明确报错，
+    不回退到默认方法，调用方不会拿到"以为是自己选的方法"的结果。
+    """
+    factory = RETRIEVER_FACTORIES.get(method)
+    if factory is None:
+        available = "、".join(sorted(RETRIEVER_FACTORIES))
+        raise ValueError(f"未实现的检索方法：{method!r}；当前可用：{available}")
     documents = build_documents(benchmark.records, benchmark.reference)
     if sorted(documents) != benchmark.case_ids:
         raise ValueError(
             f"检索语料与已校验语料不一致：文档 {sorted(documents)}，语料 {benchmark.case_ids}"
         )
-    return BM25Retriever(documents)
+    return factory(documents)
 
 
 def rank_query(
-    benchmark: Benchmark, retriever: BM25Retriever, query: BenchmarkQuery,
+    benchmark: Benchmark, retriever: Retriever, query: BenchmarkQuery,
 ) -> list[RankedCase]:
     """按 Query 文本排名；请求范围覆盖整个语料，超出语料或重复的返回 ID 直接报错。
 
@@ -165,7 +205,7 @@ def rank_query(
 
 
 def evaluate_query(
-    benchmark: Benchmark, retriever: BM25Retriever, query: BenchmarkQuery,
+    benchmark: Benchmark, retriever: Retriever, query: BenchmarkQuery,
 ) -> QueryEvaluation:
     """一条 Query 的数据流：检索 → 校验排名 → 取该 Query 的正例 → 逐 K 计分。"""
     ranked = rank_query(benchmark, retriever, query)
@@ -306,21 +346,57 @@ def _benchmark_document(benchmark: Benchmark) -> dict:
     }
 
 
-def _retrieval_document(benchmark: Benchmark, retriever: BM25Retriever) -> dict:
-    """报告中的检索部分：实际使用的实现、分词、文档构建和 BM25 参数。"""
-    index = retriever.index
+def _retrieval_document(benchmark: Benchmark, retriever: Retriever) -> dict:
+    """报告中的检索部分：方法自己声明的元数据 + 评估器负责的语料范围。
+
+    方法元数据来自 retriever.describe()，评估器不再读具体实现的内部对象；
+    键的先后顺序不代表语义，字段内容由各方法自行声明。
+    """
     return {
-        "method": "bm25_okapi",
-        "implementation": "rank_bm25.BM25Okapi",
-        "tokenizer": "casetrace.retrieval.bm25.tokenize",
+        **retriever.describe(),
         "document_builder": "casetrace.demo.build_documents",
         "corpus_size": len(benchmark.case_ids),
         "requested_top_k": len(benchmark.case_ids),
-        "parameters": {
-            "k1": float(index.k1), "b": float(index.b), "epsilon": float(index.epsilon),
-        },
-        "note": "保留 BM25 实际返回的全部条目，不补分数、不补名次；分数不是相关概率。",
     }
+
+
+def _run_details(retriever: Retriever) -> dict | None:
+    """方法可选提供的本次运行观测值（耗时、缓存状态）；未提供时记 None，不编造字段。"""
+    provider = getattr(retriever, "run_details", None)
+    if provider is None:
+        return None
+    details = provider()
+    return details if isinstance(details, dict) else None
+
+
+def _timing_document(
+    index_build_seconds: float,
+    per_query_seconds: list[tuple[str, float]],
+    total_seconds: float,
+    method_details: dict | None = None,
+) -> dict:
+    """报告中的耗时部分：本次运行的观测秒数 + 测量边界。
+
+    数值来自 time.perf_counter（单调时钟），不参与确定性比较；边界文字说明每个数字包住了哪一步，
+    避免把"耗时"当成跨机器、跨缓存条件可比的效率结论。
+    方法自己提供的 run_details()（存在时）原样记在 method_details，同样不参与比较。
+    """
+    document = {
+        "unit": "seconds",
+        "clock": "time.perf_counter",
+        "index_build_seconds": index_build_seconds,
+        "per_query": [
+            {"query_id": query_id, "seconds": seconds}
+            for query_id, seconds in per_query_seconds
+        ],
+        "queries_total_seconds": sum(seconds for _, seconds in per_query_seconds),
+        "total_seconds": total_seconds,
+        "boundaries": list(TIMING_BOUNDARIES),
+        "comparison_note": TIMING_COMPARISON_NOTE,
+    }
+    if method_details is not None:
+        document["method_details"] = method_details
+    return document
 
 
 def _metrics_document() -> dict:
@@ -346,7 +422,10 @@ def _reproducibility_document() -> dict:
         notes.append("无法读取 git 状态（git 不可用或不在仓库中），工作区是否干净未知。")
     return {
         "python": platform.python_version(),
-        "packages": _package_versions(("casetrace", "rank-bm25", "openpyxl")),
+        "packages": _package_versions(
+            ("casetrace", "rank-bm25", "openpyxl", "numpy",
+             "sentence-transformers", "transformers", "torch"),
+        ),
         "git_head": head,
         "git_dirty": bool(changed_paths),
         "git_status_paths": changed_paths,
@@ -357,23 +436,40 @@ def _reproducibility_document() -> dict:
     }
 
 
-def run_evaluation(qrels_path: Path, *, base_dir: Path | None = None) -> dict:
-    """完整评估入口：校验输入 → 建一次索引 → 逐 Query 计分 → 汇总 → 可复现报告。
+def run_evaluation(
+    qrels_path: Path, *, base_dir: Path | None = None, method: str = DEFAULT_METHOD,
+) -> dict:
+    """完整评估入口：校验输入 → 按方法建一次索引 → 逐 Query 计分 → 汇总 → 可复现报告。
 
     返回可直接 json.dumps 的字典；不写文件、不打印，保存与展示由调用方负责。
     逐 Query 排名与分数来自 evaluate_query，汇总来自 aggregate，口径不在这里另算一遍。
+    方法不认识时在写任何结果之前报错，调用方不会留下半份报告。
+    耗时只记录本次运行的观测值并附边界说明，不参与排名、分数与指标的比较。
     """
+    started = perf_counter()
     benchmark = load_benchmark(qrels_path, base_dir=base_dir)
-    retriever = build_retriever(benchmark)
-    evaluations = [evaluate_query(benchmark, retriever, query) for query in benchmark.queries]
+    build_started = perf_counter()
+    retriever = build_retriever(benchmark, method=method)
+    index_build_seconds = perf_counter() - build_started
+    evaluations: list[QueryEvaluation] = []
+    per_query_seconds: list[tuple[str, float]] = []
+    for query in benchmark.queries:
+        query_started = perf_counter()
+        evaluations.append(evaluate_query(benchmark, retriever, query))
+        per_query_seconds.append((query.query_id, perf_counter() - query_started))
+    summary = aggregate(evaluations)
+    total_seconds = perf_counter() - started
     return {
         "schema_version": RESULT_SCHEMA_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "benchmark": _benchmark_document(benchmark),
         "retrieval": _retrieval_document(benchmark, retriever),
+        "timing": _timing_document(
+            index_build_seconds, per_query_seconds, total_seconds, _run_details(retriever),
+        ),
         "metrics": _metrics_document(),
         "queries": [asdict(evaluation) for evaluation in evaluations],
-        "summary": asdict(aggregate(evaluations)),
+        "summary": asdict(summary),
         "reproducibility": _reproducibility_document(),
     }
 

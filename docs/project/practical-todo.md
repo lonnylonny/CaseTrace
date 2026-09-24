@@ -1,10 +1,10 @@
 # CaseTrace 实操 Todo List
 
-更新日期：2026-09-21。
+更新日期：2026-09-25。
 
 本文是 [Current Plan](current-plan.md) 的实操阅读版，方便学习和逐项执行；项目范围、正式进度和下一交付以 Current Plan 为准。以下勾选状态是本次整理时的快照。
 
-**当前位置：M2 已验收 accepted（2026-09-22），含 nDCG、源码清单修复和分析改文；M3 尚未开始。下一窗口由 Codex 规划第一个 M3 小交付。最新状态以 [Current Plan](current-plan.md) 为准，验收证据见 [M2 完成包](tasks/m2-completion.md#2026-09-22-最终验收与交接)。旧归档哈希失败作为非阻塞历史限制保留。**
+**当前位置：M2 已验收 accepted（2026-09-22）；M3-01 多方法评估入口已验收 accepted（2026-09-23）；M3-02 Embedding 首次接入已于 2026-09-25 复验 accepted（首轮 5 条 findings 全部关闭）；M3-03 Expand Mock Datasets 已激活、尚未实施，入口见 [M3-03](tasks/m3-03-expand-mock-datasets.md)。执行及验收按 [M3 工作流](../../AGENTS.md#m3-delivery-workflow--user-confirmed-override)。最新状态以 [Current Plan](current-plan.md) 为准；旧归档哈希失败作为非阻塞历史限制保留。**
 
 ## 心智模型
 
@@ -73,7 +73,7 @@ CaseTrace 是一个“查历史案例，并带着证据解释”的工具。
 
 ## 下一轮怎样衔接
 
-M2 连续实施及教学已收束，完成包作为验收与追溯入口保留。下一窗口按 [Current Plan](current-plan.md) 规划 M3 的第一个小交付，尚未创建 M3 实施包；不重复 M2 交接或确认已有标签。当前小样例只验证评估流程，不证明生产泛化能力。
+M2 连续实施及教学已收束，完成包作为验收与追溯入口保留。M3 的七个小交付已建包，M3-01、M3-02 已 accepted；**M3-03 Expand Mock Datasets 是当前活动包**。先在包内提出有数量上限的新增 Case / Query 覆盖清单、总配对量和拟用路径，再进入生成；新 Ground Truth 在用户最终确认前保持 draft。以下带日期条目中的小步骤说明是历史快照，最新状态以 [Current Plan](current-plan.md) 与 [M3-03 包](tasks/m3-03-expand-mock-datasets.md) 为准。
 
 以下带日期条目是历史回报，其中待审核状态及曾有的分析错误已由 M2 最终验收与当前分析替代。
 

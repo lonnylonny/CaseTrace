@@ -104,13 +104,38 @@ Retrieval 质量与答案忠实度分开检查，不能用流畅回答代替检�
 |---|---|---|
 | M1 — Retrieval Baseline | 实际开发样例可运行；每个 Case 生成可检查的文档；BM25 返回稳定排名与来源；真实 demo smoke check 通过 | 已完成（2026-09-17）；真实 CLI 回归检查通过 |
 | M2 — Ground Truth / Evaluation | 首批 18 个配对经用户确认；CLI 输出逐 Query 结果及 Recall / MRR / nDCG；指标有可手算样例验证；产出首轮错误分析并确定数据版本、指标与 split 约定 | 已验收 accepted（2026-09-22）；三项审核 findings 已关闭，含 nDCG；旧归档哈希失败作为非阻塞历史限制保留 |
-| M3 — Retrieval Experiments | 完成 BM25、Embedding、Hybrid、Rerank 同基准比较；记录收益、退步、耗时和代表性错误；按结果选最终组合 | 未开始 |
+| M3 — Retrieval Experiments | 完成 BM25、Embedding、Hybrid、Rerank 同基准比较；记录收益、退步、耗时和代表性错误；按结果选最终组合 | 进行中；M3-01 accepted（2026-09-23）、M3-02 accepted（2026-09-25），当前为 M3-03 |
 | M4 — Grounded Answer | 从检索结果生成约定的历史参考回答；检查关键事实、引用和信息不足处理；分别报告检索与回答问题 | 未开始；现有 demo 仅展示字段 |
 | M5 — PostgreSQL / FastAPI | 按冻结模型保存并取回完整 Case；提供必要的导入方式和 FastAPI 入口；API / CLI 共用检索与回答核心；固定输入迁移前后的结果及来源一致 | 未开始；在 M4 后实施 |
 | M6 — Docker / Demo / V1 收束 | Docker 启动必要服务与简单 Web Demo；CLI Evaluation 可复现；固定方案完成 Locked Test 对比；README 说明启动、数据、实验、失败案例与局限 | 未开始 |
 
 M3 每次增加一个方法并对比，Rerank 无收益也应保留实验结论。最终组件取舍以证据为依据，不设置未经实验支持的提升承诺。
 M5 / M6 只实现展示主流程所需工程能力，不扩展成完整 Ingestion Platform 或企业基础设施。
+
+### M3 小交付安排（2026-09-22 已建包，M3-01 已验收）
+
+用户已确定以下七个小交付及 **Expand Mock Datasets** 的位置，七份任务包已建立；模型、参数和新数据规模在对应交付启动时结合已验收结果细化。继续使用本地文件；数据库实施仍属于 M5。执行、用户亲手编码、回报及逐包验收的规则统一见 [AGENTS 的 M3 工作流](../../AGENTS.md#m3-delivery-workflow--user-confirmed-override)。本节是 M3 Plan 的唯一状态入口。
+
+| 交付 | 任务与输入 | 输出与完成标准 | 主要实际动作 |
+|---|---|---|---|
+| [M3-01 — 多方法评估入口](tasks/m3-01-evaluation-entry.md)（accepted 2026-09-23） | 以现有 dev-v2、runner 和 BM25 结果为基线，支持选择检索方法，复用指标与输入校验 | BM25 排名、分数和指标与 M2 一致；报告可记录方法配置、源码/依赖及耗时；方法专属信息不强制共用 | 已交付公共契约、方法选择、耗时与独立 BM25 v2 回归结果；Spec / Standards 均 0 findings |
+| [M3-02 — Embedding 首次接入](tasks/m3-02-embedding.md)（accepted 2026-09-25） | 使用 dev-v2 和相同历史检索文本，选择一个适合当前文本与运行环境的模型 | 独立的向量检索及逐 Query 结果；记录模型版本、文本处理、截断策略和缓存绑定；仅作为初步开发对比 | 已交付本地 BGE small CPU/离线检索、缓存与报告接入、同基准 BM25/Embedding 结果和差异分析；首轮 5 条 findings 已关闭，Spec / Standards 均 0 open findings |
+| [M3-03 — Expand Mock Datasets](tasks/m3-03-expand-mock-datasets.md)（当前活动包） | 根据 M2 错误分析和初步检索观察补一小批 Case / Query；遵循第 3、4 节及现有 CR / GR | 独立的新 Development benchmark、完整标注草稿、用户确认记录、来源哈希与版本说明；新版本上 BM25 / Embedding 重新建立对照 | 准备事实与来源候选，生成文本并校验，审阅时点与相关性，补齐全部 Query × Case 配对；最小调整 loader 支持新版本，运行已接入方法 |
+| [M3-04 — Hybrid](tasks/m3-04-hybrid.md)（待前包验收） | 使用同一新 benchmark 的 BM25 / Embedding 排名，首轮建议基于名次的 RRF 融合 | 可追溯的候选合并与融合排名，记录两路候选数、融合参数及相对两个单方法的变化 | 新增小型融合实现与必要测试，保存各路名次及融合结果，运行同基准评估 |
+| [M3-05 — Rerank](tasks/m3-05-rerank.md)（待前包验收） | 对固定候选生成方法返回的候选重新评分 | 候选生成 + 重排的完整配置、重排前后结果和耗时；区分候选遗漏与重排错误 | 接入一个重排模型，固定候选数量，构造 Query / 历史文本对并评分，记录完整候选及排名；没有收益也保留结论 |
+| [M3-06 — 有限针对性实验（按证据触发）](tasks/m3-06-targeted-experiments.md)（待前包验收） | 从实际错误选择少量假设，如字段权重、泛词/背景话术或否定表达；一次改变一个因素 | 保留或放弃调整的证据，阅读优先级与二值指标分别分析；无明确问题时记录不开展的理由 | 修改少量实验配置或逻辑，在同一版本上对照运行；不做无限调参，也不以指标必须上涨作为完成标准 |
+| [M3-07 — 汇总选型与验收](tasks/m3-07-selection.md)（待前包验收） | 汇总同版本 BM25 / Embedding / Hybrid / Rerank 结果 | 对比指标、逐 Query 退步、代表性错误、耗时及复杂度；固定交给 M4 的检索方案、来源接口与复现命令，完成 Spec / Standards 验收 | 固定配置复跑、整理对比与局限、完成必要检查及验收后更新状态；Grounded Answer 实现属于 M4 |
+
+M3-03 的边界与检查点：
+
+- 扩充是本轮明确安排的交付，置于 Embedding 首次跑通之后、Hybrid / Rerank 正式比较之前。先准备覆盖清单和小批数据草稿，随后进行 Ground Truth 确认与版本发布；可拆为两个教学步骤，不能跳过确认直接报告正式指标。规模在该包中按缺口和人工标注工作量固定，不先批量生成大量数据或建设通用生成平台。
+- 优先覆盖同义表达、技术类比、背景关联、易混淆案例和否定表达。沿用第 4 节相关性标准；同产品等充分条件已成立的 Case 不能为了制造困难样例标为负例。不按某个模型的输赢挑选或改写标签；新增样例不保证 BM25 退步或语义方法提升。
+- 沿用第 3 节链接的冻结模型、CR / GR 和 reference data，生成事实与候选来源按 GR-10 执行。新语料使用独立文件，保留 dev-v2 原件及回归用途；Query 时点不包含后来才知道的当前原因，并明确新历史语料在 Query 时点前已结案且完整可用的快照依据。
+- 配对范围包括旧 Query × 新 Case、新 Query × 旧 Case、新 Query × 新 Case。未改变的旧 18 对沿用已有确认，不重新要求确认；新增或语义发生变化的配对由用户最终确认。确认完成前维持 draft，不将未标注或 Ambiguous 当作 0。
+- 当前 `benchmark.py` 只接受 `dev-qrels-v2`。支持新版本属于本交付必要的小改动，需保留旧版本读取及哈希、完整配对、确认状态和 Development 校验，不通过改名或跳过检查复用旧标签。
+- 本次扩充用于 Development。记录案例来源与近重复家族，已参与讨论和调参的样例不得再充当 Locked Test；M6 的独立最终对比仍按第 4、5 节执行。
+
+规划复核结论：以上顺序可作为 M3 的交付框架，无需先补数据基础或恢复 dev-v1。dev-v2 的当前指标已达该正例分布下的上限，只能用于接通流程和观察退步；扩充后也不承诺一定区分方法或证明泛化。四类方法须在同一最终 Development 版本及指标口径上比较，记录建索引/文档编码与单 Query 检索/重排耗时，注明冷启动、缓存、硬件或 API 条件。模型及候选参数在对应包内固定；学习确认与代码验收沿用 AGENTS 的现行规则，M2 连续交付例外不自动延续到 M3。
 
 ## 6. 当前事实与下一交付
 
@@ -216,8 +241,43 @@ M5 / M6 只实现展示主流程所需工程能力，不扩展成完整 Ingestio
 - 最近一次代码验证为 278 passed、169 subtests passed、1 failed；evaluate、demo、隔离重建与结果一致性验证均成功。本次只刷新文档，没有重跑或改写测试结果。
 - 用户明确以当前 dev-v2 继续；旧归档哈希差异作为历史限制保留，不再作为 M2 收尾或 M3 前置。具体决定见 [dev-v2 记录](../../data/evaluation/dev-v2/README.md#2026-09-22-用户后续决定)，不能称旧版迁移校验通过。
 
-当前位置：**M1、M2 已完成并验收。当前基线为 dev-v2、6 Cases × 3 Queries、18 对已确认二值标签、K=1/3/4 与 MRR@4；正式结果及已修正分析在 results/。M3 尚未开始。**
+2026-09-23 M3-01 验收：
 
-下一项交付限定为：**在用户新开的窗口中规划 M3 的第一个小交付，再实施检索对比实验。** 先读本计划，再按需查看 [M2 最终交接](tasks/m2-completion.md#2026-09-22-最终验收与交接)、[运行记录](../../results/README.md) 与 [错误分析](../../results/dev-v2-bm25-error-analysis.md)。BM25 / Embedding / Hybrid / Rerank 必须同基准比较；方法逐个推进，具体模型、依赖、测试和教学边界在新包确定。本轮不预先展开 M3 实现或新增基础设施。
+- 多方法公共检索契约、runner / CLI 方法选择、耗时元数据与独立 BM25 v2 回归结果已完成；用户亲手实现的 `--method` 声明与透传已复核。Spec / Standards 均 0 findings，Verdict 为 **accepted**，详见 [M3-01 Codex Acceptance](tasks/m3-01-evaluation-entry.md#codex-acceptance)。
+- 独立实测为定向 **60 passed**；全套 **289 passed、169 subtests passed、1 failed**，唯一失败仍是旧 dev-v1 归档哈希历史限制。BM25 五个事实面板与 M2 完全一致，M2 原产物未被覆写；未知 embedding 方法 exit 2 且不落盘，demo 正常。
+- M3-02 已激活，实施基线为 `/tmp/casetrace-m3-02-codex-78mz0Z`；M3-01 已验收但未提交的工作区改动属于下一包起点。
+
+2026-09-24 M3-02 Cline 自测完成（标注为**已交付并自测、尚未 accepted**，状态刷新仍以 Codex 验收为准）：
+
+- SD1–SD4 全部完成并自测：依赖与选模（`BAAI/bge-small-zh-v1.5` @ `7999e1d3…`，CPU / 离线）、`retrieval/embedding.py`（含缓存）、用户亲手实现的 `rank_by_similarity`、registry / 报告接入、正式 BM25 与 Embedding 结果、同基准差异分析与运行记录；详情与证据见 [M3-02 包](tasks/m3-02-embedding.md#cline-report)。
+- 正式产物：`results/dev-v2-bm25-m3-02.json`（15,373 B，`e953e772…5910`）与 `results/dev-v2-embedding-m3-02.json`（15,482 B，`8450bb5b…6856`），不覆写 M2 / M3-01 产物；差异分析见 [dev-v2-bm25-vs-embedding-m3-02.md](../../results/dev-v2-bm25-vs-embedding-m3-02.md)，运行记录见 [results/README.md 第 9 节](../../results/README.md#9-m3-02-首次-embedding-结果与-bm25-同版本对照evaluation-result-v22026-09-24)。
+- 观测读数（非质量结论）：三条 Query 首位一致，`recall@1 / recall@3 / precision@1 / precision@3 / ndcg@1 / ndcg@3 / mrr@4` 两者相同；差异只在 K=4（`recall@4` 1.0 → 0.9167、`precision@4` 0.5 → 0.4167、`ndcg@4` 1.0 → 0.9440），来自 Q001 同产品正例 C002 由第 4 名降到第 6 名。
+- 已核对的自测结果：定向 **159 passed**；全套 **315 passed、169 subtests passed、1 failed**（唯一失败仍是旧 dev-v1 归档哈希，既有历史限制）；`demo` exit 0；两条 `evaluate` exit 0。
+- 记录更正的既有表述：缓存 `hit` 与冷编码 `miss` 不是逐位相同（分数末位差 ≤3.331e-16，排名与指标一致），因此「缓存只影响耗时不影响结果」只在排名与指标层面成立；该表述已在分析与运行记录中更正，未改代码。
+- 本包**不扩充数据、不进入 Hybrid / Rerank**，也未做参数实验；C002 名次变化的机制说明仅为观察与假设，验证登记为 M3-06 输入。
+
+2026-09-24 M3-02 Codex 首轮验收：
+
+- SD4 正式结果与差异分析通过独立复核：BM25 / Embedding evaluate 与 demo 均 exit 0，两份重跑报告的五个可比较面板分别与正式产物相等；定向 **159 passed**，全套 **315 passed、169 subtests passed、1 failed**，唯一失败仍是既有 dev-v1 归档哈希。
+- 整包 Verdict 为 **needs changes**：Spec 有 2 项——缓存键缺少已固定的依赖版本与 dtype，合法 JSON 中类型错误的缓存向量会抛未捕获 `TypeError` 而非标记 corrupt 后重建；Standards 有 3 项——缓存“不改变向量”的文案与实测不符、耗时细分字段路径写错、任务包头与 SD2 表格仍保留过期状态。完整证据见 [M3-02 Codex Acceptance](tasks/m3-02-embedding.md#codex-acceptance)。
+- M3-02 继续作为活动包；修正 findings、补缓存回归并重生成受文案变化影响的正式产物后回交复验。M3-03 不激活、不建立实施基线。
+
+2026-09-25（本地）M3-02 Codex findings 修正轮（Cline，自测完成、待复验）：
+
+- 首轮验收 needs changes 的 5 条 findings 已全部修正：① 缓存键补入 `libraries`（numpy / sentence-transformers / transformers / torch）与 `model_output_dtype` / `working_dtype`；② `_read_cache()` 把「合法 JSON 但 `vectors` 结构 / 类型非法」判为 `corrupt` 并重新编码，不再抛未捕获 `TypeError`；③ `describe().cache.note` 限定为「不改变排名与指标 + 末位浮点差」；④ `TIMING_BOUNDARIES` 指向顶层 `timing.method_details`；⑤ 包头、SD2 表格与状态行文字统一。**未改检索算法、BM25 参数、模型 / revision / instruction / 归一化、qrels 与指标口径**，未进入 Hybrid / Rerank / 数据扩充。
+- 新增 5 个回归用例（缓存配置记录、依赖版本失效、3 组非法 `vectors` → `corrupt`）。自测：定向 **164 passed**；全套 **320 passed、169 subtests passed、1 failed**（唯一失败仍为旧 dev-v1 归档哈希）；`demo` exit 0；未知方法 exit 2 且不留文件；冷 / 热缓存排名与指标一致、分数最大 `|Δ| = 3.331e-16`。
+- 正式产物按新缓存键重生成：`results/dev-v2-bm25-m3-02.json` `df2c2f5d…0e06`（15,520 B）、`results/dev-v2-embedding-m3-02.json` `98aaf6e9…4ab0`（15,773 B，cache hit）；与 SD4 时点产物比较 `benchmark` / `metrics` / `summary` 相等、`queries` 分数最大 `|Δ| = 0.000e+00`，差异只在 `retrieval` 与 `timing`。M2 / M3-01 产物未覆写。
+- 逐条对应、复现对照与快照见 [M3-02 包的 Codex findings 修正轮](tasks/m3-02-embedding.md#codex-findings-修正轮2026-09-25-本地cline) 与 [dev-v2 运行记录第 9.3 节](../../results/README.md#93-codex-findings-修正轮2026-09-25-本地)；编辑前快照 `/tmp/casetrace-m3-02-fix-20260925-000017/before/`。
+- **M3-02 仍为活动包、尚未 accepted；M3-03 未激活**，等待 Codex 复验。本条为 Cline 观察状态，不代表验收结论；用户学习确认与代码验收分别记录。
+
+2026-09-25 M3-02 Codex 复验：
+
+- 首轮 2 个 Spec finding 与 3 个 Standards finding 全部关闭；复验为 **Spec 0 open findings、Standards 0 open findings，Verdict accepted**。缓存键、损坏缓存重建、自描述文字及状态记录均与实现一致，未改检索算法、标签或指标口径。
+- 独立验证：定向 **164 passed**；全套 **320 passed、169 subtests passed、1 failed**，唯一失败仍是既有 dev-v1 归档哈希；BM25 / Embedding evaluate 与 demo 均 exit 0，未知 hybrid exit 2 且不留文件；两种方法正式产物五个可比较面板分别与复跑结果相等。
+- M3-03 已激活，实施基线为 `/tmp/casetrace-m3-03-codex-WRKTMs`。M3-02 复验前快照为 `/tmp/casetrace-m3-02-reacceptance-UPct5N/`。
+
+当前位置：**M1、M2 已完成并验收；M3 进行中，M3-01 与 M3-02 已 accepted，M3-03 为当前活动包。活动 benchmark 暂仍为 dev-v2、6 Cases × 3 Queries、18 对已确认二值标签、K=1/3/4 与 MRR@4；M3-03 的新 benchmark 在用户确认前保持 draft。**
+
+下一项交付限定为：**实施 [M3-03 — Expand Mock Datasets](tasks/m3-03-expand-mock-datasets.md)**；先由 Cline 在同一包中拆分不超过 5 个子交付并提出有数量上限的新增 Case / Query 覆盖清单，记录总配对与拟用路径，再进入生成。实施基线为 `/tmp/casetrace-m3-03-codex-WRKTMs`。用户学习确认、用户亲手代码、Ground Truth 最终确认与代码验收分别记录。
 
 用户学习反馈与代码验收分别记录。本文是唯一当前计划；旧的带日期回报保留历史状态，不作为当前待办。

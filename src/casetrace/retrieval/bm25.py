@@ -1,10 +1,13 @@
 """本地 BM25 基线：文档和查询使用同一切词规则，结果始终保留来源 Case ID。"""
 
-from dataclasses import dataclass
 import re
 import unicodedata
 
 from rank_bm25 import BM25Okapi
+
+from casetrace.retrieval.base import SearchHit
+
+# SearchHit 的定义在公共契约模块 base 中；这里继续导出，调用方的导入路径不变。
 
 
 def tokenize(text: str) -> list[str]:
@@ -23,13 +26,6 @@ def tokenize(text: str) -> list[str]:
     return tokens
 
 
-@dataclass(frozen=True)
-class SearchHit:
-    case_id: str
-    score: float
-    matched_terms: list[str]
-
-
 class BM25Retriever:
     """输入为 case_id → 历史检索文本；不接收或使用相关性标签。"""
 
@@ -42,6 +38,19 @@ class BM25Retriever:
             raise ValueError("每条历史案例必须有可检索的文本")
         self.term_sets = [set(tokens) for tokens in corpus]
         self.index = BM25Okapi(corpus)
+
+    def describe(self) -> dict:
+        """报告用的方法元数据；参数取实际索引实例，不在这里另抄一份常量。"""
+        return {
+            "method": "bm25_okapi",
+            "implementation": "rank_bm25.BM25Okapi",
+            "tokenizer": "casetrace.retrieval.bm25.tokenize",
+            "parameters": {
+                "k1": float(self.index.k1), "b": float(self.index.b),
+                "epsilon": float(self.index.epsilon),
+            },
+            "note": "保留 BM25 实际返回的全部条目，不补分数、不补名次；分数不是相关概率。",
+        }
 
     def search(self, query: str, *, top_k: int = 3) -> list[SearchHit]:
         if type(top_k) is not int or top_k < 1:

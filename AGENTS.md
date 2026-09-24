@@ -1,4 +1,3 @@
-
 # CaseTrace — Codex / Cline Shared Instructions
 
 ## Role
@@ -120,6 +119,17 @@ For the remainder of M2, this section overrides the per-delivery Codex handoff a
 * Retain the stage baseline and add snapshots before modifying newly involved files. Cline self-review and user confirmations do not replace the final Codex review.
 * When all planned M2 functionality, checks, results, error analysis, and teaching are delivered, Cline assembles the final report and marks it ready for Codex review. Codex then reviews M2 as a whole, including the pending nDCG delivery, along Spec and Standards. Until that review, record M2 as delivered/self-tested pending review, or accurately report remaining blockers. Stop at M2; subsequent milestones require a new plan.
 
+### M3 Delivery Workflow — User-Confirmed Override
+
+For M3, apply the seven deliveries in [Current Plan](docs/project/current-plan.md#5-交付里程碑与完成标准) in their existing order. The user approved this workflow on 2026-09-22; it overrides conflicting default teaching and task-breakdown rules below. The M2 continuous-delivery exception ends with M2.
+
+* Codex maintains one package per delivery and the M3 plan in Current Plan. Cline breaks the active package into **at most five subdeliveries**, records their goals, outputs, checks and ownership in its Cline Report, then implements and explains one at a time. Do not split the seven deliveries into new stages or generate a whole delivery's code at once.
+* Reserve a meaningful, bounded piece of code in **every delivery** for the user, including data or reporting deliveries; a relevant test or analysis function is suitable. Cline gives only the goal, interface and necessary hints, then waits for the user's implementation before checking it. Keep that part unwritten, including in proposed patches or complete answer examples, unless the user explicitly asks for implementation help. Record the user's actual contribution and the review result separately from agent work.
+* Keep the teaching pauses defined below. Understanding a subdelivery permits the next subdelivery within the same package; it does not constitute Codex acceptance. If a conditional experiment is unnecessary, preserve the package and its small user-authored evidence-checking exercise; record why no retrieval change was made.
+* On completion, Cline finishes the **same package's Cline Report** with completed work, key implementation, actual test results (including failed/unrun checks), remaining issues and the next entry point, plus subdelivery and learning records. Mark it ready for acceptance or blocked. Do not create a competing completion document or start the next delivery.
+* Codex reviews Spec and Standards against that delivery's baseline, records its verdict in Codex Acceptance, and refreshes completion status and the next entry in Current Plan. Advance to the next package only after acceptance; needs changes or blocked keeps the current package active. Self-tests, user coding and Ground Truth confirmation are distinct evidence, not substitutes for acceptance.
+* The seven packages may be prepared together. Only the active package has an implementation handoff baseline; when accepting its predecessor, Codex activates the next package and captures its then-current HEAD, tracked/untracked changes and relevant file snapshots. Cline checks that baseline and snapshots newly involved files before editing. Preparation snapshots for later packages are not their implementation baselines.
+
 ### Cline Teaching and Task Proportionality
 
 * Default to implementing, verifying, and explaining one small step; the user understands the code, then maintains and adjusts it. Do not require blank-function exercises unless the user chooses to code themselves.
@@ -141,11 +151,11 @@ Codex writes one Markdown file at `docs/project/tasks/<task-id>.md` per small de
 
 Use these four sections, marking non-applicable items explicitly:
 
-| Section | Owner and required content |
-|---|---|
-| Codex Plan | Goal, scope, authoritative source pointers, required interfaces/behavior, small implementation steps, test seams and commands, acceptance criteria, teaching focus and stop point, selected skill paths. |
-| Handoff Baseline | Codex records starting HEAD, existing tracked/untracked changes, and locations of relevant pre-task file snapshots. Cline checks these before editing and records intervening changes. |
-| Cline Report | Actual changes, commands and observed results, checks not run, deviations, remaining problems, and taught/pending topics. Label the delivery ready for acceptance or blocked; self-tests do not constitute Codex acceptance. |
+| Section          | Owner and required content                                                                                                                                                                                                                             |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Codex Plan       | Goal, scope, authoritative source pointers, required interfaces/behavior, small implementation steps, test seams and commands, acceptance criteria, teaching focus and stop point, selected skill paths.                                               |
+| Handoff Baseline | Codex records starting HEAD, existing tracked/untracked changes, and locations of relevant pre-task file snapshots. Cline checks these before editing and records intervening changes.                                                                 |
+| Cline Report     | Actual changes, commands and observed results, checks not run, deviations, remaining problems, and taught/pending topics. Label the delivery ready for acceptance or blocked; self-tests do not constitute Codex acceptance.                           |
 | Codex Acceptance | Separate Spec and Standards findings, verification evidence, and a verdict: accepted, needs changes, or blocked. Codex updates Current Plan after acceptance; code acceptance does not imply the user understood the lesson or confirmed Ground Truth. |
 
 Before editing an implementation task, preserve relevant file contents in an OS temporary directory and record its absolute path; include pre-existing untracked files and note absent targets. Keep this baseline until acceptance. Review the task's changes against it, including staged, unstaged, and new files, rather than attributing the whole dirty workspace to Cline. If a snapshot is unavailable, report the comparison limit and re-establish the baseline before proceeding; do not manufacture a commit to obtain one.
@@ -158,15 +168,15 @@ Use the installed skills under `.agents/skills/` selectively. Read the chosen `S
 
 The following user-approved project adaptations override conflicting skill defaults. Keep upstream skill files unchanged; these adaptations are maintained only here.
 
-| Task | Skill and CaseTrace adaptation |
-|---|---|
-| Choose a workflow | [ask-matt](.agents/skills/ask-matt/SKILL.md) is a router, not a mandatory full pipeline. Use only the steps needed for the current delivery. |
-| Specify and hand off | [to-spec](.agents/skills/to-spec/SKILL.md) and [handoff](.agents/skills/handoff/SKILL.md): write the concise repository plan package above instead of publishing to a tracker or saving the handoff in a temporary directory. Reference existing rules; omit extensive user-story lists. No tracker/setup prerequisite. Temporary baseline snapshots remain separate from the package. |
-| Implement and self-test | [implement](.agents/skills/implement/SKILL.md), with [tdd](.agents/skills/tdd/SKILL.md) when appropriate: test public behavior in small red–green slices. Put test seams in the plan; user-confirmed seams need no repeat confirmation. Use existing checks appropriate to the change; no automatic commit. Cline reports self-checks; final two-axis acceptance belongs to Codex. |
-| Teach current code | [teach](.agents/skills/teach/SKILL.md): use the small-concept and feedback principles with the teaching rules above. Routine explanations do not create a teaching workspace, HTML lessons, mission files, or a separate learning-record system. |
-| Accept a delivery | [code-review](.agents/skills/code-review/SKILL.md): Codex reviews Standards and Spec separately, using this file, task-relevant rules, and the plan package. Use the recorded baseline and actual working-tree changes, including new files; a committed diff, issue tracker, and subagents are not prerequisites. Default to one agent. |
-| Resolve difficult problems | [diagnosing-bugs](.agents/skills/diagnosing-bugs/SKILL.md) for Codex's evidence-driven diagnosis; [codebase-design](.agents/skills/codebase-design/SKILL.md) when an interface decision needs it. |
-| Maintain agent instructions | [writing-for-agents](.agents/skills/writing-for-agents/SKILL.md): retain one authoritative source per rule and use task-triggered pointers. |
+| Task                        | Skill and CaseTrace adaptation                                                                                                                                                                                                                                                                                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Choose a workflow           | [ask-matt](.agents/skills/ask-matt/SKILL.md) is a router, not a mandatory full pipeline. Use only the steps needed for the current delivery.                                                                                                                                                                                                                                          |
+| Specify and hand off        | [to-spec](.agents/skills/to-spec/SKILL.md) and [handoff](.agents/skills/handoff/SKILL.md): write the concise repository plan package above instead of publishing to a tracker or saving the handoff in a temporary directory. Reference existing rules; omit extensive user-story lists. No tracker/setup prerequisite. Temporary baseline snapshots remain separate from the package. |
+| Implement and self-test     | [implement](.agents/skills/implement/SKILL.md), with [tdd](.agents/skills/tdd/SKILL.md) when appropriate: test public behavior in small red–green slices. Put test seams in the plan; user-confirmed seams need no repeat confirmation. Use existing checks appropriate to the change; no automatic commit. Cline reports self-checks; final two-axis acceptance belongs to Codex.    |
+| Teach current code          | [teach](.agents/skills/teach/SKILL.md): use the small-concept and feedback principles with the teaching rules above. Routine explanations do not create a teaching workspace, HTML lessons, mission files, or a separate learning-record system.                                                                                                                                      |
+| Accept a delivery           | [code-review](.agents/skills/code-review/SKILL.md): Codex reviews Standards and Spec separately, using this file, task-relevant rules, and the plan package. Use the recorded baseline and actual working-tree changes, including new files; a committed diff, issue tracker, and subagents are not prerequisites. Default to one agent.                                              |
+| Resolve difficult problems  | [diagnosing-bugs](.agents/skills/diagnosing-bugs/SKILL.md) for Codex's evidence-driven diagnosis; [codebase-design](.agents/skills/codebase-design/SKILL.md) when an interface decision needs it.                                                                                                                                                                                      |
+| Maintain agent instructions | [writing-for-agents](.agents/skills/writing-for-agents/SKILL.md): retain one authoritative source per rule and use task-triggered pointers.                                                                                                                                                                                                                                           |
 
 Skills do not authorize Git commits, pushes, merges, deployment, or automatic agent launches. This applies to nested skill calls too. Do not default to `implement-spec`'s parallel agents, branches, or PR workflow; the user chooses delegation explicitly.
 
@@ -243,3 +253,18 @@ Report concisely:
 * unresolved issues that materially affect correctness or the next step.
 
 Stop at the requested scope. Do not automatically continue into unrelated features or the next project stage.
+
+## Explanation Rule
+
+When explaining unfamiliar code or language features:
+
+1. Start with what the code literally changes or triggers.
+2. Distinguish runtime behavior from static/type-checking behavior.
+3. Explain required prerequisites before using higher-level terms.
+4. Compare with the behavior if the construct were removed or replaced.
+5. Explain purpose and terminology only after the mechanism is clear.
+6. as simple as possible, don't overthinking, just help me creating the mind model. Second check before generation.
+
+Prefer: `mechanism → difference → purpose → terminology`.
+
+Do not explain terminology with more terminology.
