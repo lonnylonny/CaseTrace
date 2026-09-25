@@ -17,7 +17,6 @@
 | 指标口径 | K=1/3/4 的 recall / precision / nDCG + `rr@4`；跨 Query 等权平均 | 同左 |
 | 缓存条件 | 无此概念 | 正式结果为 **hit**：`.cache/embeddings/d2374a3b295754f151002b8e3d5b38613c169700f6c3bed1e2e7727ab0464497.json`，68,640 B，SHA-256 `388ef8d1f6519cdb5fd99617a5bf15c0c247a60cc24ee9f4f3a34a5373e3d4a0` |
 
-2026-09-25（本地）按 Codex findings 修正后**重生成**过这两份产物：缓存键补入依赖版本与 dtype、缓存 note 与耗时 boundaries 文案更正。重生成前后 `benchmark` / `metrics` / `summary` 完全相等，`queries` 排名顺序一致、分数最大 `|Δ| = 0.000e+00`；差异只在 `retrieval`（新缓存键、`libraries` 四项、note 文案）与 `timing`。本节其余读数（排名、指标、机制观察）在重生成后不变。
 
 ## 2. 逐 Query 完整排名对照
 
@@ -71,7 +70,7 @@
 
 **4.4 否定语境仍然未被处理。** BM25 把「未发现剥离」当成 `剥离` 命中（M2 已记录的局限）。Embedding 虽然编码了整句，但本语料无法证明它理解了否定——它的排名变化来自整段语义，不能当成"语义方法会正确处理否定"的证据。
 
-## 5. 耗时对照（修正轮重生成时的观测值，不可作效率结论）
+## 5. 耗时对照（观测值，不可作效率结论）
 
 | 项目 | BM25 | Embedding（hit） | Embedding（miss，独立缓存目录） |
 |---|---|---|---|
@@ -82,7 +81,6 @@
 | `per_query[].seconds` | 0.0003 / 0.0002 / 0.0002 s | 0.0128 / 0.0095 / 0.0089 s | 0.0106 / 0.0092 / 0.0099 s |
 | `total_seconds` | 0.0210 s | 4.7198 s | 5.0320 s |
 
-- SD4 时点同口径读数为 BM25 `total 0.0250 s`、Embedding `hit 4.8080 s` / `miss 5.0464 s`；修正轮重生成时为上表值，差异只来自机器负载，不作为结论。
 - 硬件与条件：i7-8550U（8 线程）/ 31 GB，CPU 执行（`nvidia-smi` 报 NVML 版本不匹配，本包全程未使用 GPU），完全离线（`local_files_only=True`）。
 - 冷启动（miss）与热缓存（hit）的差别**只在文档编码**：0.2052 s → 0 s；模型加载两次都约 4.7 s，与本项目缓存无关（权重由 HuggingFace 缓存管理）。
 - 逐 Query 检索耗时两者都在 0.01 s 量级；本语料下 BM25 与 Embedding 的总耗时差**几乎全部来自模型加载**。单次读数不足以评价效率，跨机器比较需固定硬件与缓存条件。
@@ -91,10 +89,10 @@
 
 | 对照 | 结果 |
 |---|---|
-| 同一命令连续两次（`--method bm25`） | `benchmark` / `retrieval` / `metrics` / `queries` / `summary` **完全一致**；只有 `generated_at`、`timing.*`，以及 `reproducibility.git_status_paths` 变化；修正轮重生成时复测同样成立 |
-| 同一命令连续两次（`--method embedding`，均为 hit） | 同上，五个面板完全一致（修正轮复测成立） |
-| Embedding **hit** 与 **miss** 对照 | 排名顺序、逐 Query 指标与全部汇总指标**一致**；分数存在末位浮点差，逐 Query 最大 `|Δscore|` = 2.220e-16 / 1.110e-16 / 3.331e-16（修正轮按新缓存键复测，数值相同） |
-| `reproducibility.git_status_paths` | 后运行的那次会多出**先写出的结果文件本身**（SD4 时点为 27 → 28 条），属如实记录执行时点的工作区状态，不是读数差异；修正轮五次运行均为 29 条，因为运行开始时两个 M3-02 产物都已存在，现象成因不变 |
+| 同一命令连续两次（`--method bm25`） | `benchmark` / `retrieval` / `metrics` / `queries` / `summary` **完全一致**；只有 `generated_at`、`timing.*`，以及 `reproducibility.git_status_paths` 变化 |
+| 同一命令连续两次（`--method embedding`，均为 hit） | 同上，五个面板完全一致 |
+| Embedding **hit** 与 **miss** 对照 | 排名顺序、逐 Query 指标与全部汇总指标**一致**；分数存在末位浮点差，逐 Query 最大 `|Δscore|` = 2.220e-16 / 1.110e-16 / 3.331e-16 |
+| `reproducibility.git_status_paths` | 记录执行时点的工作区状态，可能随文件写入变化；不属于排名或指标差异 |
 
 末位浮点差的成因（已实测确认）：缓存文件保存的是**归一化后的工作矩阵**，其行范数不是精确的 `1.0`（实测 0.9999999999999999 与 1.0000000000000002 各若干行），读取时 `_normalized_matrix` 会再归一化一次，于是末位变化。**这不是缺陷，但必须记录**：`hit` 与 `miss` 不是逐位相同，只有排名与指标相同。因此"缓存只影响耗时不影响结果"这句话只在**排名与指标层面**成立。
 
@@ -113,9 +111,4 @@
 - 本文件不修改代码、`qrels`、标签、BM25 参数与 Embedding 配置；所有调整方向登记为 M3-04 / M3-05 / M3-06 的输入。
 - 未跑：Hybrid（M3-04）、Rerank（M3-05）、针对性参数实验（M3-06）、Locked Test 对比（M6）。
 - 既有历史限制不变：`data/evaluation/dev-v1/qrels.json` 的归档哈希与迁移记录不一致，本轮未刷新哈希、未改旧文件。
-- 复现命令：
-
-```bash
-uv run casetrace evaluate --method bm25 --output results/dev-v2-bm25-m3-02.json
-uv run casetrace evaluate --method embedding --output results/dev-v2-embedding-m3-02.json
-```
+- 复现命令与比较边界见 [results README](README.md#复现与比较)。

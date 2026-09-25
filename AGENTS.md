@@ -21,35 +21,9 @@ Explain unfamiliar concepts when relevant, without over-explaining familiar mate
 
 ## Project Boundaries
 
-CaseTrace is a **Retrieval + Evaluation + Grounded Answer system for historical semiconductor packaging quality cases**, built for learning and job portfolio demonstration.
+CaseTrace is a **Retrieval + Evaluation + Grounded Answer system for historical semiconductor packaging quality cases**, built for learning and job portfolio demonstration. Keep semiconductor packaging as the application context, not the main engineering objective; the system does not determine the current incident's final Root Cause.
 
-V1 delivery order:
-
-```text
-Frozen Data Foundation v1
-      → Case Documents / BM25
-      → User-confirmed Ground Truth / CLI Evaluation / Error Analysis
-      → Embedding / Hybrid / Rerank experiments
-      → Grounded Answer
-      → PostgreSQL / FastAPI
-      → Docker / Simple Web Demo / Reproducible Results / README
-```
-
-BM25, Embedding, Hybrid, and Rerank are all mandatory V1 experiments on the same versioned benchmark. Rerank must be evaluated but need not be deployed; select the final combination from observed results.
-
-PostgreSQL, FastAPI, Docker, a simple Web Demo, CLI Evaluation, reproducible experiment results, and README are mandatory V1 deliverables. Database and service integration follow retrieval evaluation and Grounded Answer; never promote them back into prerequisites.
-
-Grounded Answer covers relevant historical cases, grounded relevance reasons, historical causes, historical checks/results, sources, and missing information. Reuse existing structured content first; complex Cause / Checkpoint extraction is deferred.
-
-LangChain may serve the LLM application layer when useful. Consider LangGraph only for a concrete multi-step workflow such as query rewriting, branching, or retries. Do not rewrite Retrieval Core merely to adopt a framework.
-
-React / TypeScript, Kubernetes, complex CI/CD, public deployment, and a full Ingestion Platform are optional, not V1 acceptance requirements.
-
-The system supports investigation; it does **not** determine the current incident's final Root Cause.
-
-Keep semiconductor packaging as the application context rather than the main engineering objective.
-
-Do not silently expand V1 into major out-of-scope directions such as Root Cause prediction, autonomous investigation, GraphRAG / Knowledge Graph, fine-tuning, formal causal inference, computer vision, or enterprise-scale infrastructure.
+For delivery order, mandatory V1 outputs, framework choices, optional work and exclusions, use [Current Plan §§1–2](docs/project/current-plan.md#2-已确认的范围). Keep database/service integration after retrieval evaluation and Grounded Answer; scope changes require the user's decision rather than restoring superseded plans.
 
 ## Source of Truth
 
@@ -65,7 +39,7 @@ Repository responsibilities:
 * `data/reference/` — domain/reference data;
 * `src/casetrace/` — runtime implementation;
 * `tests/` — software tests;
-* `docs/legacy/` — historical snapshots, not active requirements or instructions. Do not read archived Stage 1–7 by default or restore their scope from a search result.
+* Superseded planning and execution history is recoverable from Git; it is not an active requirement or instruction.
 
 For data models, validators, or dataset logic, read the relevant `docs/data/` sources first.
 
@@ -81,13 +55,7 @@ After acceptance, Codex updates Current Plan's status and next deliverable. Keep
 
 ## Data Foundation v1 Freeze
 
-The user has accepted the existing Schema, dataclasses, CR/GR, Validator, and reference data as **complete and frozen for V1**. No additional data-foundation work is a prerequisite for Retrieval Evaluation.
-
-* Keep existing definitions, implementations, and useful tests. Known coverage gaps do not create a backlog to clear before retrieval.
-* Only make foundation fixes that affect execution, evaluation credibility, data leakage, or source traceability.
-* Freeze does not certify unimplemented semantic checks or imply PostgreSQL already exists. Later persistence implements the frozen model without reopening data design.
-* Do not silently weaken confirmed business rules; explain a necessary rule change and obtain the user's decision in context.
-* Keep query/qrels/split metadata outside the historical Case model. Do not reintroduce a Scenario entity or infer retrieval relevance from CaseGroup membership.
+Follow [Current Plan §3](docs/project/current-plan.md#3-data-foundation-v1-冻结) for the frozen foundation and permitted fixes, and the linked `docs/data/` sources for business rules. Preserve existing definitions, implementations and useful tests. Coverage gaps do not create prerequisite work; a necessary business-rule change requires the user's decision and an update to its authoritative source.
 
 ## Working Style
 
@@ -102,26 +70,15 @@ needs enough consistency to support meaningful cases and credible Ground Truth.
 * Codex owns the main plan, task breakdown, plan packages, and acceptance. It also handles complex design and difficult debugging, including necessary fixes and verification, then returns the teaching context to Cline.
 * Cline implements the assigned package, self-tests, fixes routine errors, and teaches. Carry out authorized, reversible work directly; report scope changes and blockers instead of expanding the task.
 * Work toward one runnable, reviewable deliverable at a time. Keep explanations tied to the current task.
-* Start with the existing 6 Cases × 3 Queries. The agent prepares data and annotation drafts; the user finally confirms Ground Truth. Focus review on judgments that affect evaluation, not exhaustive domain validation.
+* Use the confirmed benchmark and the active package’s expansion scope. The agent prepares data and annotation drafts; the user finally confirms Ground Truth. Focus review on judgments that affect evaluation, not exhaustive domain validation.
 * Preserve point-in-time correctness, source traceability, and Development / Locked Test separation throughout.
 * Add domain detail only when its absence would affect the current demo or evaluation credibility. Keep existing frozen rules in force unless explicitly revised.
 * Prepare bounded handoffs for repetitive work when useful, including inputs, output format, and acceptance criteria. The user chooses when to delegate to another agent; do not launch agents automatically.
 * Keep planning concise. Produce detailed reports only when requested.
 
-### M2 Stage Workflow — User-Confirmed Override
-
-For the remainder of M2, this section overrides the per-delivery Codex handoff and approval timing below. The user approved this workflow on 2026-09-20.
-
-* Cline owns the remaining implementation, self-testing, debugging, and teaching within the [M2 completion package](docs/project/tasks/m2-completion.md). Use this one package throughout M2; do not require a new Codex plan or acceptance for each function or feature.
-* Work through one functional delivery at a time. Within it, keep the existing small coding and teaching steps. After explaining and verifying a feature, wait for the user's confirmation, record it, then proceed directly to the next planned feature with Cline. Confirmation advances learning and work; it is not Codex acceptance.
-* Cline may maintain observed implementation status, teaching feedback, and the next feature in Current Plan and practical-todo, explicitly distinguishing self-tested work from accepted work. Record per-feature changes and evidence in the completion package's Cline Report.
-* Handle routine and difficult implementation problems within Cline, recording failed hypotheses and preserving evidence. A scope change, confirmed business-rule conflict, or missing decision goes to the user. Do not automatically hand work to Codex after a function, a cross-module issue, or a fixed number of repair attempts; hand off early only when the user requests it. Preserve the existing Git, data, and source-traceability guardrails.
-* Retain the stage baseline and add snapshots before modifying newly involved files. Cline self-review and user confirmations do not replace the final Codex review.
-* When all planned M2 functionality, checks, results, error analysis, and teaching are delivered, Cline assembles the final report and marks it ready for Codex review. Codex then reviews M2 as a whole, including the pending nDCG delivery, along Spec and Standards. Until that review, record M2 as delivered/self-tested pending review, or accurately report remaining blockers. Stop at M2; subsequent milestones require a new plan.
-
 ### M3 Delivery Workflow — User-Confirmed Override
 
-For M3, apply the seven deliveries in [Current Plan](docs/project/current-plan.md#5-交付里程碑与完成标准) in their existing order. The user approved this workflow on 2026-09-22; it overrides conflicting default teaching and task-breakdown rules below. The M2 continuous-delivery exception ends with M2.
+For M3, apply the seven deliveries in [Current Plan](docs/project/current-plan.md#5-交付里程碑与完成标准) in their existing order. The user approved this workflow on 2026-09-22; it overrides conflicting default teaching and task-breakdown rules below.
 
 * Codex maintains one package per delivery and the M3 plan in Current Plan. Cline breaks the active package into **at most five subdeliveries**, records their goals, outputs, checks and ownership in its Cline Report, then implements and explains one at a time. Do not split the seven deliveries into new stages or generate a whole delivery's code at once.
 * Reserve a meaningful, bounded piece of code in **every delivery** for the user, including data or reporting deliveries; a relevant test or analysis function is suitable. Cline gives only the goal, interface and necessary hints, then waits for the user's implementation before checking it. Keep that part unwritten, including in proposed patches or complete answer examples, unless the user explicitly asks for implementation help. Record the user's actual contribution and the review result separately from agent work.

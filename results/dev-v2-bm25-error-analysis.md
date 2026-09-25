@@ -136,9 +136,8 @@ C001 → C003 → C004 的实际顺序符合上述阅读判断。这一区别不
 - 本分析**不修改**代码、`qrels`、标签或 BM25 参数，也不用额外权重去"修好"M2；上述所有方向都登记为 M3 的实验输入。
 - 数据规模限制：6 条语料、3 条 Query、单一 BM25 参数，只能支撑开发期错误分析，**不构成生产泛化结论**。
 - 与本次分析无关、但仍未解决：`data/evaluation/dev-v1/qrels.json` 的归档哈希与迁移记录不一致（见 [dev-v2 记录](../data/evaluation/dev-v2/README.md)），本轮未刷新哈希、未改旧文件。
-- 复现方式：`uv run python /tmp/m2-4b-evidence.py`（本次使用的临时只读脚本，未入仓库），或按下面的命令直接从结果文件重算。
+- 复现入口见 [results README](README.md#复现与比较)；以下命令读取已保存的排名。
 
 ```bash
-uv run casetrace evaluate --output /tmp/recheck.json
-python -c "import json;r=json.load(open('results/dev-v2-bm25.json'));[print(q['query_id'],[(i['rank'],i['case_id'],round(i['score'],4),len(i['matched_terms'])) for i in q['ranked']]) for q in r['queries']]"
+uv run python -c "import json;r=json.load(open('results/dev-v2-bm25.json'));[print(q['query_id'],[(i['rank'],i['case_id'],round(i['score'],4),len(i['matched_terms'])) for i in q['ranked']]) for q in r['queries']]"
 ```

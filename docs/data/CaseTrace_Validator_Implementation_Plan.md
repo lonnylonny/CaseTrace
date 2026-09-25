@@ -1,143 +1,37 @@
-
 # Validator — Data Foundation v1 覆盖说明
 
-本文件整理实现职责与顺序，不新增业务规则。规则变更应更新下列权威来源，本清单只维护实现映射：
+Data Foundation v1 已完成并冻结，现有异常站点检查已接入。冻结及修复边界见 [Current Plan](../project/current-plan.md#3-data-foundation-v1-冻结)。本文件记录覆盖限制，不新增规则或补齐待办；业务权威来源为[结构](CaseTrace_Data_Structure_V2_No_Scenario.md)、[CR](CaseTrace_Case_Constraint_Rules_Frozen.md)、[GR](CaseTrace_Case_Generation_Rules_V1.md)。
 
-- [字段、枚举与主数据关系](CaseTrace_Data_Structure_V2_No_Scenario.md)
-- [CR 业务约束](CaseTrace_Case_Constraint_Rules_Frozen.md)
-- [GR 生成限制](CaseTrace_Case_Generation_Rules_V1.md)
+## 当前职责与调用边界
 
-**当前状态：Data Foundation v1 已完成并冻结；2026-09-19 用户确认的异常站点修订已接入。** 冻结范围和开发顺序见 [Current Plan](../project/current-plan.md#3-data-foundation-v1-冻结)。
-保留并复用已有检查，仅修复影响运行、评估可信度、数据泄漏或来源追溯的问题。
-下文未实现项是覆盖范围记录，不是进入检索阶段前必须完成的任务清单；冻结不代表未实现的语义检查已经通过。
+实现见 [validators.py](../../src/casetrace/data/validators.py)；主数据读取见 [reference.py](../../src/casetrace/data/reference.py)。
 
-当前进度：已实现五类对象的本地字段检查及 `validate_records()`；`validate_relations()` 已覆盖 Dataset 内实体 ID 唯一性、引用与归属、按子记录 case_id 检查 Case 最少 Detail/Evidence 数量、Membership 组合唯一性及 Group 成员数量，并调用 `check_detail_consistency()` 检查同批号固定属性和事件重复（CR-08～11），调用 `check_detail_references()` 检查 Product/Failure Mode 引用、Case 客户一致性和异常路线适配（CR-04、05、15、16）。入口自动先做字段检查，并明确报告因前置错误而未执行的阶段。异常站点字段检查覆盖 CR-48；关系入口新增 CR-49 工序引用及产品路线并集、CR-51 同站点分组全组交集检查。CR-50 的调查确认事实仍须语义审查。枚举定义集中在 `src/casetrace/data/constants.py`。`validate_generation()` 已覆盖可确定的 GR 检查：GR-01 每 Case Detail 数量上限、GR-02 每 Detail 异常数量上限、GR-04 Dataset 复用批号数量、GR-06 每 Detail 数量上限；该入口提供完整生成上下文后才能判断的规则（GR-03、07～10）和分布类要求（GR-02 比例、GR-05 时间间隔）尚未实现。完整主数据导入校验和语义审查也尚未实现，当前通过结果不代表这些部分通过。
+| 入口 | 覆盖 |
+|---|---|
+| `validate_records` | 五类实体的类型、必填、枚举与对象内部关系 |
+| `validate_relations` | 字段守门、Dataset 唯一性、引用/归属、Case 子记录与 Group 最少数量、Lot 一致性、事件去重、产品/客户/异常路线、Case 异常工序路线并集与全组公共工序 |
+| `validate_generation` | 字段守门及 GR-01 Detail 上限、GR-02 异常数量上限、GR-04 复用批号、GR-06 数量上限 |
 
-推荐调用顺序是 `validate_relations()` 通过后再调用 `validate_generation()`：两者都做字段守门，但关系、一致性、主数据检查和 GR 检查各自只执行一次。`validate_generation()` 不重复关系与主数据检查，因此不能用来替代 CR 入口。
+先通过 `validate_relations` 再调用 `validate_generation`；后者不重复关系与主数据检查，不能替代 CR 入口。错误返回 `list[str]`，标识规则、对象、字段与原因；不自动修复输入，前置错误导致跳过时明确报告。空列表只说明该入口负责的检查未发现问题。
 
-## 1. 最小代码组织
+关系检查须使用完整 Dataset 和同一主数据构造的映射；单 Case 子集不能证明跨 Case 唯一性、批号一致性或 Group 成员数量。Case 子记录关系以子记录的 case_id 为唯一来源，不维护冗余 ID 列表。
 
-继续使用 dataclass 和标准库，不增加验证框架。先在 validators.py 中按三个入口组织，不按 CR 编号拆成几十个函数：
+## 自动检查不能证明的事项
 
-| 建议入口            | 输入范围                               | 职责                                               |
-| ------------------- | -------------------------------------- | -------------------------------------------------- |
-| validate_records    | 五类实体各自的记录列表                 | 字段类型、必填、枚举、对象内部关系                 |
-| validate_relations  | 完整的五类实体列表及已校验的主数据映射 | 唯一性、引用、归属、最少数量、批号一致性、路线适配 |
-| validate_generation | 已通过确定性 CR 检查的完整生成 Dataset | GR 中可确定执行的额外检查                          |
+| 范围 | 覆盖限制与必要处理 |
+|---|---|
+| 主数据 | 当前读取 demo 所需 Product、Customer、Route、Failure Mode、工序及路线工序子集；完整 BOM、设备、工序顺序等导入检查未覆盖 |
+| 映射校验 | 只检查接口形状、引用和覆盖；不能发现构造字典前已被覆盖的重复记录，也不替代完整主数据导入校验 |
+| 文本语义 | CR-13、26、36、44、50 需语义审阅；CR-27～29、34、43 的非空检查不证明含义合格；CR-37 是复核提示，不是硬错误 |
+| CR-35 | 先取得明确 confirmed/NDF 结案判断，再检查 confirmed 的 related Evidence 及语义支持；不通过自由文本搜“NDF”推定状态，不新增永久字段代替审阅 |
+| 生成限制 | GR-02 比例、GR-05 间隔分布、GR-03、07～10 未完整自动检查；需要生成上下文、候选来源和语义审阅 |
+| 来源核对 | demo 的原候选与 related Evidence 机械核对不证明改写后的原因—证据—措施逻辑，不是通用文本验收器 |
+| 实际调查事实 | 结构 §6 的设备、材料/晶圆批号和参数使用生成上下文与 Evidence.result 核对；异常站点引用合法不代表调查事实已确认 |
 
-每个入口先返回 list[str]；错误格式统一为“规则来源 | 对象类型和 ID（无有效 ID 时用列表下标） | 字段 | 原因”。不自动转换或修复输入。空列表只表示该入口负责的检查未发现错误。
+## 保留的设计边界
 
-仅抽取重复使用的基础检查，例如非空字符串、字符串列表、唯一 ID 建索引。文本类型和必填字段可以按实体列出字段名并用循环检查；日期、数量和条件必填直接写明确分支。避免通用规则引擎、装饰器或动态解析类型注解。
-
-先完成字段检查；存在基础错误时，本轮不执行依赖它们的关系检查。关系检查先排除重复 ID 和无效引用，再执行依赖引用的客户、路线等检查。报告哪些阶段未执行，不能把跳过当作通过。
-
-## 2. 字段和对象内部检查
-
-所有 ID 按字符串处理，不转成整数；必填文本拒绝 None、空串和纯空白。可选文本检查 str 或 None，是否必须填写由条件决定。枚举取值只从结构文档和 CR 获取，不假设存在 stages、checkpoint_types 或 group_types 主数据表。
-
-| 对象               | 检查安排                                                                                            | 来源                                         |
-| ------------------ | --------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| CaseDetail         | 文本字段、date 类型、发现日期关系、严格的正整数数量、发现阶段枚举、异常列表及元素类型/非空/内部重复 | 结构 §2、§5；CR-06、07、11、14、19～24、27 |
-| EvidenceCheckpoint | ID、结果、类型和 relevance；Other 的名称条件                                                        | 结构 §3；CR-32～34                          |
-| Case               | ID、必填和可选文本、非空无重复工序 ID 列表；子记录最少数量交由关系入口检查 | 结构 §2；CR-12、28、29、48 |
-| CaseGroup          | ID、description、类型列表及逐项枚举；包含 other 的说明条件                                          | 结构 §4；CR-42、43、46                      |
-| Membership         | 两个引用 ID 和入组理由                                                                              | 结构 §4；CR-41                              |
-
-实现注意：
-
-- date 字段不接受日期字符串或 datetime；读取原始数据时的解析另行处理。
-- 数量的整数检查排除 bool；CR 入口不加入 GR 的数量上限。
-- 非空检查只能覆盖 CR-27～29、34、43 的机械部分，不能证明文本含义合格。
-- group_type 为多选列表；包含 repeat_case 时仍要安排 CR-44 审查。CR-42 当前未明确列表内部重复是否应报错，不擅自增加这一硬约束。
-
-## 3. 关系与跨记录检查
-
-| 检查组                     | 最小实现思路                                                                                                             | 来源                                |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
-| 实体 ID 与 Membership 身份 | 分别检查 ID 和 (group_id, case_id)；实体索引遇到重复 ID 保留首条并报错，确认唯一后才供关系检查使用                       | CR-03、40                           |
-| 引用与归属                 | Detail/Evidence 按 case_id 查 Case，Membership 查 Case/Group                        | CR-02、03、31、39                   |
-| Case 子记录最少数量          | 按子记录 case_id 收集实际有 Detail/Evidence 的 Case，分别检查每个 Case 至少一个                                      | CR-01、02、30、31 |
-| Group 成员数量             | 按 group_id 收集有效的不同 case_id，再检查最少数量 | CR-38～40 |
-| Case 异常工序 | 有效工序 ID；选项来自 Case 所有 Detail 产品路线工序的并集，不要求每个产品都适用 | CR-49 |
-| 同站点分组 | 引用和工序有效后，检查所有成员的异常工序集合公共交集；管理类型混选不豁免此条件 | CR-51 |
-| Product、客户和异常路线    | 使用 product_id→customer_id、product_id→route、failure_mode_id→适用路线映射；先检查引用，再检查同 Case 客户和路线适配 | CR-04、05、15、16                   |
-| Lot 固定属性               | 按 production_lot 保存首条 Detail，后续记录逐项比较其 product_id、customer_lot、production_time；首条仅用于比较和定位，不作为真值判定 | CR-08～10                           |
-| Detail 事件去重            | 使用 (case_id, production_lot, detection_stage, detection_time, frozenset(abnormal_types)) 作为键                        | CR-11                               |
-
-异常列表内部重复在字段阶段检查，再用 frozenset 实现无序比较；不能先去重再假装原始数据合法。
-
-Case 按修订结构保存结案字段及已确认异常工序，不再保存冗余的 detail_ids 和 evidence_checkpoint_ids。内存模型和数据库均以子记录 case_id 作为唯一关系来源，避免新增、移动子记录时同步两份关系。Case 构造函数因此不再接收这两个列表，已有调用方须同步调整。
-
-关系入口必须拿到完整校验范围。单个 Case 的子集不能判断跨 Case 的 Group 成员数，也不能证明 Dataset 内唯一性或 Lot 一致性。直接使用五份完整实体列表，已移除未使用且容易混淆范围的 CaseBundle，不新增替代容器。
-
-主数据自身的客户归属、BOM、路线工序等导入检查按结构 §1、§5 独立进行；Case validator 使用已验证映射。主数据缺失应报告未完成检查，不能用空映射或跳过来表示通过。
-
-`validate_relations()` 现在要求显式提供下列五个主数据参数；`validate_records()` 的参数不变：
-
-| 参数 | 类型 | 参考数据来源 |
-|---|---|---|
-| product_customers | dict[str, str] | customer_product_map，按 product_id 索引 customer_id |
-| product_routes | dict[str, str] | products 的 product_id → package_route |
-| failure_mode_routes | dict[str, set[str]] | failure_modes 的 failure_mode_id → applicable_package 路线集合 |
-| processes | dict[str, str] | process_master 的 process_id → process 名称 |
-| route_processes | dict[str, set[str]] | package_process_map 的 package_route → process_id 集合 |
-
-映射必须由同一份完整、已校验的主数据构造。`check_reference_maps()` 只检查映射接口形状和两份 Product 映射的覆盖一致性，不能发现构造字典前已被覆盖的重复记录，也不替代客户/路线外键和 BOM 导入校验。Excel 的 applicable_package 使用分号分隔，读取层负责拆分、去除分隔空白并核对路线；ID 保持文本以保留前导零。`reference.py` 读取演示所需的 Product、Customer、Route、Failure Mode、process_master 和 package_process_map 子集，检查必需文本、重复单键/组合键、客户归属覆盖、路线与工序引用、工序名称一致性及路线工序覆盖；不按 sequence_no 或 relation_type 排除来料、辅助或可选工序。完整 BOM、设备及工序顺序等导入检查仍未覆盖。自动测试使用人工小映射及最小人工 Excel。
-
-`check_process_maps()` 检查新增映射形状、非空集合、工序引用及产品路线覆盖；原三份映射继续由 `check_reference_maps()` 检查。产品引用或主数据无效时明确报告异常工序检查未执行；Case 工序非法时不把无效 ID 交集作为同站点依据，并报告相关分组检查未执行。Case 新字段和两份新增映射无默认值，旧 JSON 缺字段时报错，不能静默填充候选工序。
-
-## 4. CR 中无需新增拒绝分支的边界
-
-| 规则          | 实现处理                                                                 |
-| ------------- | ------------------------------------------------------------------------ |
-| CR-17、18、22 | 保留多异常和多工序范围；不要求 Case 工序与 Failure Mode 的 applicable_process 匹配，不强制同批发现日期相同 |
-| CR-24、25     | 数量必填已由字段校验覆盖，单个数量字段和固定单位由结构表达               |
-| CR-45～47     | 不因跨客户/产品或纯管理目的拒绝 Group；混选 same_abnormal_process 时仍检查 CR-51 |
-
-## 5. 生成限制单独检查
-
-当前状态：GR-01（仅上限）、GR-02（仅异常数量上限）、GR-04、GR-06 已实现，位置为 `validators.py` 的 `check_case_detail_count()`、`check_detail_generation_limits()`、`check_production_lot_reuse()`，由 `validate_generation()` 汇总；GR-01、GR-02、GR-06 的下限分别由 CR-01、CR-14、CR-23 覆盖，不重复实现。GR-02 比例、GR-05 间隔分布、GR-03 和 GR-07～GR-10 需要生成上下文或分布统计，尚未实现。
-
-| 规则      | 处理方式                                                                                                |
-| --------- | ------------------------------------------------------------------------------------------------------- |
-| GR-01     | 检查 Detail 数量；客户和 BOM 固定归属复用已有检查。“少量多 Product”未给阈值，不补设比例               |
-| GR-02     | 复用异常引用和路线检查；生成器按单/双异常采样。分布输出统计，“约 90%/10%”未给容差，不设精确比例硬门槛 |
-| GR-03     | 可取得结构化事实时核对路线/BOM；组合合理性进入语义审查                                                  |
-| GR-04     | 在完整 Dataset 统计复用 production_lot 的种类数和各自出现次数；批号固定属性复用 CR                      |
-| GR-05     | 日期先通过 CR；输出间隔分布，不新增“超过半年非法”条件                                                 |
-| GR-06     | 在正整数基础上检查上限；不对同批 Detail 数量求和作为去重数量或批次数量                                  |
-| GR-07     | 复用 Evidence 结构检查；相关实际事实的覆盖需生成上下文和语义审查                                        |
-| GR-08、09 | 使用生成时保留的候选来源核对；改写后的概念一致性需要语义审查，不能仅做文本精确匹配                      |
-| GR-10     | 生成流程保留候选、事实与审查信息；仅靠最终 dataclass 无法证明生成顺序和来源                             |
-
-## 6. 语义审查与未完成事项
-
-CR-13、26、36、44、50 单列语义审查；CR-27～29、34、43 除结构检查外还包含文本含义要求。CR-37 只产生复核提示，不作为硬错误。
-
-演示入口使用草稿中保留的来源信息，核对所选 Failure Mode 的原始原因／措施候选，并对标记 confirmed 的草稿检查至少一个 related Evidence。这只是固定草稿的机械核对，不证明文本语义支持，也不是通用的改写验收器。
-
-CR-35 分两步：先取得明确的 confirmed/NDF 结案判定，再对 confirmed Case 检查是否有 related Evidence，并审查支持关系。当前 root_cause 只有自由文本，不能通过搜索“NDF”几个字符可靠判定，也不能把 related 标签当成语义支持的证明。结案判定及候选来源可由生成上下文或人工审查提供，不擅自增加永久字段。没有这些信息时标记待审查。
-
-B07 的实际设备、材料和批号等事实使用生成上下文核对，并审查 Evidence.result 是否准确表达；不从任意自由文本做简单提取后声称完整验证。
-
-## 7. 历史实现与验证顺序（不作为当前任务清单）
-
-1. 实现字段入口：合法输入、纯空白、错误类型、bool 数量、日期相同/倒置、Other 条件、异常列表重复。
-2. 实现关系入口：重复 ID、悬空引用、子记录缺失/移动归属后的最少数量、Group 不同成员数、客户混合、路线不适配、Lot 属性冲突、异常顺序交换后的事件重复。
-3. 实现生成入口：数量边界、Detail 数量、复用批号统计；CR 合法但超出 GR 范围的输入应只在 GR 阶段失败。（已完成：GR-01 上限、GR-02 异常数量上限、GR-04、GR-06，测试见 `tests/data/test_generation.py`；分布统计尚未实现。）
-4. 接入语义审查信息后再报告完整审查结果。在此之前只能报告确定性检查的覆盖范围。
-
-测试使用独立构造的小样例，不依赖真实主数据文件，也不使用 Locked Test 调整规则。涉及主数据时提供最小人工映射。
-
-## 8. 样例支持与延期的生成能力
-
-冻结资料已提供客户归属、产品路线、固定 BOM、Failure Mode 原因/措施候选及设备知识，权威来源仍是 `data/reference/` 的 Excel 和本目录的结构、CR、GR 文档。当前已有模型、确定性校验、主数据子集读取及 `casetrace demo` 本地 BM25 演示。`data/dev/demo.json` 保存 6 条固定的开发草稿、来源和查询；草稿待人工审阅，尚无自动批量生成器或完整业务验收。
-
-以下为完整自动生成能力的未实现项，当前暂缓，不作为小样例检索与评估的前置任务：
-
-1. 完整主数据导入校验：演示已读取必要子集并保留文本 ID、检查客户归属与路线引用；工序 ID 与路线关联已为异常站点接入；BOM、设备及工序顺序等剩余完整校验按实际需要补齐。
-2. 可复现的 Python 生成流程：按 GR 确定结构化事实（含异常工序及调查依据）、复用批号及固定属性、原因/措施候选、B07 调查事实，并保留随机种子、来源与生成上下文。主数据中的候选知识不等于可直接采样的集合，须结合路线、固定 BOM 和已有生成边界筛选。
-3. 文本生成和验收：根据既定事实组织文本，接入 confirmed/NDF 判定、原因—证据—措施及来源审查，组合 CR、GR 与待审查状态；不能把两个入口均返回空列表当成完整验收。
-
-“少量”“通常半年内”等尚未量化的口径留给生成配置及分布报告，不擅自增加硬性拒绝阈值。
-当前复用少量开发样例，由助手处理明显矛盾，不要求用户逐条验收全部领域事实。Query–Case 标签由 Agent 起草，正式 Ground Truth 必须经用户最终确认。样例运行状态以 Current Plan 为准；只有影响运行、评估可信度、数据泄漏或来源追溯的问题才允许对冻结基础做必要修复，不因扩充数据自动重开上述工作。
+- CR 与 GR 分开；date 不接受 datetime，严格整数排除 bool，ID 保持文本及前导零。原始文件解析不由 Validator 自动转换。
+- 不把未规定的阈值变成硬规则：“少量”、约 90%/10%、通常半年内仍按既有生成口径处理；不凭 GR-06 把同批事件数量相加当作去重数量。
+- `group_type` 的内部重复未被 CR-42 明确禁止，不擅自增加拒绝条件；混选 same_abnormal_process 仍须满足全组交集。
+- 工序范围使用路线并集，包含 incoming / optional / auxiliary，不以 sequence_no 过滤；Failure Mode 的 applicable_process 仅为候选知识。缺异常工序不能静默填充。
+- 冻结不认证未实施检查。完整导入、通用生成器与语义 Validator 继续延期；扩充小批样例时只补当前可信度所需事实、来源和人工审阅，不重开基础工程。

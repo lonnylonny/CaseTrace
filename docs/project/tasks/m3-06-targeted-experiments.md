@@ -30,33 +30,12 @@
 
 ## Handoff Baseline
 
-- 本包尚无实施基线。前置包验收后，由 Codex 记录当时 HEAD、tracked / untracked 状态及相关文件快照，再激活本包；不能把 M3-01 基线当作本包起点。
-- 本轮仅建立计划文本；准备期快照位于 `/tmp/casetrace-m3-packages-ozbqut0a/preparation`，其中本包原先不存在。
-- 激活时补齐：起始 HEAD、绝对快照目录、已有改动清单、缺失目标、已验收依赖的实际接口/数据/模型配置。新涉及文件由 Cline 编辑前追加快照。
+尚未激活。前包 accepted 后由 Codex 记录当时 HEAD、tracked/untracked 改动、相关快照与实际依赖，再交接实施；准备期状态不作为实施基线。
 
 ## Cline Report
 
-状态：未开始。由 Cline 接手后填写；下表按实际工作量填写 1–5 项，不增加新的 M3 小交付。
-
-| 子交付 | 目标与产物 | Cline / 用户负责的代码 | 检查与教学停止点 | 实际状态 |
-|---|---|---|---|---|
-| 待 Cline 拆分 | 待填写 | 明确预留用户代码位置 | 待填写 | 未开始 |
-
-- **完成内容：** 待填写（文件、行为及范围偏差）。
-- **关键实现：** 待填写（输入输出、调用关系与必要取舍）。
-- **用户亲手代码与检查：** 待填写（实际路径/接口、用户提交内容、检查证据；与 Agent 实现分开）。
-- **测试结果：** 待填写（实际命令、通过/失败结果、未跑检查及理由；正式模型运行与替身测试分开）。
-- **遗留问题：** 待填写（失败证据、已试假设、阻塞/非阻塞判断）。
-- **教学状态：** 待填写（已讲、用户反馈、待讲；不能把代码通过当作用户理解）。
-- **基线核对及接手间变化：** 待填写。
-- **下一步入口：** 当前先完成本包；回报 ready for acceptance 后交 Codex。验收后的目标为 [M3-07](m3-07-selection.md)（须本包 Codex accepted 后进入）。
+未开始。激活后按 [AGENTS 的 M3 工作流](../../../AGENTS.md#m3-delivery-workflow--user-confirmed-override)记录最多 5 个子交付、用户代码、实际验证、教学与未结项。
 
 ## Codex Acceptance
 
-- **Spec：** 未审阅。
-- **Standards：** 未审阅。
-- **独立验证证据与比较限制：** 未执行；实际完成时填写。
-- **用户代码/教学记录核对：** 未审阅；不替代 Ground Truth 确认。
-- **Verdict：** 待验收（accepted / needs changes / blocked）。
-- **Current Plan 刷新及下一包基线：** 未执行；仅 accepted 后激活下一入口。
-
+Spec / Standards 均未审阅，无验证结论，Verdict 待验收。仅 accepted 后进入 [M3-07](m3-07-selection.md)。
