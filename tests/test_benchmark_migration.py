@@ -6,7 +6,21 @@ import json
 from pathlib import Path
 
 
-def test_v2_preserves_old_snapshot_queries_and_only_confirmed_label_correction():
+def test_v1_surviving_archive_differs_from_the_recorded_migration_source():
+    """保留已知溯源缺口；测试通过不表示迁移时的 v1 原件已找回。"""
+    root = Path(__file__).resolve().parents[1]
+    old_path = root / "data/evaluation/dev-v1/qrels.json"
+    new = json.loads((root / "data/evaluation/dev-v2/qrels.json").read_bytes())
+
+    surviving_hash = hashlib.sha256(old_path.read_bytes()).hexdigest()
+    recorded_hash = new["previous_qrels"]["sha256"]
+    assert new["previous_qrels"]["path"] == "data/evaluation/dev-v1/qrels.json"
+    assert surviving_hash == "e92e5bb1f84d0e69b3a05753664b57b689bf330059c6a11cf1ccd4194e9fe933"
+    assert recorded_hash == "c0175226433332e1ac592e0850248fe7bd4dbde9173d3c8f0773c2d1602a245e"
+    assert surviving_hash != recorded_hash
+
+
+def test_v2_preserves_snapshot_queries_and_confirmed_labels_against_surviving_v1():
     root = Path(__file__).resolve().parents[1]
     old_path = root / "data/evaluation/dev-v1/qrels.json"
     old = json.loads(old_path.read_bytes())
@@ -16,8 +30,6 @@ def test_v2_preserves_old_snapshot_queries_and_only_confirmed_label_correction()
     current_data = json.loads((root / new["sources"]["dataset"]["path"]).read_bytes())
 
     assert hashlib.sha256(snapshot.read_bytes()).hexdigest() == old["sources"]["dataset"]["sha256"]
-    assert hashlib.sha256(old_path.read_bytes()).hexdigest() == "c0175226433332e1ac592e0850248fe7bd4dbde9173d3c8f0773c2d1602a245e"
-    assert new["previous_qrels"]["sha256"] == hashlib.sha256(old_path.read_bytes()).hexdigest()
     for source in new["sources"].values():
         assert hashlib.sha256((root / source["path"]).read_bytes()).hexdigest() == source["sha256"]
     assert current_data["queries"] == previous_data["queries"]
@@ -28,8 +40,17 @@ def test_v2_preserves_old_snapshot_queries_and_only_confirmed_label_correction()
     old_by_pair = {(row["query_id"], row["case_id"]): row for row in old["judgments"]}
     new_by_pair = {(row["query_id"], row["case_id"]): row for row in new["judgments"]}
     assert new_by_pair.keys() == old_by_pair.keys()
-    changed = [pair for pair in old_by_pair if old_by_pair[pair] != new_by_pair[pair]]
-    assert changed == [("Q001", "C002")]
+    label_changes = {
+        pair: (old_by_pair[pair]["relevance"], new_by_pair[pair]["relevance"])
+        for pair in old_by_pair
+        if old_by_pair[pair]["relevance"] != new_by_pair[pair]["relevance"]
+    }
+    assert label_changes == {("Q001", "C002"): (0, 1)}
+    rationale_changes = {
+        pair for pair in old_by_pair
+        if old_by_pair[pair]["rationale"] != new_by_pair[pair]["rationale"]
+    }
+    assert rationale_changes == {("Q001", "C002"), ("Q001", "C004"), ("Q003", "C006")}
     assert new_by_pair[("Q001", "C002")]["relevance"] == 1
     assert [sum(row["relevance"] for row in new["judgments"] if row["query_id"] == query)
             for query in ("Q001", "Q002", "Q003")] == [4, 1, 1]

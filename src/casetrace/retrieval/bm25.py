@@ -52,10 +52,14 @@ class BM25Retriever:
             "note": "保留 BM25 实际返回的全部条目，不补分数、不补名次；分数不是相关概率。",
         }
 
+    def query_tokens(self, query: str) -> list[str]:
+        """Query 侧的词项；子类可覆盖做实验性过滤，索引与历史文本不受影响。"""
+        return tokenize(query)
+
     def search(self, query: str, *, top_k: int = 3) -> list[SearchHit]:
         if type(top_k) is not int or top_k < 1:
             raise ValueError("top_k 必须是正整数")
-        tokens = tokenize(query)
+        tokens = self.query_tokens(query)
         if not tokens:
             return []
         scores = self.index.get_scores(tokens)

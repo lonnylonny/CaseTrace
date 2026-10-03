@@ -11,6 +11,7 @@ write_report 负责把报告落盘，先写临时文件再原子替换，失败�
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
+from functools import partial
 from importlib.metadata import PackageNotFoundError, version
 import hashlib
 import json
@@ -21,6 +22,7 @@ import tempfile
 from pathlib import Path
 from time import perf_counter
 
+from casetrace.data.reference import ReferenceData
 from casetrace.demo import build_documents
 from casetrace.evaluation.benchmark import (
     PROJECT_ROOT,
@@ -37,6 +39,9 @@ from casetrace.evaluation.metrics import (
 from casetrace.retrieval.base import Retriever
 from casetrace.retrieval.bm25 import BM25Retriever
 from casetrace.retrieval.embedding import EmbeddingRetriever
+from casetrace.retrieval.hybrid import HybridRetriever
+from casetrace.retrieval.query_filter import FilteredBM25Retriever
+from casetrace.retrieval.rerank import RerankRetriever
 
 # M2 固定的评估口径：逐 Query 报告 K=1/3/4 的 Recall、Precision、nDCG，RR 只用 K=4。
 METRIC_KS = (1, 3, 4)
@@ -100,6 +105,9 @@ REPRODUCIBILITY_SOURCE_FILES = (
     "src/casetrace/retrieval/base.py",
     "src/casetrace/retrieval/bm25.py",
     "src/casetrace/retrieval/embedding.py",
+    "src/casetrace/retrieval/hybrid.py",
+    "src/casetrace/retrieval/query_filter.py",
+    "src/casetrace/retrieval/rerank.py",
     "pyproject.toml",
     "uv.lock",
 )
@@ -160,7 +168,46 @@ DEFAULT_METHOD = "bm25"
 RETRIEVER_FACTORIES: dict[str, Callable[[dict[str, str]], Retriever]] = {
     "bm25": BM25Retriever,
     "embedding": EmbeddingRetriever,
+    "hybrid": HybridRetriever,
+    "rerank": RerankRetriever,
 }
+
+# M3-06 针对性实验变体：与 bm25 共用同一索引，只在 Query 侧过滤词项。
+# 与生产注册表分开登记：它们不是交付方法，是否采纳由 M3-07 按证据决定，
+# 因此不进入“注册表只登记真实方法”的生产守卫；build_retriever 两个表都能解析。
+EXPERIMENTAL_RETRIEVER_FACTORIES: dict[str, Callable[[dict[str, str]], Retriever]] = {
+    "bm25_drop_negation": partial(FilteredBM25Retriever, drop_negation_clauses=True),
+    "bm25_drop_labels": partial(FilteredBM25Retriever, drop_label_terms=True),
+    "bm25_drop_negation_labels": partial(
+        FilteredBM25Retriever, drop_negation_clauses=True, drop_label_terms=True,
+    ),
+}
+
+
+def resolve_retriever_factory(method: str) -> Callable[[dict[str, str]], Retriever]:
+    """按方法名取构造函数；未知方法明确报错，不回退到默认方法。
+
+    生产表与 M3-06 实验表都能解析，与 build_retriever 用的是同一份注册表。
+    """
+    factory = RETRIEVER_FACTORIES.get(method) or EXPERIMENTAL_RETRIEVER_FACTORIES.get(method)
+    if factory is None:
+        available = "、".join(sorted(RETRIEVER_FACTORIES | EXPERIMENTAL_RETRIEVER_FACTORIES))
+        raise ValueError(f"未实现的检索方法：{method!r}；当前可用：{available}")
+    return factory
+
+
+def build_retriever_from_records(
+    records: dict, reference: ReferenceData, *, method: str = DEFAULT_METHOD,
+) -> Retriever:
+    """不经过 qrels 的最小构造入口：同样的历史文本与语料一致性检查。"""
+
+    documents = build_documents(records, reference)
+    case_ids = sorted(case.case_id for case in records["cases"])
+    if sorted(documents) != case_ids:
+        raise ValueError(
+            f"检索语料与已校验语料不一致：文档 {sorted(documents)}，语料 {case_ids}"
+        )
+    return resolve_retriever_factory(method)(documents)
 
 
 def build_retriever(benchmark: Benchmark, *, method: str = DEFAULT_METHOD) -> Retriever:
@@ -169,16 +216,8 @@ def build_retriever(benchmark: Benchmark, *, method: str = DEFAULT_METHOD) -> Re
     文档只来自历史记录，标签、理由与审查元数据不参与；未知方法在这里明确报错，
     不回退到默认方法，调用方不会拿到"以为是自己选的方法"的结果。
     """
-    factory = RETRIEVER_FACTORIES.get(method)
-    if factory is None:
-        available = "、".join(sorted(RETRIEVER_FACTORIES))
-        raise ValueError(f"未实现的检索方法：{method!r}；当前可用：{available}")
-    documents = build_documents(benchmark.records, benchmark.reference)
-    if sorted(documents) != benchmark.case_ids:
-        raise ValueError(
-            f"检索语料与已校验语料不一致：文档 {sorted(documents)}，语料 {benchmark.case_ids}"
-        )
-    return factory(documents)
+
+    return build_retriever_from_records(benchmark.records, benchmark.reference, method=method)
 
 
 def rank_query(
@@ -369,6 +408,30 @@ def _run_details(retriever: Retriever) -> dict | None:
     return details if isinstance(details, dict) else None
 
 
+def _trace_key(retriever: Retriever) -> str:
+    """方法可选指定自己的追溯字段名；缺省沿用 hybrid 的 fusion_trace，便于旧结果对照。"""
+    key = getattr(retriever, "trace_key", None)
+    return key if isinstance(key, str) and key else "fusion_trace"
+
+
+def _query_traces(retriever: Retriever, queries: list[BenchmarkQuery]) -> list[dict] | None:
+    """方法可选提供的逐 Query 追溯（各路名次、融合分数、重排名次等）。
+
+    只在方法提供 query_traces() 时记录，按调用顺序与 queries 对齐并补 query_id，
+    写入报告顶层（字段名由 _trace_key 决定），不混进排名、分数与指标的可比面板。
+    """
+    provider = getattr(retriever, "query_traces", None)
+    if provider is None:
+        return None
+    traces = provider()
+    if not isinstance(traces, list):
+        return None
+    return [
+        {**trace, "query_id": query.query_id}
+        for query, trace in zip(queries, traces)
+    ]
+
+
 def _timing_document(
     index_build_seconds: float,
     per_query_seconds: list[tuple[str, float]],
@@ -459,7 +522,7 @@ def run_evaluation(
         per_query_seconds.append((query.query_id, perf_counter() - query_started))
     summary = aggregate(evaluations)
     total_seconds = perf_counter() - started
-    return {
+    report = {
         "schema_version": RESULT_SCHEMA_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "benchmark": _benchmark_document(benchmark),
@@ -472,6 +535,10 @@ def run_evaluation(
         "summary": asdict(summary),
         "reproducibility": _reproducibility_document(),
     }
+    traces = _query_traces(retriever, benchmark.queries)
+    if traces is not None:
+        report[_trace_key(retriever)] = traces
+    return report
 
 
 def write_report(report: dict, output_path: Path) -> Path:

@@ -4,9 +4,11 @@
 def main() -> None:
     """命令行入口；检索逻辑保留在模块内，后续 API 可直接复用。"""
     import argparse
+    from datetime import date
     import json
     from pathlib import Path
 
+    from casetrace.answer.model import DEFAULT_MODEL
     from casetrace.demo import run_demo
 
     parser = argparse.ArgumentParser(description="CaseTrace 历史案例检索")
@@ -25,10 +27,31 @@ def main() -> None:
                           help="结果 JSON 的保存路径；先写临时文件再原子替换")
     evaluate.add_argument("--method", default="bm25",
                           help="检索方法名；默认 bm25，可用方法以 runner 的 RETRIEVER_FACTORIES 为准")
+    answer = commands.add_parser("answer", help="按固定 R3 检索并用真实模型生成历史参考回答")
+    answer.add_argument("--query", help="当前已知信息原文；与 --known-at 一起给出")
+    answer.add_argument("--known-at", type=date.fromisoformat,
+                        help="当前已知信息的时点 YYYY-MM-DD；不允许省略或从历史数据推断")
+    answer.add_argument("--query-id", help="改用语料中的示例 Query（如 Q005），须显式指定")
+    answer.add_argument("--data", type=Path, default=Path("data/dev/demo-v3.json"),
+                        help="dev-v3 语料；默认解析示例 Query 与快照时点")
+    answer.add_argument("--reference", type=Path, default=Path(
+        "data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx"))
+    answer.add_argument("--top-k", type=int, default=4,
+                        help="读取的候选条数；默认 4，候选不是已确认相关案例")
+    answer.add_argument("--model", default=DEFAULT_MODEL,
+                        help="请求使用的模型别名；实际身份以响应返回的 model 为准")
+    answer.add_argument("--output", type=Path, help="运行记录 JSON 的保存路径；可选")
+    answer.add_argument("--json", action="store_true", help="把运行记录打印成 JSON")
+    answer.add_argument("--check-only", action="store_true",
+                        help="只检查输入与证据上下文，不调用模型、不写运行记录")
     args = parser.parse_args()
     if args.command is None:
         parser.print_help()
         return
+    if args.command == "answer":
+        from casetrace.answer.cli import run_answer_command
+
+        return run_answer_command(args)
     if args.command == "evaluate":
         from casetrace.evaluation.runner import run_evaluation, write_report
 

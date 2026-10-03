@@ -14,7 +14,7 @@
 
 ## Handoff Baseline
 
-已验收，无活动基线；原始快照、修正过程和接手差异通过 Git 查阅。未验收的 M3-03 使用[自己的实施基线](m3-03-expand-mock-datasets.md#handoff-baseline)。
+已验收，无活动基线；原始快照、修正过程和接手差异通过 Git 查阅。后续包的历史基线分别记录于其交付摘要。
 
 ## Cline Report
 

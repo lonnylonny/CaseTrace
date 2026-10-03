@@ -1,0 +1,506 @@
+{
+  "record_version": "m4-03-answer-run-1",
+  "status": "ok",
+  "query": {
+    "query_id": "Q002",
+    "text": "声学扫描发现塑封空洞 molding void，涉及客户 CUS_001、产品 PROD_013、生产批 DEV_PL_012、客户批 DEV_CL_012，需要查找历史调查记录。",
+    "known_at": "2026-09-15"
+  },
+  "snapshot": {
+    "snapshot_id": "dev-v3-2026-09-15",
+    "known_at": "2026-09-15",
+    "basis": "data/dev/demo-v3.json 的九条 Case 被设定为在 2026-09-15 之前已结案且完整可用，沿用 dev-v2 的模拟快照时点；这是模拟约定，不代表已实现通用结案／可用时间过滤。",
+    "dataset_sha256": "0a29041a4e6ed11a5b31ff85a74fa8bed9b79afeb1d35158ea9430f6e5af8f0b",
+    "reference_sha256": "f5001bddd3dff43342a2569ceda836ddb4f5c0caca942c1c4d043d99a9131c85"
+  },
+  "corpus": {
+    "dataset_path": "/Users/a1-6/Projects/casetrace/data/dev/demo-v3.json",
+    "reference_path": "/Users/a1-6/Projects/casetrace/data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx",
+    "case_count": 9,
+    "review_status": "draft_pending_human_review",
+    "source_cases_are_draft": true
+  },
+  "retrieval": {
+    "requested_method": "bm25_drop_negation_labels",
+    "top_k": 4,
+    "description": {
+      "method": "bm25_filtered_query_terms",
+      "implementation": "rank_bm25.BM25Okapi",
+      "tokenizer": "casetrace.retrieval.bm25.tokenize",
+      "parameters": {
+        "k1": 1.5,
+        "b": 0.75,
+        "epsilon": 0.25
+      },
+      "note": "M3-06 针对性实验变体：索引与历史文本与 bm25 相同，只过滤 Query 词项；不是生产检索方案，是否采纳由 M3-07 按证据决定。分数不是相关概率。",
+      "query_filter": {
+        "drop_negation_clauses": true,
+        "drop_label_terms": true,
+        "negation_markers": [
+          "排除",
+          "不",
+          "未",
+          "无",
+          "非"
+        ],
+        "label_tokens": [
+          "产品",
+          "产批",
+          "及客",
+          "客户",
+          "户批",
+          "涉及",
+          "生产"
+        ],
+        "id_pattern": "(?:prod|cus|dev)_[a-z0-9_]+"
+      }
+    }
+  },
+  "ranking": [
+    {
+      "rank": 1,
+      "case_id": "C005",
+      "score": 15.848967679902792,
+      "matched_terms": [
+        "molding",
+        "void",
+        "发现",
+        "塑封",
+        "声学",
+        "学扫",
+        "封空",
+        "扫描",
+        "描发",
+        "现塑",
+        "空洞"
+      ]
+    },
+    {
+      "rank": 2,
+      "case_id": "C008",
+      "score": 13.84643164433057,
+      "matched_terms": [
+        "molding",
+        "void",
+        "发现",
+        "塑封",
+        "声学",
+        "学扫",
+        "封空",
+        "扫描",
+        "描发",
+        "空洞",
+        "记录"
+      ]
+    },
+    {
+      "rank": 3,
+      "case_id": "C002",
+      "score": 2.08488158753281,
+      "matched_terms": [
+        "发现",
+        "记录",
+        "调查"
+      ]
+    },
+    {
+      "rank": 4,
+      "case_id": "C006",
+      "score": 0.711342975437686,
+      "matched_terms": [
+        "发现",
+        "记录"
+      ]
+    }
+  ],
+  "context": {
+    "query": "声学扫描发现塑封空洞 molding void，涉及客户 CUS_001、产品 PROD_013、生产批 DEV_PL_012、客户批 DEV_CL_012，需要查找历史调查记录。",
+    "cases": [
+      {
+        "rank": 1,
+        "case_id": "C005",
+        "case": {
+          "case_id": "C005",
+          "abnormal_description": "OQC 声学扫描发现塑封空洞 molding void，空洞集中在封装边缘区域。",
+          "root_cause": "结案确认：mold vent/vacuum不足。",
+          "corrective_action": "改善vent/vacuum。",
+          "investigation_others": null,
+          "abnormal_processes": [
+            "P007"
+          ]
+        },
+        "details": [
+          {
+            "detail_id": "D005",
+            "case_id": "C005",
+            "product_id": "PROD_005",
+            "customer_lot": "DEV_CL_005",
+            "production_lot": "DEV_PL_005",
+            "production_time": "2026-06-01",
+            "detection_stage": "OQC",
+            "detection_time": "2026-06-09",
+            "abnormal_types": [
+              "00018"
+            ],
+            "affected_qty": 500,
+            "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+          }
+        ],
+        "evidences": [
+          {
+            "checkpoint_id": "E005",
+            "case_id": "C005",
+            "checkpoint_type": "Other",
+            "custom_name": "SAM 与模具排气检查",
+            "result": "SAM 确认边缘空洞；模具排气通道检查发现堵塞，清理后的对照试模空洞减少。",
+            "relevance": "related"
+          }
+        ],
+        "source": {
+          "sheet": "failure_modes",
+          "failure_mode_id": "00018",
+          "root_cause": "mold vent/vacuum不足",
+          "corrective_action": "改善vent/vacuum",
+          "closure_status": "confirmed"
+        },
+        "background": [
+          {
+            "product_id": "PROD_005",
+            "product_name": "SYN_MCU_A",
+            "product_family": "Microcontroller",
+            "package_route": "LF_WB",
+            "customer_id": "CUS_001"
+          }
+        ],
+        "processes": [
+          {
+            "process_id": "P007",
+            "process_name": "Molding"
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "case_id": "C008",
+        "case": {
+          "case_id": "C008",
+          "abnormal_description": "OQC 声学扫描发现部分器件内部存在塑封空洞，空洞集中在塑封体靠近基板边缘的区域。",
+          "root_cause": "结案确认：molding compound受潮、夹气或挥发物异常。",
+          "corrective_action": "控制molding compound储存与含湿。",
+          "investigation_others": null,
+          "abnormal_processes": [
+            "P007"
+          ]
+        },
+        "details": [
+          {
+            "detail_id": "D008",
+            "case_id": "C008",
+            "product_id": "PROD_009",
+            "customer_lot": "DEV_CL_009",
+            "production_lot": "DEV_PL_009",
+            "production_time": "2026-07-08",
+            "detection_stage": "OQC",
+            "detection_time": "2026-07-11",
+            "abnormal_types": [
+              "00018"
+            ],
+            "affected_qty": 220,
+            "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+          }
+        ],
+        "evidences": [
+          {
+            "checkpoint_id": "E008",
+            "case_id": "C008",
+            "checkpoint_type": "Other",
+            "custom_name": "SAM 与模压条件复查",
+            "result": "声学扫描确认塑封体边缘存在内部空洞；molding compound 储存与含湿记录显示开封后暴露时间超出控制要求，重新干燥并调整模压条件（模压设备 EQ_MOLD_02）后的对照试模空洞明显减少。",
+            "relevance": "related"
+          }
+        ],
+        "source": {
+          "sheet": "failure_modes",
+          "failure_mode_id": "00018",
+          "root_cause": "molding compound受潮、夹气或挥发物异常",
+          "corrective_action": "控制molding compound储存与含湿",
+          "closure_status": "confirmed"
+        },
+        "background": [
+          {
+            "product_id": "PROD_009",
+            "product_name": "SYN_RF_A",
+            "product_family": "Wireless Connectivity",
+            "package_route": "SUBSTRATE_WB",
+            "customer_id": "CUS_003"
+          }
+        ],
+        "processes": [
+          {
+            "process_id": "P007",
+            "process_name": "Molding"
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "case_id": "C002",
+        "case": {
+          "case_id": "C002",
+          "abnormal_description": "客户反馈引脚润湿不良，焊料未充分铺展；异常位置位于外部引脚表面。",
+          "root_cause": "结案确认：引脚表面污染/氧化。",
+          "corrective_action": "防止引脚污染氧化。",
+          "investigation_others": null,
+          "abnormal_processes": [
+            "P013"
+          ]
+        },
+        "details": [
+          {
+            "detail_id": "D002",
+            "case_id": "C002",
+            "product_id": "PROD_001",
+            "customer_lot": "DEV_CL_001",
+            "production_lot": "DEV_PL_001",
+            "production_time": "2026-06-01",
+            "detection_stage": "Customer",
+            "detection_time": "2026-06-12",
+            "abnormal_types": [
+              "00016"
+            ],
+            "affected_qty": 200,
+            "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+          }
+        ],
+        "evidences": [
+          {
+            "checkpoint_id": "E002",
+            "case_id": "C002",
+            "checkpoint_type": "Other",
+            "custom_name": "引脚表面与润湿检查",
+            "result": "入库前留样引脚表面检查正常；仓储记录显示防潮管控失效，出库留样及客退样品出现同类氧化和污染。去除污染后的对照样品润湿改善，内部焊线检查未发现剥离。调查确认异常涉及 Storage & Transportation 工序中的仓储阶段。",
+            "relevance": "related"
+          }
+        ],
+        "source": {
+          "sheet": "failure_modes",
+          "failure_mode_id": "00016",
+          "root_cause": "引脚表面污染/氧化",
+          "corrective_action": "防止引脚污染氧化",
+          "closure_status": "confirmed"
+        },
+        "background": [
+          {
+            "product_id": "PROD_001",
+            "product_name": "SYN_PWR_A",
+            "product_family": "Power Management",
+            "package_route": "LF_WB",
+            "customer_id": "CUS_001"
+          }
+        ],
+        "processes": [
+          {
+            "process_id": "P013",
+            "process_name": "Storage & Transportation"
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "case_id": "C006",
+        "case": {
+          "case_id": "C006",
+          "abnormal_description": "客户收货后发现 BGA 锡球缺失，缺球位置靠近托盘边缘，邻近锡球有机械碰伤。",
+          "root_cause": "结案确认：运输/搬运机械碰伤或掉球。",
+          "corrective_action": "改善搬运和运输防护。",
+          "investigation_others": null,
+          "abnormal_processes": [
+            "P013"
+          ]
+        },
+        "details": [
+          {
+            "detail_id": "D006",
+            "case_id": "C006",
+            "product_id": "PROD_006",
+            "customer_lot": "DEV_CL_006",
+            "production_lot": "DEV_PL_006",
+            "production_time": "2026-06-01",
+            "detection_stage": "Customer",
+            "detection_time": "2026-06-15",
+            "abnormal_types": [
+              "00026"
+            ],
+            "affected_qty": 600,
+            "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+          }
+        ],
+        "evidences": [
+          {
+            "checkpoint_id": "E006",
+            "case_id": "C006",
+            "checkpoint_type": "AOI",
+            "custom_name": null,
+            "result": "出货 AOI 记录中锡球完整；收货样品显示边缘碰伤及掉球，运输防护检查发现相应接触痕迹。",
+            "relevance": "related"
+          }
+        ],
+        "source": {
+          "sheet": "failure_modes",
+          "failure_mode_id": "00026",
+          "root_cause": "运输/搬运机械碰伤或掉球",
+          "corrective_action": "改善搬运和运输防护",
+          "closure_status": "confirmed"
+        },
+        "background": [
+          {
+            "product_id": "PROD_006",
+            "product_name": "SYN_MCU_B",
+            "product_family": "Microcontroller",
+            "package_route": "SUBSTRATE_WB",
+            "customer_id": "CUS_004"
+          }
+        ],
+        "processes": [
+          {
+            "process_id": "P013",
+            "process_name": "Storage & Transportation"
+          }
+        ]
+      }
+    ]
+  },
+  "request": {
+    "provider": "deepseek",
+    "model_alias": "deepseek-flash",
+    "prompt_version": "grounded_answer_v1",
+    "max_tokens": 2048,
+    "temperature": 0.0,
+    "response_format": "json_object",
+    "thinking": "disabled"
+  },
+  "response": {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "called_model": true,
+    "elapsed_seconds": 4.501548041000206,
+    "usage": {
+      "prompt_tokens": 2559,
+      "completion_tokens": 1253,
+      "total_tokens": 3812
+    }
+  },
+  "citations": {
+    "checked": 14,
+    "issue_count": 0,
+    "issues": []
+  },
+  "answer": {
+    "case_answers": [
+      {
+        "case_id": "C005",
+        "relevance_reason": "当前 Query 为声学扫描发现塑封空洞 molding void，历史 Case C005 的 abnormal_description 同样记录为 OQC 声学扫描发现塑封空洞 molding void，且其 abnormal_processes 为 P007 Molding，与当前 Incident 的失效表现一致。",
+        "query_facts": [
+          "声学扫描发现塑封空洞 molding void"
+        ],
+        "case_facts": [
+          "OQC 声学扫描发现塑封空洞 molding void，空洞集中在封装边缘区域。",
+          "abnormal_processes: [\"P007\"]",
+          "process_name: Molding"
+        ],
+        "historical_root_cause": "结案确认：mold vent/vacuum不足。",
+        "historical_evidences": [
+          {
+            "checkpoint_id": "E005",
+            "result": "SAM 确认边缘空洞；模具排气通道检查发现堵塞，清理后的对照试模空洞减少。"
+          }
+        ],
+        "sources": [
+          {
+            "case_id": "C005",
+            "field": "abnormal_description"
+          },
+          {
+            "case_id": "C005",
+            "field": "root_cause"
+          },
+          {
+            "case_id": "C005",
+            "field": "abnormal_processes"
+          },
+          {
+            "case_id": "C005",
+            "field": "checkpoint:E005"
+          }
+        ]
+      },
+      {
+        "case_id": "C008",
+        "relevance_reason": "当前 Query 为声学扫描发现塑封空洞 molding void，历史 Case C008 的 abnormal_description 同样记录为 OQC 声学扫描发现部分器件内部存在塑封空洞，且其 abnormal_processes 为 P007 Molding，与当前 Incident 的失效表现一致。",
+        "query_facts": [
+          "声学扫描发现塑封空洞 molding void"
+        ],
+        "case_facts": [
+          "OQC 声学扫描发现部分器件内部存在塑封空洞，空洞集中在塑封体靠近基板边缘的区域。",
+          "abnormal_processes: [\"P007\"]",
+          "process_name: Molding"
+        ],
+        "historical_root_cause": "结案确认：molding compound受潮、夹气或挥发物异常。",
+        "historical_evidences": [
+          {
+            "checkpoint_id": "E008",
+            "result": "声学扫描确认塑封体边缘存在内部空洞；molding compound 储存与含湿记录显示开封后暴露时间超出控制要求，重新干燥并调整模压条件（模压设备 EQ_MOLD_02）后的对照试模空洞明显减少。"
+          }
+        ],
+        "sources": [
+          {
+            "case_id": "C008",
+            "field": "abnormal_description"
+          },
+          {
+            "case_id": "C008",
+            "field": "root_cause"
+          },
+          {
+            "case_id": "C008",
+            "field": "abnormal_processes"
+          },
+          {
+            "case_id": "C008",
+            "field": "checkpoint:E008"
+          }
+        ]
+      }
+    ],
+    "skipped_candidates": [
+      {
+        "case_id": "C002",
+        "reason": "C002 的 abnormal_description 为引脚润湿不良、焊料未充分铺展，异常类型为 00016，abnormal_processes 为 P013 Storage & Transportation，与当前 Query 的塑封空洞 molding void 在失效表现、异常类型和工序上均不一致，证据不足以说明相关。"
+      },
+      {
+        "case_id": "C006",
+        "reason": "C006 的 abnormal_description 为 BGA 锡球缺失、邻近锡球机械碰伤，异常类型为 00026，abnormal_processes 为 P013 Storage & Transportation，与当前 Query 的塑封空洞 molding void 在失效表现、异常类型和工序上均不一致，证据不足以说明相关。"
+      }
+    ],
+    "current_gaps": [
+      "当前 Query 未给出当前 Incident 的异常类型编号（如 00018），无法与历史 Case 的 abnormal_types 字段做逐项比对。",
+      "当前 Query 未给出当前 Incident 的检测阶段（如 OQC）与检测时间，无法与历史 Case 的 detection_stage / detection_time 比对。",
+      "当前 Query 未给出当前 Incident 涉及的工序（如 P007 Molding），无法与历史 Case 的 abnormal_processes 比对。",
+      "当前 Query 未给出当前 Incident 的空洞位置分布（如封装边缘区域、塑封体靠近基板边缘区域），无法与历史 Case 的 abnormal_description 中的位置描述比对。",
+      "当前 Query 未给出当前 Incident 的受影响数量与处置方式，无法与历史 Case 的 affected_qty / disposition 比对。",
+      "当前 Query 未给出当前 Incident 的封装路线与产品族信息，无法与历史 Case 的 background 中 package_route / product_family 比对。",
+      "当前 Query 未给出当前 Incident 的模压设备、molding compound 储存与含湿记录、模具排气通道状态等检查信息，无法判断是否与历史 Case 的检查项对应。"
+    ],
+    "insufficiency": "现有历史证据中仅 C005 与 C008 的 abnormal_description 与当前 Query 的塑封空洞 molding void 直接对应，且两者均属 P007 Molding；但当前 Query 未提供异常类型编号、检测阶段、检测时间、涉及工序、空洞位置、受影响数量、封装路线及模压相关检查记录，因此无法进一步判断当前 Incident 与 C005 或 C008 在异常类型、工序归属、位置分布或检查项上是否一致，也无法据此确认当前 Incident 的原因或应执行的检查。"
+  },
+  "answer_text": "{\n  \"case_answers\": [\n    {\n      \"case_id\": \"C005\",\n      \"relevance_reason\": \"当前 Query 为声学扫描发现塑封空洞 molding void，历史 Case C005 的 abnormal_description 同样记录为 OQC 声学扫描发现塑封空洞 molding void，且其 abnormal_processes 为 P007 Molding，与当前 Incident 的失效表现一致。\",\n      \"query_facts\": [\n        \"声学扫描发现塑封空洞 molding void\"\n      ],\n      \"case_facts\": [\n        \"OQC 声学扫描发现塑封空洞 molding void，空洞集中在封装边缘区域。\",\n        \"abnormal_processes: [\\\"P007\\\"]\",\n        \"process_name: Molding\"\n      ],\n      \"historical_root_cause\": \"结案确认：mold vent/vacuum不足。\",\n      \"historical_evidences\": [\n        {\n          \"checkpoint_id\": \"E005\",\n          \"result\": \"SAM 确认边缘空洞；模具排气通道检查发现堵塞，清理后的对照试模空洞减少。\"\n        }\n      ],\n      \"sources\": [\n        {\"case_id\": \"C005\", \"field\": \"abnormal_description\"},\n        {\"case_id\": \"C005\", \"field\": \"root_cause\"},\n        {\"case_id\": \"C005\", \"field\": \"abnormal_processes\"},\n        {\"case_id\": \"C005\", \"field\": \"checkpoint:E005\"}\n      ]\n    },\n    {\n      \"case_id\": \"C008\",\n      \"relevance_reason\": \"当前 Query 为声学扫描发现塑封空洞 molding void，历史 Case C008 的 abnormal_description 同样记录为 OQC 声学扫描发现部分器件内部存在塑封空洞，且其 abnormal_processes 为 P007 Molding，与当前 Incident 的失效表现一致。\",\n      \"query_facts\": [\n        \"声学扫描发现塑封空洞 molding void\"\n      ],\n      \"case_facts\": [\n        \"OQC 声学扫描发现部分器件内部存在塑封空洞，空洞集中在塑封体靠近基板边缘的区域。\",\n        \"abnormal_processes: [\\\"P007\\\"]\",\n        \"process_name: Molding\"\n      ],\n      \"historical_root_cause\": \"结案确认：molding compound受潮、夹气或挥发物异常。\",\n      \"historical_evidences\": [\n        {\n          \"checkpoint_id\": \"E008\",\n          \"result\": \"声学扫描确认塑封体边缘存在内部空洞；molding compound 储存与含湿记录显示开封后暴露时间超出控制要求，重新干燥并调整模压条件（模压设备 EQ_MOLD_02）后的对照试模空洞明显减少。\"\n        }\n      ],\n      \"sources\": [\n        {\"case_id\": \"C008\", \"field\": \"abnormal_description\"},\n        {\"case_id\": \"C008\", \"field\": \"root_cause\"},\n        {\"case_id\": \"C008\", \"field\": \"abnormal_processes\"},\n        {\"case_id\": \"C008\", \"field\": \"checkpoint:E008\"}\n      ]\n    }\n  ],\n  \"skipped_candidates\": [\n    {\n      \"case_id\": \"C002\",\n      \"reason\": \"C002 的 abnormal_description 为引脚润湿不良、焊料未充分铺展，异常类型为 00016，abnormal_processes 为 P013 Storage & Transportation，与当前 Query 的塑封空洞 molding void 在失效表现、异常类型和工序上均不一致，证据不足以说明相关。\"\n    },\n    {\n      \"case_id\": \"C006\",\n      \"reason\": \"C006 的 abnormal_description 为 BGA 锡球缺失、邻近锡球机械碰伤，异常类型为 00026，abnormal_processes 为 P013 Storage & Transportation，与当前 Query 的塑封空洞 molding void 在失效表现、异常类型和工序上均不一致，证据不足以说明相关。\"\n    }\n  ],\n  \"current_gaps\": [\n    \"当前 Query 未给出当前 Incident 的异常类型编号（如 00018），无法与历史 Case 的 abnormal_types 字段做逐项比对。\",\n    \"当前 Query 未给出当前 Incident 的检测阶段（如 OQC）与检测时间，无法与历史 Case 的 detection_stage / detection_time 比对。\",\n    \"当前 Query 未给出当前 Incident 涉及的工序（如 P007 Molding），无法与历史 Case 的 abnormal_processes 比对。\",\n    \"当前 Query 未给出当前 Incident 的空洞位置分布（如封装边缘区域、塑封体靠近基板边缘区域），无法与历史 Case 的 abnormal_description 中的位置描述比对。\",\n    \"当前 Query 未给出当前 Incident 的受影响数量与处置方式，无法与历史 Case 的 affected_qty / disposition 比对。\",\n    \"当前 Query 未给出当前 Incident 的封装路线与产品族信息，无法与历史 Case 的 background 中 package_route / product_family 比对。\",\n    \"当前 Query 未给出当前 Incident 的模压设备、molding compound 储存与含湿记录、模具排气通道状态等检查信息，无法判断是否与历史 Case 的检查项对应。\"\n  ],\n  \"insufficiency\": \"现有历史证据中仅 C005 与 C008 的 abnormal_description 与当前 Query 的塑封空洞 molding void 直接对应，且两者均属 P007 Molding；但当前 Query 未提供异常类型编号、检测阶段、检测时间、涉及工序、空洞位置、受影响数量、封装路线及模压相关检查记录，因此无法进一步判断当前 Incident 与 C005 或 C008 在异常类型、工序归属、位置分布或检查项上是否一致，也无法据此确认当前 Incident 的原因或应执行的检查。\"\n}",
+  "error": null,
+  "limits": [
+    "引用校验只确认引用能否在本次上下文中定位，不代表引用支持了它所在的那句话；语义支持必须另行人工审阅。",
+    "回答是历史参考，不判断当前 Incident 的最终 Root Cause。",
+    "运行记录不含凭据；本次回答不构成新的 Ground Truth，也不升级 draft Case。",
+    "前 4 条是检索候选，不是已确认相关案例；不得为证据不足的候选编造相关理由。",
+    "检索分数只是排序依据，不是相关概率，也不可跨方法比较。",
+    "源 Case 的审阅状态仍是 draft，本阶段不把它升级为正式事实，也不产生新的 Ground Truth。"
+  ]
+}

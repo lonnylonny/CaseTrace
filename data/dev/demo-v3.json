@@ -434,31 +434,46 @@
     {
       "query_id": "Q001",
       "known_at": "2026-09-15",
-      "text": "PROD_001 在 OQC 发现焊线脱落，拉力检查显示焊点剥离，原因尚未确认。"
+      "text": "PROD_001 在 OQC 发现焊线脱落，拉力检查显示焊点剥离，涉及客户 CUS_001、生产批 DEV_PL_001、客户批 DEV_CL_001，原因尚未确认。"
     },
     {
       "query_id": "Q002",
       "known_at": "2026-09-15",
-      "text": "声学扫描发现塑封空洞 molding void，需要查找历史调查记录。"
+      "text": "声学扫描发现塑封空洞 molding void，涉及客户 CUS_001、产品 PROD_013、生产批 DEV_PL_012、客户批 DEV_CL_012，需要查找历史调查记录。"
     },
     {
       "query_id": "Q003",
       "known_at": "2026-09-15",
-      "text": "客户收货后发现 BGA 锡球缺失，托盘边缘有碰伤痕迹。"
+      "text": "客户收货后发现 BGA 锡球缺失，涉及客户 CUS_004、产品 PROD_006、生产批 DEV_PL_013、客户批 DEV_CL_013，托盘边缘有碰伤痕迹。"
     },
     {
       "query_id": "Q004",
       "known_at": "2026-09-15",
-      "text": "来料抽检的声学扫描发现塑封内部空洞，涉及生产批 DEV_PL_009，需要查找同批及同类异常的历史调查记录，原因尚未确认。"
+      "text": "来料抽检的声学扫描发现塑封内部空洞，涉及客户 CUS_003、产品 PROD_009、生产批 DEV_PL_009、客户批 DEV_CL_009，需要查找同批及同类异常的历史调查记录，原因尚未确认。"
     },
     {
       "query_id": "Q005",
       "known_at": "2026-09-15",
-      "text": "已排除外观碰伤与运输损伤的可能，检查重点在键合界面：OQC 拉力试验显示焊线自焊盘脱开，原因尚未确认。"
+      "text": "已排除外观碰伤与运输损伤的可能，检查重点在键合界面：OQC 拉力试验显示焊线自焊盘脱开，涉及客户 CUS_002、产品 PROD_004、生产批 DEV_PL_014、客户批 DEV_CL_014，原因尚未确认。"
     }
   ],
   "corpus_version": "dev-corpus-v3",
   "generation_basis": "GR-10：产品、工序、批号、时间、数量、原因与措施候选由 Python 从主数据确定；仅改写文本字段",
+  "query_revision": {
+    "date": "2026-09-25",
+    "description": "补足每条 Query 当时已知的客户、产品、生产批号与客户批号。客户由 products 主数据经 customer_product_map 推导（CR-04）；复用批号 DEV_PL_001 / DEV_PL_009 与语料中该批的产品、投批时间、客户批完全一致（CR-08～CR-10）；新批号 DEV_PL_012～014 与 DEV_CL_012～014 未与任何既有 Case 重复。",
+    "rule": "每条 Query 写明当时已知的客户、产品、生产批号与客户批号；取值必须与主数据及语料一致。",
+    "reused_batches": [
+      "DEV_PL_001",
+      "DEV_PL_009"
+    ],
+    "new_batches": [
+      "DEV_PL_012",
+      "DEV_PL_013",
+      "DEV_PL_014"
+    ],
+    "old_conclusions_unchanged": "旧 6 Case / 3 Query 的已确认历史结论不因本次补足而改变；但 Query 文本变化，dev-v3 的 45 对标签全部需要用户重新确认。"
+  },
   "supersedes": {
     "path": "data/dev/demo.json",
     "sha256": "6923d382ba082f72beb922737e9b169313c1a236662f6a57a8a322e0879689f7"

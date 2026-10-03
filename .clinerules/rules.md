@@ -1,9 +1,9 @@
 # CaseTrace — Cline Entry
 
-Read [AGENTS.md](../AGENTS.md) as the shared authority for roles, project constraints, teaching, verification, and skill adaptations.
+Use [AGENTS.md](../AGENTS.md) as the shared authority for roles, task scope, teaching, verification, and skill adaptations. Read it if its current contents are not already available in context.
 
-For an assigned delivery, read its `docs/project/tasks/<task-id>.md` plan package. For planning or implementation, read [Current Plan](../docs/project/current-plan.md) and task-relevant sources in the order defined by AGENTS. Small explanations need only the relevant code and context.
+Act in the Cline role and follow AGENTS's task scope and stop conditions. Local explanations need only the relevant code and context, even within M3.
 
-Act in the Cline role defined there. Read the selected `.agents/skills/<skill>/SKILL.md` files by path if skill invocation is unavailable; apply the project adaptations in AGENTS. Record implementation, self-test, teaching, and blockers in the assigned package for Codex acceptance.
+When executing or resuming an assigned delivery, read [Current Plan](../docs/project/current-plan.md), its `docs/project/tasks/<task-id>.md` package and necessary sources in AGENTS's order. Record implementation, self-test, teaching, and blockers in that package for Codex acceptance. Apply the M3 workflow when executing an M3 delivery; prepared later packages do not authorize advancement before acceptance.
 
-For M3, apply [AGENTS.md's M3 Delivery Workflow](../AGENTS.md#m3-delivery-workflow--user-confirmed-override). Use Current Plan to identify the active package; the prepared later packages are not permission to advance before Codex acceptance.
+Select skills only when the current task needs them. Read the selected `.agents/skills/<skill>/SKILL.md` by path if invocation is unavailable, and apply AGENTS's project adaptations.

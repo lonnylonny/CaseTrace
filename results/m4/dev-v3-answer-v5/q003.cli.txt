@@ -1,0 +1,34 @@
+Query Q003｜2026-09-15：客户收货后发现 BGA 锡球缺失，涉及客户 CUS_004、产品 PROD_006、生产批 DEV_PL_013、客户批 DEV_CL_013，托盘边缘有碰伤痕迹。
+快照：dev-v3-2026-09-15｜语料 9 条｜审阅状态 draft_pending_human_review（来源 Case 为 draft）
+检索：bm25_drop_negation_labels（top_k=4）｜候选排名：1.C006 > 2.C009 > 3.C005 > 4.C008
+
+1. C006
+   相关理由：当前 Query 描述客户收货后发现 BGA 锡球缺失且托盘边缘有碰伤痕迹；历史 Case C006 记录客户收货后发现 BGA 锡球缺失、缺球位置靠近托盘边缘、邻近锡球有机械碰伤，双方异常描述支持同类现象。此外 Query 产品 PROD_006 与 C006 历史产品 PROD_006 相同，客户 CUS_004 与 C006 background 客户相同。
+   当前 Query 依据：客户收货后发现 BGA 锡球缺失；涉及客户 CUS_004、产品 PROD_006、生产批 DEV_PL_013、客户批 DEV_CL_013；托盘边缘有碰伤痕迹；query_product_mentions：PROD_006 产品族 Microcontroller，封装路线 SUBSTRATE_WB
+   历史依据：客户收货后发现 BGA 锡球缺失，缺球位置靠近托盘边缘，邻近锡球有机械碰伤。；background：product_id PROD_006，product_family Microcontroller，customer_id CUS_004；processes：P013 Storage & Transportation
+   历史原因（该 Case 的记录）：结案确认：运输/搬运机械碰伤或掉球。
+   历史改善措施（该 Case 的记录，不是当前建议）：改善搬运和运输防护。
+   历史检查 E006：出货 AOI 记录中锡球完整；收货样品显示边缘碰伤及掉球，运输防护检查发现相应接触痕迹。
+   来源：C006:case.abnormal_description、C006:case.root_cause、C006:case.corrective_action、C006:detail:D006、C006:background、C006:processes、C006:checkpoint:E006
+
+跳过候选 C009：C009 历史异常为 FT 电性测试后锡球顶面压痕与局部变形，检查结果明确外观与托盘接触面复查未发现碰伤、缺球或掉球痕迹；与当前 Query 的 BGA 锡球缺失及托盘边缘碰伤痕迹不是同类异常描述，产品 PROD_011、客户 CUS_005 也与当前不同。
+跳过候选 C005：C005 历史异常为 OQC 声学扫描发现塑封空洞 molding void，与当前 Query 的 BGA 锡球缺失及托盘边缘碰伤痕迹不是同类异常描述，产品 PROD_005、客户 CUS_001 也与当前不同。
+跳过候选 C008：C008 历史异常为 OQC 声学扫描发现塑封体内部空洞，与当前 Query 的 BGA 锡球缺失及托盘边缘碰伤痕迹不是同类异常描述，产品 PROD_009、客户 CUS_003 也与当前不同。
+
+当前仍缺少的信息：
+- 当前 Query 未提供受影响数量或抽样数量，无法与历史 Case 的 affected_qty 做规模比较。
+- 当前 Query 未提供检测阶段的具体检查记录或检查结果（如出货 AOI、运输防护检查），无法与历史检查证据逐项对照。
+- 当前 Query 未提供当前根因记录，无法与历史 Case 的结案原因做对应比较。
+
+不足说明：本回答仅列出历史记录，不据此判断当前原因或推荐当前改善措施。
+
+引用校验：检查 12 条，问题 0 条（只确认引用可定位，不代表引用支持原句）
+运行状态：ok
+
+限制与边界：
+- 引用校验只确认引用能否在本次上下文中定位，不代表引用支持了它所在的那句话；语义支持必须另行人工审阅。
+- 回答是历史参考，不判断当前 Incident 的最终 Root Cause。
+- 运行记录不含凭据；本次回答不构成新的 Ground Truth，也不升级 draft Case。
+- 前 4 条是检索候选，不是已确认相关案例；不得为证据不足的候选编造相关理由。
+- 检索分数只是排序依据，不是相关概率，也不可跨方法比较。
+- 源 Case 的审阅状态仍是 draft，本阶段不把它升级为正式事实，也不产生新的 Ground Truth。

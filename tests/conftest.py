@@ -10,7 +10,11 @@ import pytest
 @pytest.fixture
 def reference_path(tmp_path):
     tables = {
-        "products": [("product_id", "product_name", "package_route"), ("P1", "演示产品", "LF_WB")],
+        "products": [
+            ("product_id", "product_name", "product_family_id", "package_route"),
+            ("P1", "演示产品", "PF1", "LF_WB"),
+        ],
+        "product_families": [("product_family_id", "product_family"), ("PF1", "演示产品族")],
         "failure_modes": [
             ("failure_mode_id", "failure_mode", "applicable_package", "possible_root_causes", "corrective_actions"),
             ("00001", "wire lift", "LF_WB", "表面污染; 参数异常", "改善清洁; 优化参数"),

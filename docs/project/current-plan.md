@@ -1,8 +1,8 @@
 # CaseTrace — Current Plan
 
-本文件是范围、里程碑、当前状态与下一交付的唯一计划入口。协作与教学规则见 [AGENTS.md](../../AGENTS.md)，交付细节见活动任务包；历史执行记录通过 Git 查阅。
+本文件是范围、里程碑、当前状态与下一交付的唯一计划入口。协作与教学规则见 [AGENTS.md](../../AGENTS.md)，交付细节见活动任务包；已验收任务包保留结论摘要，历史执行记录查 Git 或任务包注明的清理前快照。
 
-**当前位置：M1、M2、M3-01、M3-02 已验收；M3-03 实施中，尚未验收。** dev-v2 是正式 Development benchmark；dev-v3 仍为待用户确认的草稿。下一步见第 6 节。
+**当前位置：M1～M4 已验收；Pre-M5 审计于 2026-10-03 通过，无 M5 blocker。** 下一步为 M5 最小任务包，待用户开始；本轮未实施数据库/API。审计证据见 [Pre-M5 audit](tasks/pre-m5-audit.md)。
 
 ## 1. 目标与执行顺序
 
@@ -21,6 +21,8 @@ Data Foundation v1（已完成并冻结）
 每次推进一个可运行、可审阅的交付。错误分析贯穿实验；数据扩充由实际缺口驱动，数据基础与数据库不重新成为检索评估的前置工程。
 
 ## 2. 已确认的范围
+
+**学习展示优先（2026-10-03 用户确认）：** 本项目不是实际生产质量判定系统。以基本逻辑正确、链路可运行、主要输出完整可追溯、方便学习和展示为完成标准；不追求逐句行业语义零争议。行业隐含判断由用户负责，agent 不代替工程师裁决；不影响基本输出的措辞歧义记为已知限制，不追加机制、评审循环或反复模型重跑。优先保留用户已理解、已固定的实现；只对已复现的重要逻辑/系统错误作直接必要的最小修复，不做顺带清理、接口重写或风格重构。
 
 | 类别 | V1 决定 |
 |---|---|
@@ -54,16 +56,20 @@ Query、qrels、split 与实验记录独立于历史 Case；不恢复 Scenario �
 
 ### 相关性与阅读优先级
 
-- 同产品、同批次、类似产品、同异常，**任一关系成立即足以 Relevant**；不要求同时成立或原因相同。“类似产品”按同 Product Family 判断，仅同 Package Route 不足以成立。
+- **统一规则（2026-10-03 用户确认，覆盖旧背景充分条件）：** 是否 Relevant / 采用，依据当前已知异常与历史案例的调查参考价值。理由须由双侧已知现象及历史记录支持，不要求措辞逐字相同或根因相同。
+- 同批次、同产品、同产品族、同客户等仅为背景补充/辅助信息，均不单独决定相关性、不强制采用或另列背景案例；背景不同也不能单独否定异常参考价值。“类似产品”仍指同 Product Family，仅同 Package Route 不等于类似产品。不新增硬编码权重或必选条件。
+- **采用后再说明背景关系。** 明确标注同批次，分别写生产批和客户批的匹配字段/值，不凭一项相同推定另一项也相同；当前未给批号不从历史反填。产品、产品族、客户等已知背景关系在已采用 Case 中简明说明，不能替代异常参考理由。未采用 Case 不因这些关系相同被判漏选，也不单独摘出。
 - 不新增“同异常类别”判定层，共享 failure_mode_id 不自动等于同异常。仅同异常站点也不足以单独 Relevant，须结合已知异常或背景；不得从历史记录反填当前未知工序。
-- Repeat / Recurrence 指同产品且异常相同或高度相似；Incident / Context Linkage 包括同产品、同批次及有依据的生产背景联系；Technical Analog 包括类似产品或同异常。一个 Case 可有多类相关性。
-- 仅有通用调查方法不自动 Relevant；已经满足任一充分条件的 Case 不能当 Hard Negative。CaseGroup、相同 Root Cause、Evidence 的 `related` 都不能自动生成 qrels。
-- 阅读期望为优先完全相同异常；识别方式及额外排序规则由 M3 证据决定，不转换为未经确认的分级 qrels 或权重。Q001 的已确认阅读判断：C001 完全相同；C003、C004 相关，C003 更接近；C002 因同产品相关。C004 不因与 C001 同站点而成为完全相同异常。
-- dev-v2 三条 Query 未提供批号，不以历史 Case 间同批推断 Query 同批；含批号的新 Query 的判断依据须在新标注中明确，同批次粒度的未决问题见活动任务包。
+- Repeat / Recurrence 指同产品且异常相同或高度相似；Incident / Context Linkage 描述产品、批次等背景联系；Technical Analog 描述异常的技术参考关系。这些名称不自动生成相关性标签。
+- 仅有通用调查方法不自动 Relevant；CaseGroup、相同 Root Cause、Evidence 的 `related` 也不能自动生成 qrels。异常参考价值须按当前已知信息说明，不新增“共享代码即同异常”的捷径。
+- 阅读期望为优先完全相同异常；其它排序变化须有实验依据，不转换为未经确认的分级 qrels 或权重。旧 Q001×C002 的同产品/同批次正例、Q001×C004 与 Q003×C005 的同族依据不能继续作为新规则裁决，须复核；不自动改标签。C004 不因与 C001 同站点而成为完全相同异常。
+- dev-v2 三条 Query 未提供批号，不以历史 Case 间同批推断 Query 同批；同批次只作采用后的背景标注，不作为独立纳入条件。
+- Query 必须写明当时已知的客户、产品、生产批号与客户批号（2026-09-25 用户决定，自 dev-v3 起执行）：取值与主数据及语料一致——客户由产品经 `customer_product_map` 推导，复用的批号须与语料中该批的产品、投批时间、客户批一致，新批号不得与既有 Case 重复；批号为模拟值，主数据无批号表。dev-v3 的五条 Query 已按此补足，见 [dev-v3 版本说明](../../data/evaluation/dev-v3/README.md)。
 
 ### Ground Truth、时点与隔离
 
 - Ground Truth 单位是 Query × Historical Case；Agent 起草标签、理由和证据，**用户最终确认**。未确认或 Ambiguous 保持 draft；未标注不能当 Not Relevant，正式 evaluator 拒绝不完整或未确认输入。
+- 2026-10-03 规则改变后，既有 qrels 与实验按旧口径保留；其 `human_confirmed` 不等于新口径确认，不自动重标。新 GT 仍由用户确认；若未来发布新口径指标，再版本化并同基准重评。该复核不作为学习展示或工程推进的前置任务，不用旧指标冒充新结论。
 - [dev-v2](../../data/evaluation/dev-v2/README.md) 的 6 Case × 3 Query、18 对二值标签已于 2026-09-19 最终确认，无需再次确认。qrels 确认不改变源 Case 的 draft 审阅状态；新版本的新增或语义改变配对另行确认。
 - Query 只含当时已知事实；只检索在 Query 时点前已结案且完整可用的历史内容。dev-v2 的六案完整内容被用户设定为在 2026-09-15 前可用；这是模拟快照约定，不能由 detection_time 推导，也不表示已实现通用结案/可用时间过滤。扩充数据必须记录自己的快照依据。
 - 索引限于允许的历史内容与主数据背景，排除 qrels、标注理由、生成审阅信息和候选知识库全文。
@@ -96,32 +102,41 @@ Query、qrels、split 与实验记录独立于历史 Case；不恢复 Scenario �
 |---|---|---|
 | M1 — Retrieval Baseline | 真实开发样例可运行，Case 文档可检查，BM25 稳定返回排名与来源 | 已完成（2026-09-17） |
 | M2 — Ground Truth / Evaluation | 用户确认标签、CLI 逐 Query 及汇总指标、手算验证、版本约定与错误分析 | [accepted（2026-09-22）](tasks/m2-completion.md) |
-| M3 — Retrieval Experiments | 同基准四方法比较，记录收益、退步、耗时与错误，按证据选型 | 进行中，当前 M3-03 |
-| M4 — Grounded Answer | 生成约定的历史参考回答，检查关键事实、引用和信息不足；分开报告检索/回答问题 | 未开始；demo 目前仅展示字段 |
+| M3 — Retrieval Experiments | 同基准四方法比较，记录收益、退步、耗时与错误，按证据选型 | 已完成；[M3-07 accepted（2026-09-30）](tasks/m3-07-selection.md#codex-acceptance) |
+| M4 — Grounded Answer | 生成约定的历史参考回答，检查主要字段、来源及历史/当前区分 | 已完成；M4-01～M4-04 accepted（学习展示范围） |
 | M5 — PostgreSQL / FastAPI | 冻结模型完整存取；必要导入与 API；API/CLI 共用核心；迁移前后固定输入结果与来源一致 | 未开始，在 M4 后 |
 | M6 — Docker / Demo / 收束 | Docker 与简单 Web Demo，CLI 可复现，固定方案完成 Locked Test 对比，README 含启动、数据、实验、失败案例和局限 | 未开始 |
 
-### M3 小交付安排
+### M3 交付索引（已完成）
 
-七个包按以下顺序推进；执行、用户亲手代码、教学停点及验收规则统一见 [M3 工作流](../../AGENTS.md#m3-delivery-workflow--user-confirmed-override)。未来包仅已准备，前包 accepted 后才建立实施基线并激活。
+下表仅保留交付索引；不再执行旧排期或激活流程。实验数据和复现入口见 [results](../../results/README.md)。
 
 | 包 | 交付与依赖 | 状态 |
 |---|---|---|
 | [M3-01 多方法评估入口](tasks/m3-01-evaluation-entry.md) | 公共检索契约、方法选择、配置/版本/耗时报告；BM25 与 M2 回归一致 | accepted 2026-09-23 |
 | [M3-02 Embedding](tasks/m3-02-embedding.md) | 本地 BGE small CPU/离线路径、缓存、同 dev-v2 对照；[选模决定](research/m3-02-embedding-model-selection.md) | accepted 2026-09-25 |
-| [M3-03 Expand Mock Datasets](tasks/m3-03-expand-mock-datasets.md) | 扩充 Development，完整配对与用户确认、来源家族和版本说明；新版重跑 BM25 / Embedding | 实施中，停在标签确认 |
-| [M3-04 Hybrid](tasks/m3-04-hybrid.md) | 已确认新版上用 RRF 融合，记录两路候选/名次/参数，与单方法比较 | 待前包验收 |
-| [M3-05 Rerank](tasks/m3-05-rerank.md) | 固定候选方法与数量，真实重排模型，分开分析候选遗漏和排序错误 | 待前包验收 |
-| [M3-06 有限针对性实验](tasks/m3-06-targeted-experiments.md) | 依据错误做少量单变量对照；无必要时记录不调整理由，保留用户证据检查练习 | 待前包验收 |
-| [M3-07 汇总选型](tasks/m3-07-selection.md) | 四方法同版本结果、逐 Query 退步、耗时/复杂度与复现；固定 M4 所需检索方案及来源接口 | 待前包验收 |
+| [M3-03 Expand Mock Datasets](tasks/m3-03-expand-mock-datasets.md) | 扩充 Development，完整配对与用户确认、来源家族和版本说明；新版重跑 BM25 / Embedding | accepted 2026-09-26 |
+| [M3-04 Hybrid](tasks/m3-04-hybrid.md) | 已确认新版上用 RRF 融合，记录两路候选/名次/参数，与单方法比较 | accepted 2026-09-27 |
+| [M3-05 Rerank](tasks/m3-05-rerank.md) | 固定候选方法与数量，真实重排模型，分开分析候选遗漏和排序错误 | accepted 2026-09-28 |
+| [M3-06 有限针对性实验](tasks/m3-06-targeted-experiments.md) | 依据错误做少量单变量对照；无必要时记录不调整理由，保留用户证据检查练习 | accepted 2026-09-29 |
+| [M3-07 汇总选型](tasks/m3-07-selection.md) | 四方法同版本结果、逐 Query 退步、耗时/复杂度与复现；固定 M4 所需检索方案及来源接口 | accepted 2026-09-30 |
 
-M3-03 保留 dev-v2 原件，优先补同义表达、技术类比、背景关联、易混淆与否定表达，按 GR-10 准备事实和来源。规模、路径、全配对范围及确认进度由活动包维护。不按模型输赢挑选数据或标签，不保证扩充后能区分方法或证明泛化。M3-06 不无限调参、不要求指标必须上涨；M5/M6 只实现展示主流程所需能力。
 
 ## 6. 当前事实与下一交付
 
-- **当前活动包：** [M3-03](tasks/m3-03-expand-mock-datasets.md)。Cline 已交付新语料、loader 版本支持与 qrels 草稿并自测，尚未经过 Codex 验收。
-- **正式 / 草稿：** dev-v2 为已确认的 6 × 3；dev-v3 为 9 × 5、45 对草稿，沿用旧 18 对，新增 27 对待确认，其中 Q005–C004 待用户裁定。CLI 默认仍用 dev-v2。
-- **下一步：** 用户确认新增标签及疑难配对 → 用户亲手完成 loader 缺配对回归测试 → Cline 完成版本说明、来源/家族与语义审阅记录，在同一新版正式运行 BM25 / Embedding → 回交 Codex。未确认前不发布正式 dev-v3 指标，不激活 M3-04。
-- **验证证据：** 已验收部分见 [M3-02 最终验收](tasks/m3-02-embedding.md#codex-acceptance)，当前实现自测见 [M3-03 回报](tasks/m3-03-expand-mock-datasets.md#cline-report)；已有记录不代表本次文档整理重跑。
-- **未解决的历史限制：** dev-v1 qrels 归档哈希与迁移记录不一致，失败测试保留；按用户决定不阻塞开发，也不刷新哈希或宣称迁移通过。完整依据见 [dev-v2 记录](../../data/evaluation/dev-v2/README.md#2026-09-22-用户后续决定)。
-- **未完成的学习确认与比较限制：** 见各已完成包的简要记录及 M3-03 的 Handoff Baseline；代码验收、学习确认、用户代码与 Ground Truth 确认分别记录。
+- **工程状态：** M1～M4 accepted；2026-10-03 Pre-M5 审计全套 **571 passed、169 subtests passed**，ruff/lock 检查通过。demo、默认评估及 R3 回归通过；五条 v10 回答离线回放通过，未新增模型调用。详细范围与证据见 [审计记录](tasks/pre-m5-audit.md)。
+- **检索选型：** R3（`bm25_drop_negation_labels`，H1+H2），回答默认 top_k=4；`demo` 仍为原 BM25 / 六案，`evaluate` 默认 BM25 / dev-v2。四类方法及实验产物保留。R3 同版旧口径 Recall@4=0.96、Precision@4=0.70、nDCG@4=0.9839；这些是 Development 历史结果，不是新规则质量结论。
+- **数据状态：** dev-v3 r2 为 9 Case × 5 Query、45 对旧口径 `human_confirmed`，正例 5 / 2 / 2 / 2 / 4；Case 仍为 draft。新口径待复核配对见 [M4-04](tasks/m4-04-answer-evaluation.md#新口径-ground-truth-待复核draft不改正式文件)，不是 M5 前置任务。
+- **已接受限制：** v10 两处措辞限制及原审阅计数保留在 [M4 报告](../../results/dev-v3-m4-answer-evaluation.md)；不继续调模型。dev-v1 历史哈希原件缺失仍不能证明逐字节迁移，但反复测试失败已于 2026-09-29 修复，详见 [dev-v2 归档说明](../../data/evaluation/dev-v2/README.md#2026-09-29-归档校验维护)。M3-03 早期基线丢失仅限制历史差异归属，不影响当前运行。
+- **下一入口：** 用户开始 M5 时准备最小任务包并建立当时的实施基线。按冻结模型持久化、导入和 API/CLI 共用核心，保持迁移前后固定输入的结果与来源一致；接缝见 [M5 交接](handoffs/m4-04-m5-handoff.md)。本次审计不启动 M5，也不补做 M6 的 Locked Test。
+
+## 7. Grounded Answer 最终决定与 M5 invariants
+
+M4-01～M4-04 已 accepted：[上下文](tasks/m4-01-evidence-context.md)、[生成](tasks/m4-02-grounded-generation.md)、[CLI](tasks/m4-03-answer-cli.md)、[回答评估](tasks/m4-04-answer-evaluation.md)。用户的代码与学习贡献保留在各包摘要；完成的两天排期不再作为当前任务。
+
+1. **共用核心：** CLI/API 只适配输入、输出及错误；复用现有检索、上下文、生成和引用校验，不复制业务逻辑。数据库按 §3 冻结模型完整存取，保留 ID、关系、原文、来源和 review 状态；固定输入迁移前后排名、上下文及来源一致。
+2. **保持原始 Query：** R3 过滤只影响检索词，生成器仍收到完整 Query（含否定、客户、产品与批号）与证据；`known_at` 用于快照检查。Query 提及产品的主数据查表只补名称/产品族/标准路线，不做 Incident 字段抽取或反填当前未知。
+3. **快照与隔离：** 当前仅支持 `dev-v3-2026-09-15` 的已记录可用性快照，文件身份同时绑定语料与主数据。M5 更换存储后仍须能核对同一内容及可用性依据，不能用 detection_time 冒充结案时间。qrels/理由、生成审阅元数据和候选库全文不进入检索或模型证据；draft 状态不得自动升级，Development / Locked Test 隔离继续有效。
+4. **输出与来源：** 输出相关历史案例、双侧相关依据、历史原因/检查/改善措施、来源和具体缺口。保留 Case、Detail、checkpoint 与字段原文、否定和不确定性；采用依据遵守 §4，不由背景关系强制纳入。历史结论不成为当前 Root Cause 或当前已验证措施。
+5. **状态与记录：** 成功、空命中、模型失败、格式失败、引用失败分开；空命中不调用模型，失败不包装成成功。记录原始输入、排名、上下文、实际发送消息、模型/提示词/源码/数据身份及可用的响应、耗时和用量；凭据不入产物，批量复跑不覆盖旧证据。
+6. **生成与质量边界：** 当前直接用 OpenAI 兼容 SDK 接 DeepSeek `deepseek-flash` 非思考 JSON Output，提示词 `grounded_answer_v10`；单次生成，无重试、路由或 Agent 工作流。引用守卫只证明可定位，语义支持另行审阅；软件回归不替代 AI 评估。模型别名不等于不可变版本，不承诺逐字复现。接受既有学习展示限制，不在存储/API 迁移中调模型或重新选型。

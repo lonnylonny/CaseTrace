@@ -1,0 +1,471 @@
+{
+  "record_version": "m4-03-answer-run-1",
+  "status": "ok",
+  "query": {
+    "query_id": "Q003",
+    "text": "客户收货后发现 BGA 锡球缺失，涉及客户 CUS_004、产品 PROD_006、生产批 DEV_PL_013、客户批 DEV_CL_013，托盘边缘有碰伤痕迹。",
+    "known_at": "2026-09-15"
+  },
+  "snapshot": {
+    "snapshot_id": "dev-v3-2026-09-15",
+    "known_at": "2026-09-15",
+    "basis": "data/dev/demo-v3.json 的九条 Case 被设定为在 2026-09-15 之前已结案且完整可用，沿用 dev-v2 的模拟快照时点；这是模拟约定，不代表已实现通用结案／可用时间过滤。",
+    "dataset_sha256": "0a29041a4e6ed11a5b31ff85a74fa8bed9b79afeb1d35158ea9430f6e5af8f0b",
+    "reference_sha256": "f5001bddd3dff43342a2569ceda836ddb4f5c0caca942c1c4d043d99a9131c85"
+  },
+  "corpus": {
+    "dataset_path": "/Users/a1-6/Projects/casetrace/data/dev/demo-v3.json",
+    "reference_path": "/Users/a1-6/Projects/casetrace/data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx",
+    "case_count": 9,
+    "review_status": "draft_pending_human_review",
+    "source_cases_are_draft": true
+  },
+  "retrieval": {
+    "requested_method": "bm25_drop_negation_labels",
+    "top_k": 4,
+    "description": {
+      "method": "bm25_filtered_query_terms",
+      "implementation": "rank_bm25.BM25Okapi",
+      "tokenizer": "casetrace.retrieval.bm25.tokenize",
+      "parameters": {
+        "k1": 1.5,
+        "b": 0.75,
+        "epsilon": 0.25
+      },
+      "note": "M3-06 针对性实验变体：索引与历史文本与 bm25 相同，只过滤 Query 词项；不是生产检索方案，是否采纳由 M3-07 按证据决定。分数不是相关概率。",
+      "query_filter": {
+        "drop_negation_clauses": true,
+        "drop_label_terms": true,
+        "negation_markers": [
+          "排除",
+          "不",
+          "未",
+          "无",
+          "非"
+        ],
+        "label_tokens": [
+          "产品",
+          "产批",
+          "及客",
+          "客户",
+          "户批",
+          "涉及",
+          "生产"
+        ],
+        "id_pattern": "(?:prod|cus|dev)_[a-z0-9_]+"
+      }
+    }
+  },
+  "ranking": [
+    {
+      "rank": 1,
+      "case_id": "C006",
+      "score": 22.350597847321666,
+      "matched_terms": [
+        "bga",
+        "发现",
+        "后发",
+        "户收",
+        "托盘",
+        "收货",
+        "球缺",
+        "痕迹",
+        "盘边",
+        "碰伤",
+        "缺失",
+        "货后",
+        "边缘",
+        "锡球"
+      ]
+    },
+    {
+      "rank": 2,
+      "case_id": "C009",
+      "score": 7.180970692264045,
+      "matched_terms": [
+        "bga",
+        "发现",
+        "后发",
+        "托盘",
+        "痕迹",
+        "碰伤",
+        "锡球"
+      ]
+    },
+    {
+      "rank": 3,
+      "case_id": "C005",
+      "score": 1.489057270280889,
+      "matched_terms": [
+        "发现",
+        "边缘"
+      ]
+    },
+    {
+      "rank": 4,
+      "case_id": "C008",
+      "score": 1.153470311331655,
+      "matched_terms": [
+        "发现",
+        "边缘"
+      ]
+    }
+  ],
+  "context": {
+    "query": "客户收货后发现 BGA 锡球缺失，涉及客户 CUS_004、产品 PROD_006、生产批 DEV_PL_013、客户批 DEV_CL_013，托盘边缘有碰伤痕迹。",
+    "cases": [
+      {
+        "rank": 1,
+        "case_id": "C006",
+        "case": {
+          "case_id": "C006",
+          "abnormal_description": "客户收货后发现 BGA 锡球缺失，缺球位置靠近托盘边缘，邻近锡球有机械碰伤。",
+          "root_cause": "结案确认：运输/搬运机械碰伤或掉球。",
+          "corrective_action": "改善搬运和运输防护。",
+          "investigation_others": null,
+          "abnormal_processes": [
+            "P013"
+          ]
+        },
+        "details": [
+          {
+            "detail_id": "D006",
+            "case_id": "C006",
+            "product_id": "PROD_006",
+            "customer_lot": "DEV_CL_006",
+            "production_lot": "DEV_PL_006",
+            "production_time": "2026-06-01",
+            "detection_stage": "Customer",
+            "detection_time": "2026-06-15",
+            "abnormal_types": [
+              "00026"
+            ],
+            "affected_qty": 600,
+            "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+          }
+        ],
+        "evidences": [
+          {
+            "checkpoint_id": "E006",
+            "case_id": "C006",
+            "checkpoint_type": "AOI",
+            "custom_name": null,
+            "result": "出货 AOI 记录中锡球完整；收货样品显示边缘碰伤及掉球，运输防护检查发现相应接触痕迹。",
+            "relevance": "related"
+          }
+        ],
+        "source": {
+          "sheet": "failure_modes",
+          "failure_mode_id": "00026",
+          "root_cause": "运输/搬运机械碰伤或掉球",
+          "corrective_action": "改善搬运和运输防护",
+          "closure_status": "confirmed"
+        },
+        "background": [
+          {
+            "product_id": "PROD_006",
+            "product_name": "SYN_MCU_B",
+            "product_family": "Microcontroller",
+            "package_route": "SUBSTRATE_WB",
+            "customer_id": "CUS_004"
+          }
+        ],
+        "processes": [
+          {
+            "process_id": "P013",
+            "process_name": "Storage & Transportation"
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "case_id": "C009",
+        "case": {
+          "case_id": "C009",
+          "abnormal_description": "FT 电性测试后发现部分器件锡球表面出现压痕与局部变形，压痕位置集中在锡球顶面。",
+          "root_cause": "结案确认：重复 FT 测试中的探针挤压导致锡球顶面变形。",
+          "corrective_action": "优化探针压力与对准。",
+          "investigation_others": null,
+          "abnormal_processes": [
+            "P011"
+          ]
+        },
+        "details": [
+          {
+            "detail_id": "D009",
+            "case_id": "C009",
+            "product_id": "PROD_011",
+            "customer_lot": "DEV_CL_011",
+            "production_lot": "DEV_PL_011",
+            "production_time": "2026-07-14",
+            "detection_stage": "In-process",
+            "detection_time": "2026-07-18",
+            "abnormal_types": [
+              "00028"
+            ],
+            "affected_qty": 320,
+            "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+          }
+        ],
+        "evidences": [
+          {
+            "checkpoint_id": "E009",
+            "case_id": "C009",
+            "checkpoint_type": "Other",
+            "custom_name": "FT 探针压痕与外观复查",
+            "result": "复查显示锡球顶面存在均匀压痕，深浅与位置符合测试探针接触特征；测试设备 EQ_ET_02 的记录显示测试次数与探针压力超出设定范围；外观与托盘接触面复查未发现碰伤、缺球或掉球痕迹。",
+            "relevance": "related"
+          }
+        ],
+        "source": {
+          "sheet": "failure_modes",
+          "failure_mode_id": "00028",
+          "root_cause": "探针挤压",
+          "corrective_action": "优化探针压力与对准",
+          "closure_status": "confirmed"
+        },
+        "background": [
+          {
+            "product_id": "PROD_011",
+            "product_name": "SYN_DIG_A",
+            "product_family": "Digital Processing",
+            "package_route": "SUBSTRATE_FC",
+            "customer_id": "CUS_005"
+          }
+        ],
+        "processes": [
+          {
+            "process_id": "P011",
+            "process_name": "Electrical Test"
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "case_id": "C005",
+        "case": {
+          "case_id": "C005",
+          "abnormal_description": "OQC 声学扫描发现塑封空洞 molding void，空洞集中在封装边缘区域。",
+          "root_cause": "结案确认：mold vent/vacuum不足。",
+          "corrective_action": "改善vent/vacuum。",
+          "investigation_others": null,
+          "abnormal_processes": [
+            "P007"
+          ]
+        },
+        "details": [
+          {
+            "detail_id": "D005",
+            "case_id": "C005",
+            "product_id": "PROD_005",
+            "customer_lot": "DEV_CL_005",
+            "production_lot": "DEV_PL_005",
+            "production_time": "2026-06-01",
+            "detection_stage": "OQC",
+            "detection_time": "2026-06-09",
+            "abnormal_types": [
+              "00018"
+            ],
+            "affected_qty": 500,
+            "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+          }
+        ],
+        "evidences": [
+          {
+            "checkpoint_id": "E005",
+            "case_id": "C005",
+            "checkpoint_type": "Other",
+            "custom_name": "SAM 与模具排气检查",
+            "result": "SAM 确认边缘空洞；模具排气通道检查发现堵塞，清理后的对照试模空洞减少。",
+            "relevance": "related"
+          }
+        ],
+        "source": {
+          "sheet": "failure_modes",
+          "failure_mode_id": "00018",
+          "root_cause": "mold vent/vacuum不足",
+          "corrective_action": "改善vent/vacuum",
+          "closure_status": "confirmed"
+        },
+        "background": [
+          {
+            "product_id": "PROD_005",
+            "product_name": "SYN_MCU_A",
+            "product_family": "Microcontroller",
+            "package_route": "LF_WB",
+            "customer_id": "CUS_001"
+          }
+        ],
+        "processes": [
+          {
+            "process_id": "P007",
+            "process_name": "Molding"
+          }
+        ]
+      },
+      {
+        "rank": 4,
+        "case_id": "C008",
+        "case": {
+          "case_id": "C008",
+          "abnormal_description": "OQC 声学扫描发现部分器件内部存在塑封空洞，空洞集中在塑封体靠近基板边缘的区域。",
+          "root_cause": "结案确认：molding compound受潮、夹气或挥发物异常。",
+          "corrective_action": "控制molding compound储存与含湿。",
+          "investigation_others": null,
+          "abnormal_processes": [
+            "P007"
+          ]
+        },
+        "details": [
+          {
+            "detail_id": "D008",
+            "case_id": "C008",
+            "product_id": "PROD_009",
+            "customer_lot": "DEV_CL_009",
+            "production_lot": "DEV_PL_009",
+            "production_time": "2026-07-08",
+            "detection_stage": "OQC",
+            "detection_time": "2026-07-11",
+            "abnormal_types": [
+              "00018"
+            ],
+            "affected_qty": 220,
+            "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+          }
+        ],
+        "evidences": [
+          {
+            "checkpoint_id": "E008",
+            "case_id": "C008",
+            "checkpoint_type": "Other",
+            "custom_name": "SAM 与模压条件复查",
+            "result": "声学扫描确认塑封体边缘存在内部空洞；molding compound 储存与含湿记录显示开封后暴露时间超出控制要求，重新干燥并调整模压条件（模压设备 EQ_MOLD_02）后的对照试模空洞明显减少。",
+            "relevance": "related"
+          }
+        ],
+        "source": {
+          "sheet": "failure_modes",
+          "failure_mode_id": "00018",
+          "root_cause": "molding compound受潮、夹气或挥发物异常",
+          "corrective_action": "控制molding compound储存与含湿",
+          "closure_status": "confirmed"
+        },
+        "background": [
+          {
+            "product_id": "PROD_009",
+            "product_name": "SYN_RF_A",
+            "product_family": "Wireless Connectivity",
+            "package_route": "SUBSTRATE_WB",
+            "customer_id": "CUS_003"
+          }
+        ],
+        "processes": [
+          {
+            "process_id": "P007",
+            "process_name": "Molding"
+          }
+        ]
+      }
+    ]
+  },
+  "request": {
+    "provider": "deepseek",
+    "model_alias": "deepseek-flash",
+    "prompt_version": "grounded_answer_v1",
+    "max_tokens": 2048,
+    "temperature": 0.0,
+    "response_format": "json_object",
+    "thinking": "disabled"
+  },
+  "response": {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "called_model": true,
+    "elapsed_seconds": 4.503247667002142,
+    "usage": {
+      "prompt_tokens": 2581,
+      "completion_tokens": 1198,
+      "total_tokens": 3779
+    }
+  },
+  "citations": {
+    "checked": 9,
+    "issue_count": 0,
+    "issues": []
+  },
+  "answer": {
+    "case_answers": [
+      {
+        "case_id": "C006",
+        "relevance_reason": "当前 Incident 为“客户收货后发现 BGA 锡球缺失”，并提到“托盘边缘有碰伤痕迹”；历史 Case C006 的 abnormal_description 同样记录“客户收货后发现 BGA 锡球缺失，缺球位置靠近托盘边缘，邻近锡球有机械碰伤”，且其 abnormal_processes 为 P013（Storage & Transportation），与当前 Query 中“托盘边缘有碰伤痕迹”这一已知事实指向同一类外观/位置特征。",
+        "query_facts": [
+          "客户收货后发现 BGA 锡球缺失",
+          "托盘边缘有碰伤痕迹"
+        ],
+        "case_facts": [
+          "客户收货后发现 BGA 锡球缺失，缺球位置靠近托盘边缘，邻近锡球有机械碰伤。",
+          "abnormal_processes: [\"P013\"]",
+          "processes: [{\"process_id\": \"P013\", \"process_name\": \"Storage & Transportation\"}]"
+        ],
+        "historical_root_cause": "结案确认：运输/搬运机械碰伤或掉球。",
+        "historical_evidences": [
+          {
+            "checkpoint_id": "E006",
+            "result": "出货 AOI 记录中锡球完整；收货样品显示边缘碰伤及掉球，运输防护检查发现相应接触痕迹。"
+          }
+        ],
+        "sources": [
+          {
+            "case_id": "C006",
+            "field": "abnormal_description"
+          },
+          {
+            "case_id": "C006",
+            "field": "root_cause"
+          },
+          {
+            "case_id": "C006",
+            "field": "abnormal_processes"
+          },
+          {
+            "case_id": "C006",
+            "field": "checkpoint:E006"
+          }
+        ]
+      }
+    ],
+    "skipped_candidates": [
+      {
+        "case_id": "C009",
+        "reason": "C009 的 abnormal_description 为“FT 电性测试后发现部分器件锡球表面出现压痕与局部变形，压痕位置集中在锡球顶面”，其异常类型为 00028、异常工序为 P011（Electrical Test），且 E009 明确记录“外观与托盘接触面复查未发现碰伤、缺球或掉球痕迹”；当前 Query 的已知事实是“BGA 锡球缺失”与“托盘边缘有碰伤痕迹”，与 C009 记录的压痕/变形及“未发现碰伤、缺球或掉球痕迹”不一致，证据不足以说明相关。"
+      },
+      {
+        "case_id": "C005",
+        "reason": "C005 的 abnormal_description 为“OQC 声学扫描发现塑封空洞 molding void，空洞集中在封装边缘区域”，异常类型为 00018、异常工序为 P007（Molding）；当前 Query 的已知事实是“BGA 锡球缺失”与“托盘边缘有碰伤痕迹”，未涉及塑封空洞或声学扫描结果，证据不足以说明相关。"
+      },
+      {
+        "case_id": "C008",
+        "reason": "C008 的 abnormal_description 为“OQC 声学扫描发现部分器件内部存在塑封空洞，空洞集中在塑封体靠近基板边缘的区域”，异常类型为 00018、异常工序为 P007（Molding）；当前 Query 的已知事实是“BGA 锡球缺失”与“托盘边缘有碰伤痕迹”，未涉及塑封空洞或声学扫描结果，证据不足以说明相关。"
+      }
+    ],
+    "current_gaps": [
+      "当前 Query 未给出缺球的具体位置描述（是否靠近托盘边缘、是否邻近锡球有机械碰伤），无法与 C006 的“缺球位置靠近托盘边缘，邻近锡球有机械碰伤”做逐项比对。",
+      "当前 Query 未给出检测阶段与检测时间，无法判断是否与 C006 的 detection_stage=Customer、detection_time=2026-06-15 处于同一环节。",
+      "当前 Query 未给出异常类型编号（如 C006 的 00026），无法确认与历史 Case 的 failure_mode 是否一致。",
+      "当前 Query 未给出受影响数量与处置方式，无法与 C006 的 affected_qty=600、disposition 记录做范围比对。",
+      "当前 Query 未提供出货 AOI 记录、收货样品外观检查结果或运输防护检查结果，无法判断是否与 C006 的 E006 检查记录（“出货 AOI 记录中锡球完整；收货样品显示边缘碰伤及掉球，运输防护检查发现相应接触痕迹”）相符。",
+      "当前 Query 未提供生产时间，无法与 C006 的 production_time=2026-06-01 做时间线比对。"
+    ],
+    "insufficiency": "现有证据中只有 C006 在异常描述（客户收货后发现 BGA 锡球缺失、缺球位置靠近托盘边缘、邻近锡球有机械碰伤）与异常工序（P013 Storage & Transportation）上与当前 Query 的“BGA 锡球缺失”“托盘边缘有碰伤痕迹”存在对应；但当前 Query 缺少缺球具体位置、检测阶段与时间、异常类型编号、受影响数量与处置、出货 AOI/收货样品/运输防护检查结果、生产时间等信息，因此无法确认当前 Incident 是否与 C006 属于同一 failure_mode 或同一检查结论，也无法据此对当前 Incident 的原因作出任何判断。"
+  },
+  "answer_text": "{\n  \"case_answers\": [\n    {\n      \"case_id\": \"C006\",\n      \"relevance_reason\": \"当前 Incident 为“客户收货后发现 BGA 锡球缺失”，并提到“托盘边缘有碰伤痕迹”；历史 Case C006 的 abnormal_description 同样记录“客户收货后发现 BGA 锡球缺失，缺球位置靠近托盘边缘，邻近锡球有机械碰伤”，且其 abnormal_processes 为 P013（Storage & Transportation），与当前 Query 中“托盘边缘有碰伤痕迹”这一已知事实指向同一类外观/位置特征。\",\n      \"query_facts\": [\n        \"客户收货后发现 BGA 锡球缺失\",\n        \"托盘边缘有碰伤痕迹\"\n      ],\n      \"case_facts\": [\n        \"客户收货后发现 BGA 锡球缺失，缺球位置靠近托盘边缘，邻近锡球有机械碰伤。\",\n        \"abnormal_processes: [\\\"P013\\\"]\",\n        \"processes: [{\\\"process_id\\\": \\\"P013\\\", \\\"process_name\\\": \\\"Storage & Transportation\\\"}]\"\n      ],\n      \"historical_root_cause\": \"结案确认：运输/搬运机械碰伤或掉球。\",\n      \"historical_evidences\": [\n        {\n          \"checkpoint_id\": \"E006\",\n          \"result\": \"出货 AOI 记录中锡球完整；收货样品显示边缘碰伤及掉球，运输防护检查发现相应接触痕迹。\"\n        }\n      ],\n      \"sources\": [\n        {\"case_id\": \"C006\", \"field\": \"abnormal_description\"},\n        {\"case_id\": \"C006\", \"field\": \"root_cause\"},\n        {\"case_id\": \"C006\", \"field\": \"abnormal_processes\"},\n        {\"case_id\": \"C006\", \"field\": \"checkpoint:E006\"}\n      ]\n    }\n  ],\n  \"skipped_candidates\": [\n    {\n      \"case_id\": \"C009\",\n      \"reason\": \"C009 的 abnormal_description 为“FT 电性测试后发现部分器件锡球表面出现压痕与局部变形，压痕位置集中在锡球顶面”，其异常类型为 00028、异常工序为 P011（Electrical Test），且 E009 明确记录“外观与托盘接触面复查未发现碰伤、缺球或掉球痕迹”；当前 Query 的已知事实是“BGA 锡球缺失”与“托盘边缘有碰伤痕迹”，与 C009 记录的压痕/变形及“未发现碰伤、缺球或掉球痕迹”不一致，证据不足以说明相关。\"\n    },\n    {\n      \"case_id\": \"C005\",\n      \"reason\": \"C005 的 abnormal_description 为“OQC 声学扫描发现塑封空洞 molding void，空洞集中在封装边缘区域”，异常类型为 00018、异常工序为 P007（Molding）；当前 Query 的已知事实是“BGA 锡球缺失”与“托盘边缘有碰伤痕迹”，未涉及塑封空洞或声学扫描结果，证据不足以说明相关。\"\n    },\n    {\n      \"case_id\": \"C008\",\n      \"reason\": \"C008 的 abnormal_description 为“OQC 声学扫描发现部分器件内部存在塑封空洞，空洞集中在塑封体靠近基板边缘的区域”，异常类型为 00018、异常工序为 P007（Molding）；当前 Query 的已知事实是“BGA 锡球缺失”与“托盘边缘有碰伤痕迹”，未涉及塑封空洞或声学扫描结果，证据不足以说明相关。\"\n    }\n  ],\n  \"current_gaps\": [\n    \"当前 Query 未给出缺球的具体位置描述（是否靠近托盘边缘、是否邻近锡球有机械碰伤），无法与 C006 的“缺球位置靠近托盘边缘，邻近锡球有机械碰伤”做逐项比对。\",\n    \"当前 Query 未给出检测阶段与检测时间，无法判断是否与 C006 的 detection_stage=Customer、detection_time=2026-06-15 处于同一环节。\",\n    \"当前 Query 未给出异常类型编号（如 C006 的 00026），无法确认与历史 Case 的 failure_mode 是否一致。\",\n    \"当前 Query 未给出受影响数量与处置方式，无法与 C006 的 affected_qty=600、disposition 记录做范围比对。\",\n    \"当前 Query 未提供出货 AOI 记录、收货样品外观检查结果或运输防护检查结果，无法判断是否与 C006 的 E006 检查记录（“出货 AOI 记录中锡球完整；收货样品显示边缘碰伤及掉球，运输防护检查发现相应接触痕迹”）相符。\",\n    \"当前 Query 未提供生产时间，无法与 C006 的 production_time=2026-06-01 做时间线比对。\"\n  ],\n  \"insufficiency\": \"现有证据中只有 C006 在异常描述（客户收货后发现 BGA 锡球缺失、缺球位置靠近托盘边缘、邻近锡球有机械碰伤）与异常工序（P013 Storage & Transportation）上与当前 Query 的“BGA 锡球缺失”“托盘边缘有碰伤痕迹”存在对应；但当前 Query 缺少缺球具体位置、检测阶段与时间、异常类型编号、受影响数量与处置、出货 AOI/收货样品/运输防护检查结果、生产时间等信息，因此无法确认当前 Incident 是否与 C006 属于同一 failure_mode 或同一检查结论，也无法据此对当前 Incident 的原因作出任何判断。\"\n}",
+  "error": null,
+  "limits": [
+    "引用校验只确认引用能否在本次上下文中定位，不代表引用支持了它所在的那句话；语义支持必须另行人工审阅。",
+    "回答是历史参考，不判断当前 Incident 的最终 Root Cause。",
+    "运行记录不含凭据；本次回答不构成新的 Ground Truth，也不升级 draft Case。",
+    "前 4 条是检索候选，不是已确认相关案例；不得为证据不足的候选编造相关理由。",
+    "检索分数只是排序依据，不是相关概率，也不可跨方法比较。",
+    "源 Case 的审阅状态仍是 draft，本阶段不把它升级为正式事实，也不产生新的 Ground Truth。"
+  ]
+}

@@ -4,8 +4,6 @@ import json
 from pathlib import Path
 import sys
 
-import pytest
-
 from casetrace import main
 from casetrace.retrieval.base import SearchHit
 
@@ -139,11 +137,11 @@ def test_evaluate_rejects_unknown_method_without_writing_a_report(tmp_path, monk
     output = tmp_path / "should-not-exist.json"
 
     code, _, stderr = _invoke_cli(
-        monkeypatch, capsys, "evaluate", "--method", "hybrid", "--output", str(output),
+        monkeypatch, capsys, "evaluate", "--method", "nonexistent", "--output", str(output),
     )
 
     assert code == 2
-    assert "未实现的检索方法" in stderr and "hybrid" in stderr
+    assert "未实现的检索方法" in stderr and "nonexistent" in stderr
     assert not output.exists()
     assert list(tmp_path.iterdir()) == []
 

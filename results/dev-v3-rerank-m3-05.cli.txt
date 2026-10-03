@@ -1,0 +1,28 @@
+Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]Loading weights: 100%|██████████| 201/201 [00:00<00:00, 13911.11it/s]
+Loading weights:   0%|          | 0/71 [00:00<?, ?it/s]Loading weights: 100%|██████████| 71/71 [00:00<00:00, 8174.01it/s]
+评估输入：data/evaluation/dev-v3/qrels.json（dev-qrels-v3 / development / 确认日 2026-09-26）
+检索方法：rerank；语料 9 条；结果已写入 results/dev-v3-rerank-m3-05.json
+
+Q001  正例：C001、C002、C003、C004、C007
+  完整排名：C001 > C003 > C002 > C004 > C007 > C005 > C008 > C009 > C006
+Q002  正例：C005、C008
+  完整排名：C005 > C008 > C002 > C006 > C001 > C009 > C004 > C003 > C007
+Q003  正例：C005、C006
+  完整排名：C006 > C009 > C002 > C008 > C001 > C003 > C005 > C007 > C004
+Q004  正例：C005、C008
+  完整排名：C008 > C005 > C002 > C003 > C006 > C001 > C007 > C004 > C009
+Q005  正例：C001、C003、C004、C007
+  完整排名：C001 > C003 > C004 > C007 > C006 > C002 > C009 > C008 > C005
+
+recall@1     0.3900  参与 5 条
+recall@3     0.7700  参与 5 条
+recall@4     0.8600  参与 5 条
+precision@1  1.0000  参与 5 条
+precision@3  0.7333  参与 5 条
+precision@4  0.6500  参与 5 条
+ndcg@1       1.0000  参与 5 条
+ndcg@3       0.9226  参与 5 条
+ndcg@4       0.9226  参与 5 条
+mrr@4        1.0000  参与 5 条
+
+结果 schema：evaluation-result-v2；git 状态：脏工作区；检索分数不是相关概率，读数不代表已确认的质量结论。

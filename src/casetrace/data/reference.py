@@ -13,6 +13,9 @@ class ReferenceData:
     product_customers: dict[str, str]
     processes: dict[str, str]
     route_processes: dict[str, set[str]]
+    # 产品族名称按 product_families 原样读取：产品族只能来自主数据，
+    # 不从 package_route 或 CaseGroup 推断（Current Plan §4 的“类似产品”判断依据）。
+    product_families: dict[str, str]
 
     def validator_maps(self) -> dict:
         """从同一份主数据构造 Validator 的客户、路线、异常和工序映射。"""
@@ -57,7 +60,9 @@ def load_reference(path: Path) -> ReferenceData:
     workbook = load_workbook(path, read_only=True, data_only=True)
     try:
         products = _read_table(workbook, "products", "product_id",
-                               ("product_id", "product_name", "package_route"))
+                               ("product_id", "product_name", "product_family_id", "package_route"))
+        families = _read_table(workbook, "product_families", "product_family_id",
+                               ("product_family_id", "product_family"))
         modes = _read_table(workbook, "failure_modes", "failure_mode_id",
                            ("failure_mode_id", "failure_mode", "applicable_package",
                             "possible_root_causes", "corrective_actions"))
@@ -74,6 +79,9 @@ def load_reference(path: Path) -> ReferenceData:
         workbook.close()
 
     product_customers = {key: row["customer_id"] for key, row in assignments.items()}
+    product_families = {key: row["product_family"] for key, row in families.items()}
+    if not {row["product_family_id"] for row in products.values()} <= product_families.keys():
+        raise ValueError("产品引用了未知产品族")
     if products.keys() != product_customers.keys() or set(product_customers.values()) != set(customers):
         raise ValueError("客户归属必须覆盖全部产品及客户，且引用有效")
     processes = {key: row["process"] for key, row in process_rows.items()}
@@ -89,7 +97,8 @@ def load_reference(path: Path) -> ReferenceData:
     for route, selected in route_processes.items():
         if not selected:
             raise ValueError(f"路线 {route} 缺少工序映射")
-    reference = ReferenceData(products, modes, product_customers, processes, route_processes)
+    reference = ReferenceData(products, modes, product_customers, processes, route_processes,
+                              product_families)
     maps = reference.validator_maps()
     used_routes = set(maps["product_routes"].values())
     for applicable in maps["failure_mode_routes"].values():

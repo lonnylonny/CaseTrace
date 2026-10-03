@@ -16,6 +16,12 @@ dependencies = [
     "sentence-transformers>=6.1,<7",
     "torch>=2.2,<3",
     "numpy>=2,<3",
+    # M4-02 Grounded Answer：DeepSeek 官方以 OpenAI 兼容接口提供服务，
+    # 按官方文档使用 openai SDK 调用；本阶段不引入多模型路由或 LangChain。
+    "openai>=3.23.0",
+    # 本机通过 SOCKS 代理（ALL_PROXY=socks5://…）访问外网；httpx 缺少 socksio 时
+    # 连客户端都构造不出来（ImportError）。这不是可选优化，缺了就调不通。
+    "socksio>=1.0.0",
 ]
 
 [project.scripts]

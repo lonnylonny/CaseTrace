@@ -21,5 +21,5 @@
 - **Spec：** 0 open findings，含 nDCG；阅读判断与 BM25 归因的文字问题已关闭。
 - **Standards：** 0 open findings；执行源码清单已补全，支持未提交工作区的版本核对。
 - **实际验证（2026-09-22）：** runner/CLI 29 passed；全套 278 passed、169 subtests passed、1 failed；evaluate、demo、隔离重建与排名/分数/指标一致性验证成功。最后文字收尾未重跑测试。
-- **保留限制：** 旧 dev-v1 归档哈希失败按[用户决定](../../../data/evaluation/dev-v2/README.md#2026-09-22-用户后续决定)非阻塞，原文件、预期哈希和失败测试均保留。6 × 3 仅支撑开发流程，不证明泛化。
+- **保留限制：** dev-v1 历史归档原件的逐字节溯源仍有缺口；测试已于 2026-09-29 按[维护记录](dev-v1-archive-hash-reconciliation.md)修复，不是当前失败。6 × 3 仅支撑开发流程，不证明泛化。
 - **Verdict：accepted。** 无待交付 M2 功能。

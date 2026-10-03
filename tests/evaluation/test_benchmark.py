@@ -15,6 +15,11 @@ QRELS_RELATIVE = "data/evaluation/dev-v2/qrels.json"
 INPUT_FILES = (DATASET_RELATIVE, REFERENCE_RELATIVE, QRELS_RELATIVE)
 
 
+DATASET_RELATIVE_V3 = "data/dev/demo-v3.json"
+QRELS_RELATIVE_V3 = "data/evaluation/dev-v3/qrels.json"
+INPUT_FILES_V3 = (DATASET_RELATIVE_V3, REFERENCE_RELATIVE, QRELS_RELATIVE_V3)
+
+
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -28,6 +33,17 @@ def benchmark_inputs(tmp_path):
     """按原字节复制已确认数据到临时项目目录，供本文件扰动。"""
     root = tmp_path / "project"
     for relative in INPUT_FILES:
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(PROJECT_ROOT / relative, target)
+    return root
+
+
+@pytest.fixture
+def benchmark_inputs_v3(tmp_path):
+    """按原字节复制已确认数据到临时项目目录，供本文件扰动。"""
+    root = tmp_path / "project"
+    for relative in INPUT_FILES_V3:
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(PROJECT_ROOT / relative, target)
@@ -250,3 +266,20 @@ def test_judgment_without_rationale_is_rejected(benchmark_inputs):
 
     with pytest.raises(ValueError, match=r"\(Q001, C004\) \| rationale"):
         _load(root)
+
+
+def test_removed_v3_cross_pair_is_reported_as_a_missing_pair(benchmark_inputs_v3):
+    root = benchmark_inputs_v3
+    qrels_path = root / QRELS_RELATIVE_V3
+    qrels = json.loads(qrels_path.read_text(encoding="utf-8"))
+
+    # 正向对照：改写前这份副本必须能完整加载 45 对，失败才只能来自下面删掉的那一对。
+    before = load_benchmark(qrels_path, base_dir=root)
+    assert sum(len(labels) for labels in before.judgments.values()) == 45
+
+    qrels["judgments"] = [row for row in qrels["judgments"]
+                          if (row["query_id"], row["case_id"]) != ("Q001", "C007")]
+    _write(qrels_path, qrels)
+
+    with pytest.raises(ValueError, match=r"缺少 1 个配对：\(Q001, C007\)"):
+        load_benchmark(qrels_path, base_dir=root)

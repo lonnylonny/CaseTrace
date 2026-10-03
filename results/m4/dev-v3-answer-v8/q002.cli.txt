@@ -1,0 +1,42 @@
+Query Q002｜2026-09-15：声学扫描发现塑封空洞 molding void，涉及客户 CUS_001、产品 PROD_013、生产批 DEV_PL_012、客户批 DEV_CL_012，需要查找历史调查记录。
+快照：dev-v3-2026-09-15｜语料 9 条｜审阅状态 draft_pending_human_review（来源 Case 为 draft）
+检索：bm25_drop_negation_labels（top_k=4）｜候选排名：1.C005 > 2.C008 > 3.C002 > 4.C006
+
+1. C005
+   相关理由：当前 Query 描述声学扫描发现塑封空洞 molding void；历史 C005 的 abnormal_description 同样记录 OQC 声学扫描发现塑封空洞 molding void，空洞集中在封装边缘区域，双方异常描述支持同类现象。
+   当前 Query 依据：声学扫描发现塑封空洞 molding void
+   历史依据：OQC 声学扫描发现塑封空洞 molding void，空洞集中在封装边缘区域。
+   历史原因（该 Case 的记录）：结案确认：mold vent/vacuum不足。
+   历史改善措施（该 Case 的记录，不是当前建议）：改善vent/vacuum。
+   历史检查 E005：SAM 确认边缘空洞；模具排气通道检查发现堵塞，清理后的对照试模空洞减少。
+   来源：C005:case.abnormal_description、C005:case.root_cause、C005:case.corrective_action、C005:checkpoint:E005
+
+2. C008
+   相关理由：当前 Query 描述声学扫描发现塑封空洞 molding void；历史 C008 的 abnormal_description 同样记录 OQC 声学扫描发现部分器件内部存在塑封空洞，空洞集中在塑封体靠近基板边缘的区域，双方异常描述支持同类现象。
+   当前 Query 依据：声学扫描发现塑封空洞 molding void
+   历史依据：OQC 声学扫描发现部分器件内部存在塑封空洞，空洞集中在塑封体靠近基板边缘的区域。
+   历史原因（该 Case 的记录）：结案确认：molding compound受潮、夹气或挥发物异常。
+   历史改善措施（该 Case 的记录，不是当前建议）：控制molding compound储存与含湿。
+   历史检查 E008：声学扫描确认塑封体边缘存在内部空洞；molding compound 储存与含湿记录显示开封后暴露时间超出控制要求，重新干燥并调整模压条件（模压设备 EQ_MOLD_02）后的对照试模空洞明显减少。
+   来源：C008:case.abnormal_description、C008:case.root_cause、C008:case.corrective_action、C008:checkpoint:E008
+
+跳过候选 C002：历史 C002 记录的是客户反馈引脚润湿不良、焊料未充分铺展，异常位置位于外部引脚表面；当前 Query 为声学扫描发现塑封空洞 molding void，双方异常描述不支持同类现象。
+跳过候选 C006：历史 C006 记录的是客户收货后发现 BGA 锡球缺失、缺球位置靠近托盘边缘、邻近锡球有机械碰伤；当前 Query 为声学扫描发现塑封空洞 molding void，双方异常描述不支持同类现象。
+
+当前仍缺少的信息：
+- 当前 Query 未提供空洞在封装内的具体位置或分布描述，无法与历史记录中的边缘区域空洞做位置层面的对照。
+- 当前 Query 未提供受影响数量或抽样数量，无法评估该批次的波及范围。
+- 当前 Query 未提供当前根因记录，无法与历史 Case 的已确认原因做对应比较。
+
+不足说明：本回答仅列出历史记录，不据此判断当前原因或推荐当前改善措施。
+
+引用校验：检查 14 条，问题 0 条（只确认引用可定位，不代表引用支持原句）
+运行状态：ok
+
+限制与边界：
+- 引用校验只确认引用能否在本次上下文中定位，不代表引用支持了它所在的那句话；语义支持必须另行人工审阅。
+- 回答是历史参考，不判断当前 Incident 的最终 Root Cause。
+- 运行记录不含凭据；本次回答不构成新的 Ground Truth，也不升级 draft Case。
+- 前 4 条是检索候选，不是已确认相关案例；不得为证据不足的候选编造相关理由。
+- 检索分数只是排序依据，不是相关概率，也不可跨方法比较。
+- 源 Case 的审阅状态仍是 draft，本阶段不把它升级为正式事实，也不产生新的 Ground Truth。

@@ -4,7 +4,6 @@ import dataclasses
 import hashlib
 import json
 import math
-from pathlib import Path
 
 import pytest
 
@@ -31,6 +30,7 @@ from casetrace.evaluation.runner import (
     write_report,
 )
 from casetrace.retrieval.base import SearchHit
+from casetrace.retrieval.hybrid import HybridRetriever
 
 QRELS_RELATIVE = "data/evaluation/dev-v2/qrels.json"
 
@@ -488,16 +488,16 @@ def test_report_timing_records_boundaries_and_stays_out_of_scores():
 
 
 def test_unknown_method_is_rejected_before_anything_is_built(benchmark):
-    # hybrid 尚未实现：真正的未知方法必须在建索引之前报错，且列出当前可用方法。
+    # nonexistent 是未实现方法：真正的未知方法必须在建索引之前报错，且列出当前可用方法。
     with pytest.raises(ValueError) as error:
-        build_retriever(benchmark, method="hybrid")
+        build_retriever(benchmark, method="nonexistent")
 
     message = str(error.value)
-    assert "未实现的检索方法" in message and "hybrid" in message
+    assert "未实现的检索方法" in message and "nonexistent" in message
     assert DEFAULT_METHOD in message            # 报错必须说明当前可用的方法
 
     with pytest.raises(ValueError, match="未实现的检索方法"):
-        run_evaluation(PROJECT_ROOT / QRELS_RELATIVE, method="hybrid")
+        run_evaluation(PROJECT_ROOT / QRELS_RELATIVE, method="nonexistent")
 
 
 def test_second_method_without_terms_can_be_registered(benchmark, monkeypatch):
@@ -543,7 +543,7 @@ def test_second_method_without_terms_can_be_registered(benchmark, monkeypatch):
 
 def test_registry_ships_only_real_methods():
     # 注册表只登记真实实现：替身方法只能通过 monkeypatch 注入；新增方法必须显式登记。
-    assert set(RETRIEVER_FACTORIES) == {"bm25", "embedding"}
+    assert set(RETRIEVER_FACTORIES) == {"bm25", "embedding", "hybrid", "rerank"}
 
 
 def test_embedding_method_report_records_cache_and_run_details(tmp_path, monkeypatch):
@@ -625,3 +625,139 @@ def test_write_report_failure_leaves_no_partial_report(tmp_path):
 
     assert existing.read_text(encoding="utf-8") == "不要被覆盖"
     assert sorted(path.name for path in tmp_path.iterdir()) == ["existing.json"]
+
+
+def test_hybrid_report_records_per_query_fusion_trace(monkeypatch):
+    """hybrid 已注册：报告顶层 fusion_trace 按 Query 对齐，追溯各路名次与融合分数。"""
+
+    class StubRoute:
+        def __init__(self, order, route_name):
+            self.order = list(order)
+            self.route_name = route_name
+
+        def search(self, query, *, top_k):
+            return [SearchHit(case_id, 1.0) for case_id in self.order[:top_k]]
+
+        def describe(self):
+            return {"method": "stub-route", "route_name": self.route_name}
+
+        def run_details(self):
+            return {"observed_route": self.route_name}
+
+    monkeypatch.setitem(
+        RETRIEVER_FACTORIES, "hybrid",
+        lambda documents: HybridRetriever(
+            documents,
+            bm25=StubRoute(["C001", "C002"], "bm25-test"),
+            embedding=StubRoute(["C002", "C001"], "embedding-test"),
+        ),
+    )
+
+    report = run_evaluation(PROJECT_ROOT / QRELS_RELATIVE, method="hybrid")
+
+    assert report["retrieval"]["method"] == "hybrid"
+    assert report["retrieval"]["routes"]["bm25"]["route_name"] == "bm25-test"
+    assert report["retrieval"]["routes"]["embedding"]["route_name"] == "embedding-test"
+    assert report["timing"]["method_details"]["routes"] == {
+        "bm25": {"observed_route": "bm25-test"},
+        "embedding": {"observed_route": "embedding-test"},
+    }
+    traces = report["fusion_trace"]
+    assert [trace["query_id"] for trace in traces] == [
+        query["query_id"] for query in report["queries"]
+    ]
+    for trace in traces:
+        assert set(trace) == {"query_id", "routes", "fusion"}
+
+
+def test_rerank_report_records_per_query_rerank_trace(monkeypatch):
+    """rerank 已注册：报告顶层 rerank_trace 按 Query 对齐，追溯候选原名次与重排分数。"""
+    from casetrace.retrieval.rerank import CANDIDATE_COUNT, RerankRetriever
+
+    class StubBase:
+        def __init__(self, order):
+            self.order = list(order)
+            self.requested_top_k = None
+
+        def search(self, query, *, top_k):
+            self.requested_top_k = top_k
+            return [SearchHit(case_id, 1.0) for case_id in self.order[:top_k]]
+
+        def describe(self):
+            return {"method": "stub-candidate"}
+
+    class StubReranker:
+        def score(self, query, documents):
+            # 用文本长度做可控分数：只验证接线，不代表任何真实语义。
+            return [float(len(text)) for text in documents]
+
+    monkeypatch.setitem(
+        RETRIEVER_FACTORIES, "rerank",
+        lambda documents: RerankRetriever(
+            documents,
+            base=StubBase(sorted(documents, reverse=True)),
+            reranker=StubReranker(),
+        ),
+    )
+
+    report = run_evaluation(PROJECT_ROOT / QRELS_RELATIVE, method="rerank")
+
+    assert report["retrieval"]["method"] == "rerank"
+    assert report["retrieval"]["candidate"]["count"] == CANDIDATE_COUNT
+    assert report["retrieval"]["candidate"]["retriever"] == {"method": "stub-candidate"}
+    assert "timing" in report["timing"]["method_details"]
+    assert "fusion_trace" not in report
+
+    traces = report["rerank_trace"]
+    assert [trace["query_id"] for trace in traces] == [
+        query["query_id"] for query in report["queries"]
+    ]
+    first = traces[0]
+    assert set(first) == {
+        "query_id", "candidate_method", "candidate_count",
+        "covers_full_corpus", "candidates", "reranked_order", "returned",
+    }
+    assert first["candidate_count"] == CANDIDATE_COUNT
+    for item in first["candidates"]:
+        assert set(item) == {
+            "case_id", "candidate_rank", "candidate_score", "rerank_score", "rerank_rank",
+        }
+    # 报告里的排名、分数与追溯的重排后顺序一致：分数是重排分数，ID 与分数一一对应。
+    assert [item["case_id"] for item in report["queries"][0]["ranked"]] == first["reranked_order"]
+    scores_by_id = {item["case_id"]: item["rerank_score"] for item in first["candidates"]}
+    for entry in report["queries"][0]["ranked"]:
+        assert entry["score"] == pytest.approx(scores_by_id[entry["case_id"]])
+
+
+def test_hybrid_candidates_do_not_change_with_qrels(benchmark, monkeypatch):
+    """换 qrels（只改标签）不改变 hybrid 的候选与融合：融合只依赖 Query 文本。"""
+
+    class StubRoute:
+        def __init__(self, order):
+            self.order = list(order)
+
+        def search(self, query, *, top_k):
+            return [SearchHit(case_id, 1.0) for case_id in self.order[:top_k]]
+
+        def describe(self):
+            return {"method": "stub-route"}
+
+    monkeypatch.setitem(
+        RETRIEVER_FACTORIES, "hybrid",
+        lambda documents: HybridRetriever(
+            documents,
+            bm25=StubRoute(["C001", "C002"]),
+            embedding=StubRoute(["C002", "C001"]),
+        ),
+    )
+    relabeled = dataclasses.replace(
+        benchmark,
+        judgments={
+            query_id: dict.fromkeys(labels, 0)
+            for query_id, labels in benchmark.judgments.items()
+        },
+    )
+    query = next(query for query in benchmark.queries if query.query_id == "Q001")
+
+    assert rank_query(benchmark, build_retriever(benchmark, method="hybrid"), query) == \
+        rank_query(relabeled, build_retriever(relabeled, method="hybrid"), query)

@@ -1,0 +1,45 @@
+Query Q002｜2026-09-15：声学扫描发现塑封空洞 molding void，涉及客户 CUS_001、产品 PROD_013、生产批 DEV_PL_012、客户批 DEV_CL_012，需要查找历史调查记录。
+快照：dev-v3-2026-09-15｜语料 9 条｜审阅状态 draft_pending_human_review（来源 Case 为 draft）
+检索：bm25_drop_negation_labels（top_k=4）｜候选排名：1.C005 > 2.C008 > 3.C002 > 4.C006
+
+1. C005
+   相关理由：当前 Query 为声学扫描发现塑封空洞 molding void；C005 的 abnormal_description 同样记录为 OQC 声学扫描发现塑封空洞 molding void，且 abnormal_types 为 00018、abnormal_processes 为 P007（Molding），与当前 Incident 的缺陷现象和工序方向一致。
+   当前 Query 依据：声学扫描发现塑封空洞 molding void；涉及客户 CUS_001、产品 PROD_013、生产批 DEV_PL_012、客户批 DEV_CL_012
+   历史依据：OQC 声学扫描发现塑封空洞 molding void，空洞集中在封装边缘区域。；abnormal_types: ["00018"]；abnormal_processes: ["P007"]；source.failure_mode_id: 00018
+   历史原因（该 Case 的记录）：结案确认：mold vent/vacuum不足。
+   历史检查 E005：SAM 确认边缘空洞；模具排气通道检查发现堵塞，清理后的对照试模空洞减少。
+   来源：C005:abnormal_description、C005:root_cause、C005:corrective_action、C005:detail:D005、C005:checkpoint:E005、C005:source.failure_mode_id
+
+2. C008
+   相关理由：当前 Query 为声学扫描发现塑封空洞 molding void；C008 的 abnormal_description 同样记录为 OQC 声学扫描发现塑封空洞，且 abnormal_types 为 00018、abnormal_processes 为 P007（Molding），与当前 Incident 的缺陷现象和工序方向一致。
+   当前 Query 依据：声学扫描发现塑封空洞 molding void；涉及客户 CUS_001、产品 PROD_013、生产批 DEV_PL_012、客户批 DEV_CL_012
+   历史依据：OQC 声学扫描发现部分器件内部存在塑封空洞，空洞集中在塑封体靠近基板边缘的区域。；abnormal_types: ["00018"]；abnormal_processes: ["P007"]；source.failure_mode_id: 00018
+   历史原因（该 Case 的记录）：结案确认：molding compound受潮、夹气或挥发物异常。
+   历史检查 E008：声学扫描确认塑封体边缘存在内部空洞；molding compound 储存与含湿记录显示开封后暴露时间超出控制要求，重新干燥并调整模压条件（模压设备 EQ_MOLD_02）后的对照试模空洞明显减少。
+   来源：C008:abnormal_description、C008:root_cause、C008:corrective_action、C008:detail:D008、C008:checkpoint:E008、C008:source.failure_mode_id
+
+跳过候选 C002：C002 的 abnormal_description 为引脚润湿不良、焊料未充分铺展，异常位置位于外部引脚表面，abnormal_types 为 00016，abnormal_processes 为 P013（Storage & Transportation），与当前 Query 的声学扫描塑封空洞 molding void 在缺陷现象、异常类型和工序上均不一致，证据不足以说明相关。
+跳过候选 C006：C006 的 abnormal_description 为 BGA 锡球缺失、邻近锡球机械碰伤，abnormal_types 为 00026，abnormal_processes 为 P013（Storage & Transportation），与当前 Query 的声学扫描塑封空洞 molding void 在缺陷现象、异常类型和工序上均不一致，证据不足以说明相关。
+
+当前仍缺少的信息：
+- 当前 Query 未提供当前 Incident 的异常类型编号（如是否与历史 Case 的 00018 相同），无法判断与历史 Case 的 failure_mode_id 是否一致。
+- 当前 Query 未提供当前 Incident 的异常工序（如是否属于 P007 Molding），无法判断与历史 Case 的 abnormal_processes 是否一致。
+- 当前 Query 未提供当前 Incident 的检测阶段（如是否 OQC）与检测时间，无法与历史 Case 的 detection_stage/detection_time 对照。
+- 当前 Query 未提供当前 Incident 的空洞位置分布（如是否集中在封装边缘或塑封体靠近基板边缘区域），无法与 C005、C008 记录的空洞位置特征对照。
+- 当前 Query 未提供当前 Incident 的受影响数量与处置情况，无法与历史 Case 的 affected_qty/disposition 对照。
+- 当前 Query 未提供当前 Incident 的模压设备、模具排气通道状态、molding compound 储存与含湿记录等检查信息，无法判断是否与 C005 的模具排气通道堵塞或 C008 的开封后暴露时间超出控制要求等历史检查结果对应。
+
+不足说明：现有历史证据中仅 C005 与 C008 在缺陷现象（声学扫描塑封空洞 molding void）、异常类型 00018 与工序 P007（Molding）上与当前 Query 一致，可支持相关性判断；但当前 Query 未给出当前 Incident 的异常类型编号、异常工序、检测阶段、空洞位置分布、受影响数量与处置、以及模压设备/模具排气/材料储存含湿等检查信息，因此无法判断当前 Incident 与 C005 或 C008 的具体原因记录是否对应，也无法据此确认当前 Incident 的原因或结论。
+
+引用校验：检查 18 条，问题 2 条（只确认引用可定位，不代表引用支持原句）
+- [unknown_field] case_answers[0].sources[5] Case C005 的本次上下文没有可定位字段 'source.failure_mode_id'（Case 字段：case_id、abnormal_description、root_cause、corrective_action、investigation_others、abnormal_processes；另有 background、processes；Detail 写 detail:<detail_id>；检查写 checkpoint:<checkpoint_id>）
+- [unknown_field] case_answers[1].sources[5] Case C008 的本次上下文没有可定位字段 'source.failure_mode_id'（Case 字段：case_id、abnormal_description、root_cause、corrective_action、investigation_others、abnormal_processes；另有 background、processes；Detail 写 detail:<detail_id>；检查写 checkpoint:<checkpoint_id>）
+运行状态：citation_failed
+
+限制与边界：
+- 引用校验只确认引用能否在本次上下文中定位，不代表引用支持了它所在的那句话；语义支持必须另行人工审阅。
+- 回答是历史参考，不判断当前 Incident 的最终 Root Cause。
+- 运行记录不含凭据；本次回答不构成新的 Ground Truth，也不升级 draft Case。
+- 前 4 条是检索候选，不是已确认相关案例；不得为证据不足的候选编造相关理由。
+- 检索分数只是排序依据，不是相关概率，也不可跨方法比较。
+- 源 Case 的审阅状态仍是 draft，本阶段不把它升级为正式事实，也不产生新的 Ground Truth。

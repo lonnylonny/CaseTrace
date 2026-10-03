@@ -1,0 +1,43 @@
+Query Q001｜2026-09-15：PROD_001 在 OQC 发现焊线脱落，拉力检查显示焊点剥离，涉及客户 CUS_001、生产批 DEV_PL_001、客户批 DEV_CL_001，原因尚未确认。
+快照：dev-v3-2026-09-15｜语料 9 条｜审阅状态 draft_pending_human_review（来源 Case 为 draft）
+检索：bm25_drop_negation_labels（top_k=4）｜候选排名：1.C001 > 2.C003 > 3.C004 > 4.C007
+
+1. C001
+   相关理由：当前 Query 已知 PROD_001 在 OQC 发现焊线脱落、拉力检查显示焊点剥离；历史 C001 记录同为 PROD_001、客户批 DEV_CL_001、生产批 DEV_PL_001，且异常描述为 OQC 拉力检查发现焊线脱落、焊点从 die pad 界面剥离。
+   当前 Query 依据：PROD_001 在 OQC 发现焊线脱落，拉力检查显示焊点剥离；涉及客户 CUS_001、生产批 DEV_PL_001、客户批 DEV_CL_001
+   历史依据：OQC 拉力检查发现焊线脱落，焊点从 die pad 界面剥离，表现为 wire bond lift。；product_id: PROD_001, customer_lot: DEV_CL_001, production_lot: DEV_PL_001, detection_stage: OQC
+   历史原因（该 Case 的记录）：结案确认：die pad或lead/substrate bond finger污染/氧化。
+   历史改善措施（该 Case 的记录，不是当前建议）：加强wafer pad和载体bond finger来料/清洁管控。
+   历史检查 E001：拉力试验的剥离面位于 die pad；界面复查发现表面污染。清洁对照样品的接合表现恢复。
+   来源：C001:case.abnormal_description、C001:case.root_cause、C001:case.corrective_action、C001:detail:D001、C001:checkpoint:E001、C001:source.failure_mode_id、C001:source.closure_status
+
+2. C003
+   相关理由：当前 Query 已知拉力检查显示焊点剥离；历史 C003 记录为拉力测试出现焊点剥离、焊线从 pad 脱落，异常位于第一焊点界面，与当前已知的焊点剥离现象同类。
+   当前 Query 依据：拉力检查显示焊点剥离
+   历史依据：在线拉力测试出现焊点剥离，焊线从 pad 脱落；异常位于第一焊点界面。
+   历史原因（该 Case 的记录）：结案确认：die pad或lead/substrate bond finger污染/氧化。
+   历史改善措施（该 Case 的记录，不是当前建议）：加强wafer pad和载体bond finger来料/清洁管控。
+   历史检查 E003：焊点剥离面存在 pad 表面污染；清洁处理后的对照样品未再出现同类界面剥离。
+   来源：C003:case.abnormal_description、C003:case.root_cause、C003:case.corrective_action、C003:detail:D003、C003:checkpoint:E003、C003:source.failure_mode_id、C003:source.closure_status
+
+跳过候选 C004：历史 C004 的异常描述为焊线断裂、断点集中在第二焊点颈部，检查结果记录未观察到 pad 界面剥离或污染；当前 Query 已知为焊点剥离，两者异常现象不同，且当前未提供产品与 C004 的 PROD_002 相同或同产品族的依据。
+跳过候选 C007：历史 C007 的异常描述为键合金球从器件焊盘表面分离、分离面位于键合界面，产品为 PROD_015、客户为 CUS_005、封装路线为 SUBSTRATE_WB；当前 Query 未提供与 C007 同产品、同批次或同产品族的依据，仅共享历史工序/失效代码不足以说明相关。
+
+当前仍缺少的信息：
+- 当前 Query 未提供异常类型代码，无法与历史 Case 的 abnormal_types/failure_mode_id 做同异常类型比对。
+- 当前 Query 未提供封装路线或产品族信息，无法判断与历史 C007 的 SUBSTRATE_WB 路线或其它产品族是否一致。
+- 当前 Query 未提供焊点剥离的具体界面位置（如 die pad、第一焊点、第二焊点颈部），无法与历史 Case 的剥离面位置做比对。
+- 当前 Query 未提供任何检查结果或调查记录，无法与历史 Case 的界面污染、参数偏离等检查发现做比对。
+
+不足说明：仅能依据当前 Query 已知的 OQC 焊线脱落、拉力检查焊点剥离及产品/批次信息，与历史 Case 记录做现象与背景层面的比对；当前原因尚未确认，无法判断与任一历史 Case 的原因是否一致。
+
+引用校验：检查 20 条，问题 0 条（只确认引用可定位，不代表引用支持原句）
+运行状态：ok
+
+限制与边界：
+- 引用校验只确认引用能否在本次上下文中定位，不代表引用支持了它所在的那句话；语义支持必须另行人工审阅。
+- 回答是历史参考，不判断当前 Incident 的最终 Root Cause。
+- 运行记录不含凭据；本次回答不构成新的 Ground Truth，也不升级 draft Case。
+- 前 4 条是检索候选，不是已确认相关案例；不得为证据不足的候选编造相关理由。
+- 检索分数只是排序依据，不是相关概率，也不可跨方法比较。
+- 源 Case 的审阅状态仍是 draft，本阶段不把它升级为正式事实，也不产生新的 Ground Truth。

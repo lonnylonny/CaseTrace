@@ -34,4 +34,7 @@ class Retriever(Protocol):
     # 可选能力：实现可以提供 run_details() -> dict，返回本次运行的观测值
     # （例如耗时、缓存命中状态）。评估器只在存在时把它记入报告的顶层 timing.method_details，
     # 因此这些值不会混进可比较的排名、分数与方法配置。
+    # 可选能力：实现可以提供 query_traces() -> list[dict]，返回逐 Query 的追溯信息
+    # （例如各路名次与融合分数）。评估器只在存在时把它写入报告顶层 fusion_trace，
+    # 同样不混进排名、分数与方法配置。
 

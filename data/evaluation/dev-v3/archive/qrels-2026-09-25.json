@@ -1,0 +1,352 @@
+{
+  "qrels_version": "dev-qrels-v3",
+  "split": "development",
+  "review_status": "human_confirmed",
+  "confirmed_on": "2026-09-25",
+  "confirmation_scope": "dev_v3_query_enriched_corpus_and_all_45_binary_labels",
+  "rationale_author": "agent_drafted_user_confirmed",
+  "sources": {
+    "dataset": {
+      "path": "data/dev/demo-v3.json",
+      "sha256": "0a29041a4e6ed11a5b31ff85a74fa8bed9b79afeb1d35158ea9430f6e5af8f0b"
+    },
+    "reference": {
+      "path": "data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx",
+      "sha256": "f5001bddd3dff43342a2569ceda836ddb4f5c0caca942c1c4d043d99a9131c85"
+    }
+  },
+  "label_meanings": {
+    "0": "Not Relevant",
+    "1": "Relevant"
+  },
+  "judgments": [
+    {
+      "query_id": "Q001",
+      "case_id": "C001",
+      "relevance": 1,
+      "rationale": "Q001 与 C001 均为 PROD_001，且生产批同为 DEV_PL_001；焊线脱落、焊点剥离的表现一致，同产品、同批次与同异常均成立。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q001",
+      "case_id": "C002",
+      "relevance": 1,
+      "rationale": "C002 的异常（外部引脚润湿不良）与 Q001 的焊线脱落不是同一异常，但两者同为 PROD_001 且同为生产批 DEV_PL_001；用户确认同产品同批次应被检索到，故判为 Relevant。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q001",
+      "case_id": "C003",
+      "relevance": 1,
+      "rationale": "Q001 与 C003 均描述焊点剥离、焊线脱落；同异常表现足以相关，不要求产品相同或措辞逐字相同。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q001",
+      "case_id": "C004",
+      "relevance": 1,
+      "rationale": "描述均为焊线相关异常；Q001 的 PROD_001 与 C004 的 PROD_002 同属 PF_001，符合类似产品条件；不以共享 failure_mode_id 推导相关性。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q001",
+      "case_id": "C005",
+      "relevance": 0,
+      "rationale": "C005 为塑封空洞；其 PROD_005 属 PF_003，与 Q001 的 PROD_001（PF_001）不同族，生产批 DEV_PL_005 也不同于 Q001 的 DEV_PL_001。仅同为 LF_WB 不足以构成类似产品。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q001",
+      "case_id": "C006",
+      "relevance": 0,
+      "rationale": "C006 为 BGA 缺球、碰伤；其 PROD_006 属 PF_003，与 Q001 的 PROD_001 不同族，生产批 DEV_PL_006 也不同批。没有同异常、同产品、类似产品或同批次依据。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q001",
+      "case_id": "C007",
+      "relevance": 0,
+      "rationale": "C007 与 C001 共享 failure_mode_id 00010，但表现为键合金球自焊盘界面分离，与 Q001 的焊线脱落、焊点剥离不同；用户确认共享 failure_mode_id 只是极弱约束，异常不同时不构成同异常，且无同产品、类似产品或同批次依据。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q001",
+      "case_id": "C008",
+      "relevance": 0,
+      "rationale": "C008 为塑封空洞，与 Q001 的键合界面分离不是同一异常；其 PROD_009 属 PF_005，与 Q001 的 PROD_001 不同族，生产批 DEV_PL_009 也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q001",
+      "case_id": "C009",
+      "relevance": 0,
+      "rationale": "C009 为 FT 探针压形导致的锡球变形，异常表现与 Q001 的焊线脱落不同；其 PROD_011 属 PF_006，与 PROD_001 不同族，生产批 DEV_PL_011 也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q002",
+      "case_id": "C001",
+      "relevance": 0,
+      "rationale": "Q002 为塑封空洞，C001 为焊点界面剥离；Q002 的 PROD_013 属 PF_007，与 C001 的 PROD_001（PF_001）不同族，生产批 DEV_PL_012 与 DEV_PL_001 也不同。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q002",
+      "case_id": "C002",
+      "relevance": 0,
+      "rationale": "Q002 为塑封空洞，C002 为外部引脚润湿不良；Q002 的 PROD_013（PF_007）与 C002 的 PROD_001（PF_001）不同族，生产批 DEV_PL_012 与 DEV_PL_001 也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q002",
+      "case_id": "C003",
+      "relevance": 0,
+      "rationale": "Q002 为塑封空洞，C003 为焊点剥离、焊线脱落；Q002 的 PROD_013（PF_007）与 C003 的 PROD_003（PF_002）不同族，生产批 DEV_PL_012 与 DEV_PL_003 也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q002",
+      "case_id": "C004",
+      "relevance": 0,
+      "rationale": "Q002 为塑封空洞，C004 为第二焊点颈部断裂；Q002 的 PROD_013（PF_007）与 C004 的 PROD_002（PF_001）不同族，生产批 DEV_PL_012 与 DEV_PL_004 也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q002",
+      "case_id": "C005",
+      "relevance": 1,
+      "rationale": "Q002 与 C005 均描述声学扫描发现塑封空洞 molding void，具有直接的同异常参考价值；两者产品族（PF_007 对 PF_003）与批号均不同。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q002",
+      "case_id": "C006",
+      "relevance": 0,
+      "rationale": "Q002 为塑封空洞，C006 为 BGA 缺球、碰伤；Q002 的 PROD_013（PF_007）与 C006 的 PROD_006（PF_003）不同族，生产批 DEV_PL_012 与 DEV_PL_006 也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q002",
+      "case_id": "C007",
+      "relevance": 0,
+      "rationale": "C007 为键合界面分离，与 Q002 的塑封空洞不是同一异常；Q002 的 PROD_013（PF_007）与 C007 的 PROD_015（PF_002）不同族，生产批也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q002",
+      "case_id": "C008",
+      "relevance": 1,
+      "rationale": "C008 与 Q002 均为声学扫描发现的塑封空洞（molding void）；同异常本身足以相关，不要求路线或产品族相同（PROD_013 属 PF_007，C008 的 PROD_009 属 PF_005，批号也不同）。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q002",
+      "case_id": "C009",
+      "relevance": 0,
+      "rationale": "C009 为锡球探针压形，与塑封空洞无关；其 PROD_011 属 PF_006，与 Q002 的 PROD_013（PF_007）不同族，批号也不同。无同产品、类似产品或同批次依据。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q003",
+      "case_id": "C001",
+      "relevance": 0,
+      "rationale": "Q003 为 BGA 缺球、托盘边缘碰伤，C001 为焊点界面剥离；Q003 的 PROD_006 属 PF_003，与 C001 的 PROD_001（PF_001）不同族，生产批 DEV_PL_013 与 DEV_PL_001 也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q003",
+      "case_id": "C002",
+      "relevance": 0,
+      "rationale": "Q003 为 BGA 缺球、碰伤，C002 为外部引脚润湿不良；仅同在客户阶段发现不足以满足本轮相关性标准，且 PROD_006（PF_003）与 PROD_001（PF_001）不同族，批号也不同。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q003",
+      "case_id": "C003",
+      "relevance": 0,
+      "rationale": "Q003 为 BGA 缺球、托盘边缘碰伤，C003 为焊点剥离、焊线脱落；Q003 的 PROD_006（PF_003）与 C003 的 PROD_003（PF_002）不同族，生产批 DEV_PL_013 与 DEV_PL_003 也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q003",
+      "case_id": "C004",
+      "relevance": 0,
+      "rationale": "Q003 为 BGA 缺球、托盘边缘碰伤，C004 为第二焊点颈部断裂；Q003 的 PROD_006（PF_003）与 C004 的 PROD_002（PF_001）不同族，生产批 DEV_PL_013 与 DEV_PL_004 也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q003",
+      "case_id": "C005",
+      "relevance": 1,
+      "rationale": "C005 为塑封空洞，与 Q003 的 BGA 缺球、碰伤不是同一异常；但 Q003 的 PROD_006 与 C005 的 PROD_005 同属 PF_003，用户确认类似产品充分条件成立，故判为 Relevant。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q003",
+      "case_id": "C006",
+      "relevance": 1,
+      "rationale": "Q003 与 C006 均描述客户收货后 BGA 缺球，并有托盘边缘或邻近位置的碰伤表现，且均为 PROD_006；同产品与同异常均成立，生产批不同（DEV_PL_013 对 DEV_PL_006），不构成同批次。依据已知现象判断，不推定当前最终原因。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q003",
+      "case_id": "C007",
+      "relevance": 0,
+      "rationale": "C007 为键合界面分离，与 Q003 的 BGA 锡球缺失、碰伤不同；PROD_015（PF_002）与 Q003 的 PROD_006（PF_003）不同族，批号也不同，无同产品、类似产品或同批依据。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q003",
+      "case_id": "C008",
+      "relevance": 0,
+      "rationale": "C008 为塑封空洞，与 BGA 缺球、碰伤不是同一异常；其 PROD_009 属 PF_005，与 Q003 的 PROD_006（PF_003）不同族，生产批 DEV_PL_009 与 DEV_PL_013 也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q003",
+      "case_id": "C009",
+      "relevance": 0,
+      "rationale": "C009 表面为锡球变形，与 Q003 的缺球、碰伤现象相近；其机制为 FT 探针压形，异常表现不同，用户确认为很弱关联，不构成 Relevant；PROD_011（PF_006）与 PROD_006（PF_003）也不同族。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q004",
+      "case_id": "C001",
+      "relevance": 0,
+      "rationale": "C001 为焊线脱落与界面剥离，与 Q004 的塑封空洞不是同一异常；Q004 的 PROD_009 属 PF_005，与 C001 的 PROD_001（PF_001）不同族，生产批 DEV_PL_009 与 DEV_PL_001 也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q004",
+      "case_id": "C002",
+      "relevance": 0,
+      "rationale": "C002 为引脚润湿不良，异常表现不同；其生产批为 DEV_PL_001，与 Q004 的 DEV_PL_009 不同批；产品族也不同（PF_001 对 PF_005）。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q004",
+      "case_id": "C003",
+      "relevance": 0,
+      "rationale": "C003 为第一焊点界面剥离，与塑封空洞不同；PROD_003 属 PF_002，与 Q004 的 PROD_009（PF_005）不同族，批号也不同。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q004",
+      "case_id": "C004",
+      "relevance": 0,
+      "rationale": "C004 为第二焊点颈部断裂，与塑封空洞不同；PROD_002 属 PF_001，与 Q004 的 PROD_009（PF_005）不同族，批号也不同。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q004",
+      "case_id": "C005",
+      "relevance": 1,
+      "rationale": "C005 与 Q004 均为声学扫描发现的塑封空洞；同异常本身足以相关，不要求批次或产品族相同（PROD_005 属 PF_003，生产批为 DEV_PL_005）。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q004",
+      "case_id": "C006",
+      "relevance": 0,
+      "rationale": "C006 为 BGA 缺球与碰伤，与塑封空洞不同；其生产批为 DEV_PL_006，与 DEV_PL_009 不同批，产品族也不同（PF_003 对 PF_005）。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q004",
+      "case_id": "C007",
+      "relevance": 0,
+      "rationale": "C007 为键合界面分离，与塑封空洞不同；PROD_015 属 PF_002，与 Q004 的 PROD_009（PF_005）不同族，批号也不同。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q004",
+      "case_id": "C008",
+      "relevance": 1,
+      "rationale": "Q004 的 PROD_009 与 C008 的产品相同，且 production_lot 均为 DEV_PL_009；同产品与同批次均足以构成调查参考，两者也都描述塑封空洞。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q004",
+      "case_id": "C009",
+      "relevance": 0,
+      "rationale": "C009 为锡球探针压形，与塑封空洞不同；PROD_011 属 PF_006，与 Q004 的 PROD_009（PF_005）不同族，批号也不同。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q005",
+      "case_id": "C001",
+      "relevance": 1,
+      "rationale": "C001 为焊点自 die pad 界面剥离，与 Q005 的焊线自焊盘脱开属同一异常；同异常本身足以相关（C001 的 PROD_001 属 PF_001，与 Q005 的 PROD_004 / PF_002 不同族，批号也不同）。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q005",
+      "case_id": "C002",
+      "relevance": 0,
+      "rationale": "C002 为引脚润湿不良，与键合界面脱开不是同一异常；其 PROD_001 属 PF_001，与 Q005 的 PROD_004（PF_002）不同族，生产批 DEV_PL_001 与 DEV_PL_014 也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q005",
+      "case_id": "C003",
+      "relevance": 1,
+      "rationale": "C003 为第一焊点界面剥离，与 Q005 的键合界面脱开属同一异常；且 PROD_003 与 Q005 的 PROD_004 同属 PF_002，符合类似产品条件。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q005",
+      "case_id": "C004",
+      "relevance": 1,
+      "rationale": "用户裁决：C004 的键合界面断裂（第二焊点颈部成形不良）与 Q005 的焊线自焊盘脱开共享 failure_mode_id 00010，属弱相关；在二值口径下判为 Relevant。两者无同产品、类似产品或同批次依据。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q005",
+      "case_id": "C005",
+      "relevance": 0,
+      "rationale": "C005 为塑封空洞，与键合界面脱开不是同一异常；其 PROD_005 属 PF_003，与 Q005 的 PROD_004（PF_002）不同族，生产批也不同批。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q005",
+      "case_id": "C006",
+      "relevance": 0,
+      "rationale": "C006 为 BGA 缺球与托盘碰伤；Q005 已排除外观碰伤与运输损伤，且两者异常表现不同；PROD_006（PF_003）与 PROD_004（PF_002）不同族，批号也不同。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q005",
+      "case_id": "C007",
+      "relevance": 1,
+      "rationale": "C007 描述键合金球自器件焊盘表面分离，与 Q005 的焊线自焊盘脱开属同一异常；且 PROD_015 与 Q005 的 PROD_004 同属 PF_002，符合类似产品条件；措辞不同不影响判断。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q005",
+      "case_id": "C008",
+      "relevance": 0,
+      "rationale": "C008 为塑封空洞，与键合界面脱开不是同一异常；其 PROD_009 属 PF_005，与 Q005 的 PROD_004（PF_002）不同族，批号也不同。",
+      "origin": "user_confirmed"
+    },
+    {
+      "query_id": "Q005",
+      "case_id": "C009",
+      "relevance": 0,
+      "rationale": "C009 为 FT 探针压形导致的锡球变形；Q005 已排除外观碰伤与运输损伤，两者异常表现不同；PROD_011（PF_006）与 PROD_004（PF_002）不同族，批号也不同。",
+      "origin": "user_confirmed"
+    }
+  ],
+  "drafted_on": "2026-09-25",
+  "previous_qrels": {
+    "path": "data/evaluation/dev-v2/qrels.json",
+    "sha256": "9112d64cac25e8af0b7b183ca0d083de2c460dc6427cf1c57785f4e0fdfc38b7"
+  },
+  "revised_on": "2026-09-25",
+  "confirmation_notes": [
+    "用户于 2026-09-25 对 dev-v3 的全部 45 对二值标签作出最终确认；确认依据为用户提交的分级标注矩阵与其四点裁决，原文见 data/evaluation/dev-v3/README.md。",
+    "二值口径（用户确认）：最强相关 / 强相关 / 弱相关 → Relevant；很弱关联 / 无关 / 完全无关 → Not Relevant。分级只作阅读顺序参考，不进入指标、不转成权重。",
+    "相对草稿的两处改动：Q001×C007 由 1 改为 0（仅共享 failure_mode_id 属极弱约束，异常表现不同）；Q005×C004 由 0 改为 1（弱相关即相关，原 needs_user_ruling 结案）。",
+    "用户同时确认：异常不同但同产品同批次者（Q001×C002）与仅同产品族者（Q003×C005）仍应判为 Relevant。'同产品本身是极弱约束'与上述两条的强弱关系留待规则层澄清，不影响本版标签。",
+    "本版为 Query 补足标识后的新版本；dev-v2 的 18 对已确认标签与 M3-01 / M3-02 正式结果属于旧版本，不得跨版本比较。"
+  ]
+}

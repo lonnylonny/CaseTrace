@@ -59,7 +59,22 @@ Follow [Current Plan §3](docs/project/current-plan.md#3-data-foundation-v1-冻�
 
 ## Working Style
 
-Adjust assistance to the request.
+### Task Scope and Stop Conditions
+
+Infer the task type from the current request without a classification report. Use these defaults unless the user requests a different scope:
+
+| Task | Default scope and stop condition |
+| --- | --- |
+| Inspection | Read the requested sources and direct evidence needed to answer the status question. Distinguish recorded status from observed execution; mark unknowns and stop without unsolicited improvement plans. |
+| Explanation | Use the supplied code; add only context needed for the current question. Follow the teaching guidance below and stop when that question is answered. |
+| Small change | Edit the target and directly affected code or tests; run proportionate checks and stop without adjacent refactoring. |
+| Implementation | Work within the current subdelivery, relevant rules and necessary dependencies. Stop at its acceptance criteria or teaching boundary. |
+| Debug | Expand inspection through reproduction evidence and a concrete hypothesis. Verify the repair or use the existing Codex handoff conditions. |
+| Architecture | Resolve the requested design decision using its constraints; recommend one option with key trade-offs, then stop before implementation unless requested. |
+
+Before expanding inspection, identify the unresolved question and how the next source could change the answer or implementation. Mere relatedness is insufficient; necessary dependency tracing remains allowed. Stop gathering context once the requested result is supported. Reuse unchanged material already available in the current context.
+
+Delivery decomposition, baselines and reports apply to delivery work. A local question within a delivery does not trigger that workflow or advance the delivery.
 
 ### Delivery Pace and Collaboration
 
@@ -89,11 +104,11 @@ For M3, apply the seven deliveries in [Current Plan](docs/project/current-plan.m
 
 ### Cline Teaching and Task Proportionality
 
-* Default to implementing, verifying, and explaining one small step; the user understands the code, then maintains and adjusts it. Do not require blank-function exercises unless the user chooses to code themselves.
-* Explain **what it does → why it exists → how it behaves**, using inputs, outputs, key syntax, and calling relationships. For fixes, explain **cause → fix → why it works**.
-* Use a short example tied to the current code. If the user is confused, simplify it and correct the misunderstanding directly; keep unrelated theory and architecture out of the explanation.
+* For implementation tasks, implement, verify, and explain one small step; the user understands the code, then maintains and adjusts it. Do not require blank-function exercises unless the user chooses to code themselves, subject to the M3 override above.
+* Explain one question at a time, starting with what the code literally does. Default to 3–6 short sentences and, if useful, one minimal example from the current code; “简单说” defaults to 1–3 sentences. Expand when requested or necessary for correctness, without packing a full lesson into long sentences.
+* Add prerequisites, removal/replacement comparisons, runtime versus type-checking distinctions, and terminology only when needed for the current understanding; these are not a mandatory checklist. For fixes, explain cause → fix → why it works. If the user is confused, simplify the same mechanism before adding concepts.
 * Stop at the package's teaching boundary. Wait for the user to say they understand or want to continue before introducing the next learning step; report taught and pending topics separately.
-* For explanation-only, review-only, or example requests, answer without modifying files. Use the supplied snippet or relevant file; broaden inspection or run code only when necessary for correctness. Small explanations do not need temporary scripts, fixtures, or demo projects.
+* Explanation-only, review-only, and example requests are read-only; run code only when necessary for correctness. Small explanations need no temporary scripts, fixtures, or demo projects.
 * When the user chooses to implement something themselves, explain the concept first, leave that coding step to them, then review or debug it.
 
 Do not generate an entire module when the user is clearly trying to understand or implement one small part.
@@ -210,18 +225,3 @@ Report concisely:
 * unresolved issues that materially affect correctness or the next step.
 
 Stop at the requested scope. Do not automatically continue into unrelated features or the next project stage.
-
-## Explanation Rule
-
-When explaining unfamiliar code or language features:
-
-1. Start with what the code literally changes or triggers.
-2. Distinguish runtime behavior from static/type-checking behavior.
-3. Explain required prerequisites before using higher-level terms.
-4. Compare with the behavior if the construct were removed or replaced.
-5. Explain purpose and terminology only after the mechanism is clear.
-6. as simple as possible, don't overthinking, just help me creating the mind model. Second check before generation.
-
-Prefer: `mechanism → difference → purpose → terminology`.
-
-Do not explain terminology with more terminology.
