@@ -30,6 +30,8 @@ uv run casetrace answer --query-id Q005                # 真实模型生成历�
 
 uv 使用项目 `.venv`，无需手动激活；`--inexact` 保留另行安装的学习工具。2026-10-03 全套测试通过（571 passed、169 subtests passed）；历史归档的逐字节溯源限制仍保留，详见 [Pre-M5 审计](docs/project/tasks/pre-m5-audit.md)。
 
+M5 的本机数据库使用 Docker Compose，启动、连接及下载失败恢复见 [PostgreSQL 环境说明](docs/development/postgresql.md)。业务建表和导入进度以 Current Plan 为准。
+
 `demo` 使用 BM25；`evaluate` 支持 BM25、Embedding、Hybrid、Rerank 及 R3（`--method bm25_drop_negation_labels`），默认 qrels 为已确认 dev-v2。Embedding 需要准备[固定版本模型](docs/project/research/m3-02-embedding-model-selection.md)，复现命令见 [results](results/README.md)。`answer` 用 R3 检索 + DeepSeek（`deepseek-flash`，非思考模式）生成历史参考回答，凭据从环境变量或项目根 `.env`（模板见 `.env.example`，`.env` 不入库）读取，不要求 qrels。
 
 demo 展示异常站点、历史原因与 Evidence 来源；`answer` 生成的回答是历史参考并附来源与具体缺口，软件测试通过不代表检索质量或回答忠实度达标。数据、运行实现与测试分别位于 `data/`、`src/casetrace/`、`tests/`。

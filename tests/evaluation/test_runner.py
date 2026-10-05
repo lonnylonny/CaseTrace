@@ -89,13 +89,10 @@ def test_invalid_return_ids_are_rejected(benchmark, hits, message):
         rank_query(benchmark, StubRetriever(hits), _query(benchmark, "Q001"))
 
 
-def test_retriever_corpus_must_match_validated_cases(benchmark, monkeypatch):
-    monkeypatch.setattr(
-        "casetrace.evaluation.runner.build_documents",
-        lambda records, reference: {"C001": "only one case"},
-    )
-    with pytest.raises(ValueError, match="不一致"):
-        build_retriever(benchmark)
+def test_documents_and_retriever_cover_validated_cases(benchmark):
+    documents = build_documents(benchmark.records, benchmark.reference)
+    assert sorted(documents) == benchmark.case_ids
+    assert build_retriever(benchmark).case_ids == benchmark.case_ids
 
 
 def test_contract_retriever_needs_only_search_and_describe(benchmark):

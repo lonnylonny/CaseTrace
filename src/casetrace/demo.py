@@ -66,15 +66,17 @@ def build_documents(records: dict, reference: ReferenceData) -> dict[str, str]:
 
 
 def load_validated_dataset(
-    data_path: Path, reference_path: Path,
+    data_path: Path, reference_path: Path, *, reference: ReferenceData | None = None,
 ) -> tuple[dict, dict, ReferenceData]:
     """读取开发样例与主数据，执行已实现的确定性校验。
 
     返回实体记录、原始 payload 和主数据；不检查来源记录，也不构建检索文本。
     demo 与评估共用这条路径，保证两者看到的是同一份已校验语料。
+    存储导入可传入已经读取的主数据，避免再次打开同一份 Excel。
     """
     records, payload = load_demo(data_path)
-    reference = load_reference(reference_path)
+    if reference is None:
+        reference = load_reference(reference_path)
     errors = validate_relations(**records, **reference.validator_maps())
     if not errors:
         errors = validate_generation(**records)

@@ -2,7 +2,7 @@
 
 本文件是范围、里程碑、当前状态与下一交付的唯一计划入口。协作与教学规则见 [AGENTS.md](../../AGENTS.md)，交付细节见活动任务包；已验收任务包保留结论摘要，历史执行记录查 Git 或任务包注明的清理前快照。
 
-**当前位置：M1～M4 已验收；Pre-M5 审计于 2026-10-03 通过，无 M5 blocker。** 下一步为 M5 最小任务包，待用户开始；本轮未实施数据库/API。审计证据见 [Pre-M5 audit](tasks/pre-m5-audit.md)。
+**当前位置：M1～M4 已验收；M5-01 于 2026-10-05 简化后 accepted。** PostgreSQL 完整建表、dev-v3 原子导入和读回已通过真实数据库验收。下一交付为 M5-02 数据库接入回答核心，待准备任务包；API 尚未实现。验收证据见 [M5-01](tasks/m5-01-postgresql-roundtrip.md#codex-acceptance)。
 
 ## 1. 目标与执行顺序
 
@@ -23,6 +23,8 @@ Data Foundation v1（已完成并冻结）
 ## 2. 已确认的范围
 
 **学习展示优先（2026-10-03 用户确认）：** 本项目不是实际生产质量判定系统。以基本逻辑正确、链路可运行、主要输出完整可追溯、方便学习和展示为完成标准；不追求逐句行业语义零争议。行业隐含判断由用户负责，agent 不代替工程师裁决；不影响基本输出的措辞歧义记为已知限制，不追加机制、评审循环或反复模型重跑。优先保留用户已理解、已固定的实现；只对已复现的重要逻辑/系统错误作直接必要的最小修复，不做顺带清理、接口重写或风格重构。
+
+**实现复杂度（2026-10-05 用户确认）：** 在基本安全和正确性足够的前提下，优先简单明了、逻辑清晰的实现。校验放在明确的职责入口并复用结果；逐字段/文档等价检查用于验收测试，不在运行链路重复叠加。只为当前需求增加模块、抽象和状态，不提前建设通用迁移、多版本管理或多层防御；已实现的偏重功能可作必要简化。
 
 | 类别 | V1 决定 |
 |---|---|
@@ -104,7 +106,7 @@ Query、qrels、split 与实验记录独立于历史 Case；不恢复 Scenario �
 | M2 — Ground Truth / Evaluation | 用户确认标签、CLI 逐 Query 及汇总指标、手算验证、版本约定与错误分析 | [accepted（2026-09-22）](tasks/m2-completion.md) |
 | M3 — Retrieval Experiments | 同基准四方法比较，记录收益、退步、耗时与错误，按证据选型 | 已完成；[M3-07 accepted（2026-09-30）](tasks/m3-07-selection.md#codex-acceptance) |
 | M4 — Grounded Answer | 生成约定的历史参考回答，检查主要字段、来源及历史/当前区分 | 已完成；M4-01～M4-04 accepted（学习展示范围） |
-| M5 — PostgreSQL / FastAPI | 冻结模型完整存取；必要导入与 API；API/CLI 共用核心；迁移前后固定输入结果与来源一致 | 未开始，在 M4 后 |
+| M5 — PostgreSQL / FastAPI | 冻结模型完整存取；必要导入与 API；API/CLI 共用核心；迁移前后固定输入结果与来源一致 | M5-01 accepted；M5-02 待规划 |
 | M6 — Docker / Demo / 收束 | Docker 与简单 Web Demo，CLI 可复现，固定方案完成 Locked Test 对比，README 含启动、数据、实验、失败案例和局限 | 未开始 |
 
 ### M3 交付索引（已完成）
@@ -122,13 +124,24 @@ Query、qrels、split 与实验记录独立于历史 Case；不恢复 Scenario �
 | [M3-07 汇总选型](tasks/m3-07-selection.md) | 四方法同版本结果、逐 Query 退步、耗时/复杂度与复现；固定 M4 所需检索方案及来源接口 | accepted 2026-09-30 |
 
 
+### M5 交付顺序
+
+按下列顺序逐包实施、教学与验收；仅为活动包建立实施基线，后续包在前一包验收后准备。
+
+| 包 | 交付与完成标准 | 状态 |
+|---|---|---|
+| [M5-01 PostgreSQL 完整存取](tasks/m5-01-postgresql-roundtrip.md) | 冻结 Schema、主数据与 dev-v3 原子导入、完整读回、来源/顺序/快照身份保留；真实 PostgreSQL 往返与回滚验证 | accepted 2026-10-05（简化后） |
+| M5-02 数据库接入回答核心 | 复用已验收 DB 加载与身份检查；CLI 可选择数据源；固定输入的文件/DB 排名、上下文、来源与响应回放一致 | 下一包，待准备 |
+| M5-03 FastAPI | 输入、输出和 HTTP 错误适配；复用同一回答核心；成功、空命中和失败状态可测，给出可运行请求示例 | 待 M5-02 验收 |
+
 ## 6. 当前事实与下一交付
 
 - **工程状态：** M1～M4 accepted；2026-10-03 Pre-M5 审计全套 **571 passed、169 subtests passed**，ruff/lock 检查通过。demo、默认评估及 R3 回归通过；五条 v10 回答离线回放通过，未新增模型调用。详细范围与证据见 [审计记录](tasks/pre-m5-audit.md)。
 - **检索选型：** R3（`bm25_drop_negation_labels`，H1+H2），回答默认 top_k=4；`demo` 仍为原 BM25 / 六案，`evaluate` 默认 BM25 / dev-v2。四类方法及实验产物保留。R3 同版旧口径 Recall@4=0.96、Precision@4=0.70、nDCG@4=0.9839；这些是 Development 历史结果，不是新规则质量结论。
 - **数据状态：** dev-v3 r2 为 9 Case × 5 Query、45 对旧口径 `human_confirmed`，正例 5 / 2 / 2 / 2 / 4；Case 仍为 draft。新口径待复核配对见 [M4-04](tasks/m4-04-answer-evaluation.md#新口径-ground-truth-待复核draft不改正式文件)，不是 M5 前置任务。
 - **已接受限制：** v10 两处措辞限制及原审阅计数保留在 [M4 报告](../../results/dev-v3-m4-answer-evaluation.md)；不继续调模型。dev-v1 历史哈希原件缺失仍不能证明逐字节迁移，但反复测试失败已于 2026-09-29 修复，详见 [dev-v2 归档说明](../../data/evaluation/dev-v2/README.md#2026-09-29-归档校验维护)。M3-03 早期基线丢失仅限制历史差异归属，不影响当前运行。
-- **下一入口：** 用户开始 M5 时准备最小任务包并建立当时的实施基线。按冻结模型持久化、导入和 API/CLI 共用核心，保持迁移前后固定输入的结果与来源一致；接缝见 [M5 交接](handoffs/m4-04-m5-handoff.md)。本次审计不启动 M5，也不补做 M6 的 Locked Test。
+- **存储状态：** M5-01 简化后 accepted。一份固定建表 SQL、一次主数据读取、单事务导入和统一读回内容检查；开发/测试库保留快照 `dev-v3-2026-09-15`，各 244 行业务数据。2026-10-05 全套 **640 passed、169 subtests passed**，storage **69 passed、0 skipped**，ruff/lock/diff 检查通过；未新增模型调用。[运行说明](../development/postgresql.md)。
+- **下一入口：** 准备 M5-02 任务包，复用 `casetrace.storage.load_snapshot` 接入回答核心；数据库读回已完成内容摘要检查，消费方只处理已记录快照的适用性，不再逐字段重验。本轮停在 M5-01 验收，未实施 M5-02。核心接缝见 [M5 交接](handoffs/m4-04-m5-handoff.md)。
 
 ## 7. Grounded Answer 最终决定与 M5 invariants
 

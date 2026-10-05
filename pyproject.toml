@@ -22,6 +22,7 @@ dependencies = [
     # 本机通过 SOCKS 代理（ALL_PROXY=socks5://…）访问外网；httpx 缺少 socksio 时
     # 连客户端都构造不出来（ImportError）。这不是可选优化，缺了就调不通。
     "socksio>=1.0.0",
+    "psycopg[binary]>=3.2,<4",
 ]
 
 [project.scripts]

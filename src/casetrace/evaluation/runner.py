@@ -199,14 +199,9 @@ def resolve_retriever_factory(method: str) -> Callable[[dict[str, str]], Retriev
 def build_retriever_from_records(
     records: dict, reference: ReferenceData, *, method: str = DEFAULT_METHOD,
 ) -> Retriever:
-    """不经过 qrels 的最小构造入口：同样的历史文本与语料一致性检查。"""
+    """从已校验记录构造历史文本和检索器，不经过 qrels。"""
 
     documents = build_documents(records, reference)
-    case_ids = sorted(case.case_id for case in records["cases"])
-    if sorted(documents) != case_ids:
-        raise ValueError(
-            f"检索语料与已校验语料不一致：文档 {sorted(documents)}，语料 {case_ids}"
-        )
     return resolve_retriever_factory(method)(documents)
 
 

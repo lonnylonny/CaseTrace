@@ -149,34 +149,24 @@ def _parse_case_answer(value: Any, path: str, *, require_corrective_action: bool
     item = _require_object(value, path)
     if require_corrective_action and "historical_corrective_action" not in item:
         raise AnswerFormatError(f"{path} 缺少必需键 historical_corrective_action")
-    evidences = tuple(
-        HistoricalEvidence(
-            checkpoint_id=_require_text(
-                _require_object(raw, f"{path}.historical_evidences[{index}]").get("checkpoint_id"),
-                f"{path}.historical_evidences[{index}].checkpoint_id",
-            ),
-            result=_require_text(
-                _require_object(raw, f"{path}.historical_evidences[{index}]").get("result"),
-                f"{path}.historical_evidences[{index}].result",
-            ),
-        )
-        for index, raw in enumerate(
-            _require_list(item.get("historical_evidences", []), f"{path}.historical_evidences")
-        )
-    )
-    sources = tuple(
-        SourceRef(
-            case_id=_require_text(
-                _require_object(raw, f"{path}.sources[{index}]").get("case_id"),
-                f"{path}.sources[{index}].case_id",
-            ),
-            field=_require_text(
-                _require_object(raw, f"{path}.sources[{index}]").get("field"),
-                f"{path}.sources[{index}].field",
-            ),
-        )
-        for index, raw in enumerate(_require_list(item.get("sources"), f"{path}.sources"))
-    )
+    evidences = []
+    for index, raw in enumerate(
+        _require_list(item.get("historical_evidences", []), f"{path}.historical_evidences")
+    ):
+        evidence_path = f"{path}.historical_evidences[{index}]"
+        evidence = _require_object(raw, evidence_path)
+        evidences.append(HistoricalEvidence(
+            checkpoint_id=_require_text(evidence.get("checkpoint_id"), f"{evidence_path}.checkpoint_id"),
+            result=_require_text(evidence.get("result"), f"{evidence_path}.result"),
+        ))
+    sources = []
+    for index, raw in enumerate(_require_list(item.get("sources"), f"{path}.sources")):
+        source_path = f"{path}.sources[{index}]"
+        source = _require_object(raw, source_path)
+        sources.append(SourceRef(
+            case_id=_require_text(source.get("case_id"), f"{source_path}.case_id"),
+            field=_require_text(source.get("field"), f"{source_path}.field"),
+        ))
     if not sources:
         raise AnswerFormatError(f"{path}.sources 不能为空数组：关键历史事实必须带来源引用")
     return CaseAnswer(
@@ -189,8 +179,8 @@ def _parse_case_answer(value: Any, path: str, *, require_corrective_action: bool
         historical_root_cause=_optional_text(
             item.get("historical_root_cause"), f"{path}.historical_root_cause"
         ),
-        historical_evidences=evidences,
-        sources=sources,
+        historical_evidences=tuple(evidences),
+        sources=tuple(sources),
         historical_corrective_action=_optional_text(
             item.get("historical_corrective_action"), f"{path}.historical_corrective_action"
         ),
