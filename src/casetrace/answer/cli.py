@@ -13,6 +13,10 @@
 
 本模块复用 M4-01／M4-02 的应用函数：不重新检索、不按 qrels 筛选候选、
 不做自动重试或改写，也不把运行故障写成「没有相关案例」。
+
+数据源在 CLI 边界选择：`file`（默认，沿用 `--data` / `--reference`）或 `postgres`
+（一次短连接读回已记录快照后立即关闭）。选定后两条路线复用同一回答核心，
+CLI 只负责连接、参数与输出，不复制检索或生成逻辑。
 """
 
 from collections.abc import Callable
@@ -22,7 +26,11 @@ import json
 from pathlib import Path
 import sys
 
+import psycopg
+
 from casetrace.answer.context import (
+    DATA_SOURCE_FILE,
+    DATA_SOURCE_POSTGRES,
     DEFAULT_TOP_K,
     DEV_V3_SNAPSHOT,
     AnswerRun,
@@ -48,6 +56,7 @@ from casetrace.answer.prompt import PROMPT_VERSION, render_system_prompt
 from casetrace.answer.provenance import implementation_identity, text_sha256
 from casetrace.answer.validation import CitationError, CitationReport, ensure_answer_citations
 from casetrace.evaluation.runner import write_report
+from casetrace.storage import DEFAULT_SCHEMA, LoadedSnapshot, connect, load_snapshot
 
 RECORD_VERSION = "m4-04-answer-run-2"
 PROVIDER = "deepseek"
@@ -94,6 +103,32 @@ def build_model(model_name: str) -> ChatModel:
 
     # v2 复制历史改善措施与来源，给完整 JSON 留出空间；不增加重试。
     return DeepSeekChatModel(model=model_name, max_tokens=4096)
+
+
+def load_database_snapshot(schema: str) -> LoadedSnapshot:
+    """数据库路线：一次短连接读回已记录快照，读完立即关闭。
+
+    初始化与导入由 M5-01 的 `python -m casetrace.storage` 负责；回答入口不自动
+    建表、不导入，也不在失败时退回文件。连接与驱动错误统一按「回答前提不满足」
+    上报：沿用 `ValueError`，不建立新的错误层级或重试机制，消息不回显连接串。
+    """
+
+    try:
+        with connect() as connection:
+            return load_snapshot(connection, schema=schema)
+    except (OSError, RuntimeError, psycopg.Error) as error:
+        raise ValueError(
+            f"数据库路线不可用（{type(error).__name__}）："
+            "请检查 CASETRACE_DATABASE_URL、数据库连接及初始化状态"
+        ) from error
+
+
+def _data_source_label(corpus: dict) -> str:
+    """运行记录里的实际数据源；旧记录缺少 `data_source` 时按文件来源理解。"""
+
+    if corpus.get("data_source", DATA_SOURCE_FILE) == DATA_SOURCE_POSTGRES:
+        return f"PostgreSQL schema={corpus.get('schema', '')}"
+    return "文件"
 
 
 @dataclass(frozen=True)
@@ -183,19 +218,24 @@ def _failed(record: dict, status: str, error: Exception, *,
 
 
 def run_answer_question(
-    query: str, known_at: date, *, dataset_path: Path, reference_path: Path,
+    query: str, known_at: date, *, dataset_path: Path | None = None,
+    reference_path: Path | None = None,
     model_factory: Callable[[], ChatModel], query_id: str | None = None,
     snapshot: CorpusSnapshot = DEV_V3_SNAPSHOT, top_k: int = DEFAULT_TOP_K,
+    loaded_snapshot: "LoadedSnapshot | None" = None, db_schema: str = DEFAULT_SCHEMA,
 ) -> AnswerOutcome:
     """跑一次完整回答：R3 检索 → 证据上下文 → 生成 → 引用守卫。
 
+    语料可选文件（两份路径）或已读回的 `loaded_snapshot`（数据库路线，`db_schema`
+    只用于记录实际来源）；两条路线在检索之后共用同一上下文、生成与引用守卫。
     不读 qrels，也不因失败改写回答、补造事实或更换模型：每种失败都有独立状态。
     输入、快照或语料不满足前提时抛 `ValueError`（由 CLI 当作输入错误处理）。
     """
 
     run = prepare_answer_run(
         query, known_at, dataset_path=dataset_path, reference_path=reference_path,
-        snapshot=snapshot, top_k=top_k,
+        snapshot=snapshot, top_k=top_k, loaded_snapshot=loaded_snapshot,
+        db_schema=db_schema,
     )
     inputs = run.inputs
     context = build_evidence_context(
@@ -280,8 +320,8 @@ def format_answer_text(outcome: AnswerOutcome) -> str:
     ) or "（本次没有候选）"
     lines = [
         f"Query {label}{query['known_at']}：{query['text']}",
-        f"快照：{snapshot['snapshot_id']}｜语料 {corpus['case_count']} 条｜"
-        f"审阅状态 {corpus['review_status']}（来源 Case 为 draft）",
+        f"数据源：{_data_source_label(corpus)}｜快照：{snapshot['snapshot_id']}｜"
+        f"语料 {corpus['case_count']} 条｜审阅状态 {corpus['review_status']}（来源 Case 为 draft）",
         f"检索：{retrieval['requested_method']}（top_k={retrieval['top_k']}）｜"
         f"候选排名：{ranking}",
         "",
@@ -329,24 +369,32 @@ def format_answer_text(outcome: AnswerOutcome) -> str:
     return "\n".join(lines)
 
 
-def resolve_query(args) -> tuple[str, date]:
-    """确定原始 Query 与 known_at：显式给出，或从语料里按 query_id 读出。
+def resolve_query(
+    args, *, loaded_snapshot: LoadedSnapshot | None = None,
+) -> tuple[str, date]:
+    """确定原始 Query 与 known_at：显式给出，或从选定路线按 query_id 读出。
 
-    示例查询必须被显式选取：这里不提供默认示例，也不从历史 Case 反推当前事实。
+    数据库路线使用已读回的 payload，不再次打开文件；示例查询必须被显式选取：
+    这里不提供默认示例，也不从历史 Case 反推当前事实。
     """
 
     if args.query_id and args.query:
         raise ValueError("--query-id 与 --query 只能给一个：示例查询与显式输入不能混用")
     if args.query_id:
-        payload = json.loads(Path(args.data).read_text(encoding="utf-8"))
+        if loaded_snapshot is None:
+            payload = json.loads(Path(args.data).read_text(encoding="utf-8"))
+            described = f"语料 {args.data}"
+        else:
+            payload = loaded_snapshot.payload
+            described = f"数据库快照 {loaded_snapshot.snapshot.snapshot_id}"
         if not isinstance(payload, dict):
-            raise ValueError(f"语料 {args.data} 不是包含 queries 的 JSON 对象")
+            raise ValueError(f"{described} 不是包含 queries 的 JSON 对象")
         queries = payload.get("queries", [])
         for query in queries:
             if query["query_id"] == args.query_id:
                 return query["text"], date.fromisoformat(query["known_at"])
         raise ValueError(
-            f"语料 {args.data} 中没有 Query {args.query_id}；"
+            f"{described} 中没有 Query {args.query_id}；"
             f"可选：{[item['query_id'] for item in queries]}"
         )
     if not args.query:
@@ -358,13 +406,13 @@ def resolve_query(args) -> tuple[str, date]:
     return args.query, args.known_at
 
 
-def _report_inputs(query: str, known_at: date, args) -> int:
+def _report_inputs(query: str, known_at: date, args, *, loaded_snapshot=None) -> int:
     """`--check-only`：只检查输入与证据上下文，不构造模型、不写运行记录。"""
 
     try:
         run = prepare_answer_run(
             query, known_at, dataset_path=args.data, reference_path=args.reference,
-            top_k=args.top_k,
+            top_k=args.top_k, loaded_snapshot=loaded_snapshot, db_schema=args.db_schema,
         )
         context = build_evidence_context(
             run.inputs.query, run.inputs.hits, run.inputs.records,
@@ -377,7 +425,8 @@ def _report_inputs(query: str, known_at: date, args) -> int:
         f"{item['rank']}.{item['case_id']}" for item in run.run_metadata["ranking"]
     ) or "（无候选）"
     print(f"Query（{known_at.isoformat()}）：{query}")
-    print(f"快照：{run.run_metadata['snapshot']['snapshot_id']}｜"
+    print(f"数据源：{_data_source_label(run.run_metadata['corpus'])}｜"
+          f"快照：{run.run_metadata['snapshot']['snapshot_id']}｜"
           f"语料 {run.run_metadata['corpus']['case_count']} 条")
     print(f"检索：{run.run_metadata['retrieval']['requested_method']}"
           f"（top_k={run.run_metadata['retrieval']['top_k']}）｜候选排名：{ranking}")
@@ -392,21 +441,32 @@ def _report_inputs(query: str, known_at: date, args) -> int:
 
 
 def run_answer_command(args) -> int:
-    """`casetrace answer` 的参数层：解析输入、跑一次回答、输出文本或 JSON、按需保存记录。"""
+    """`casetrace answer` 的参数层：选定数据源、解析输入、跑一次回答、按需保存记录。
 
+    数据库路线在这里读回一次快照，示例查询解析、准备与 check-only 都复用同一对象，
+    不重复读库；连接或读回失败按「回答前提不满足」退出，不调用模型、不写记录。
+    """
+
+    loaded_snapshot = None
+    if args.data_source == DATA_SOURCE_POSTGRES:
+        try:
+            loaded_snapshot = load_database_snapshot(args.db_schema)
+        except (ValueError, OSError) as error:
+            print(f"运行前提不满足：{error}", file=sys.stderr)
+            return EXIT_USAGE
     try:
-        query, known_at = resolve_query(args)
+        query, known_at = resolve_query(args, loaded_snapshot=loaded_snapshot)
     except (ValueError, OSError) as error:
         print(f"输入错误：{error}", file=sys.stderr)
         return EXIT_USAGE
     if args.check_only:
-        return _report_inputs(query, known_at, args)
+        return _report_inputs(query, known_at, args, loaded_snapshot=loaded_snapshot)
 
     try:
         outcome = run_answer_question(
             query, known_at, dataset_path=args.data, reference_path=args.reference,
             model_factory=lambda: build_model(args.model), query_id=args.query_id,
-            top_k=args.top_k,
+            top_k=args.top_k, loaded_snapshot=loaded_snapshot, db_schema=args.db_schema,
         )
     except (ValueError, OSError) as error:
         # 快照、输入或数据校验不通过：本次没有产生回答，因此不写运行记录。

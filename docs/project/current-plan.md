@@ -2,7 +2,7 @@
 
 本文件是范围、里程碑、当前状态与下一交付的唯一计划入口。协作与教学规则见 [AGENTS.md](../../AGENTS.md)，交付细节见活动任务包；已验收任务包保留结论摘要，历史执行记录查 Git 或任务包注明的清理前快照。
 
-**当前位置：M1～M4 已验收；M5-01 于 2026-10-05 简化后 accepted。** PostgreSQL 完整建表、dev-v3 原子导入和读回已通过真实数据库验收。下一交付为 M5-02 数据库接入回答核心，待准备任务包；API 尚未实现。验收证据见 [M5-01](tasks/m5-01-postgresql-roundtrip.md#codex-acceptance)。
+**当前位置：M1～M5 已验收；M5-03 accepted（2026-10-06，最小修复后）。** FastAPI 复用同一回答核心，真实 PostgreSQL 五 Query 回放通过；错误分类、响应读取示例与 OpenAPI 示例均已修复。证据见 [M5-03](tasks/m5-03-fastapi.md#codex-acceptance)。下一入口为 M6 Docker / 简单 Web Demo，尚未实施。
 
 ## 1. 目标与执行顺序
 
@@ -106,7 +106,7 @@ Query、qrels、split 与实验记录独立于历史 Case；不恢复 Scenario �
 | M2 — Ground Truth / Evaluation | 用户确认标签、CLI 逐 Query 及汇总指标、手算验证、版本约定与错误分析 | [accepted（2026-09-22）](tasks/m2-completion.md) |
 | M3 — Retrieval Experiments | 同基准四方法比较，记录收益、退步、耗时与错误，按证据选型 | 已完成；[M3-07 accepted（2026-09-30）](tasks/m3-07-selection.md#codex-acceptance) |
 | M4 — Grounded Answer | 生成约定的历史参考回答，检查主要字段、来源及历史/当前区分 | 已完成；M4-01～M4-04 accepted（学习展示范围） |
-| M5 — PostgreSQL / FastAPI | 冻结模型完整存取；必要导入与 API；API/CLI 共用核心；迁移前后固定输入结果与来源一致 | M5-01 accepted；M5-02 待规划 |
+| M5 — PostgreSQL / FastAPI | 冻结模型完整存取；必要导入与 API；API/CLI 共用核心；迁移前后固定输入结果与来源一致 | 已完成；M5-01～M5-03 accepted，M5-03 最小修复后通过（2026-10-06） |
 | M6 — Docker / Demo / 收束 | Docker 与简单 Web Demo，CLI 可复现，固定方案完成 Locked Test 对比，README 含启动、数据、实验、失败案例和局限 | 未开始 |
 
 ### M3 交付索引（已完成）
@@ -131,17 +131,19 @@ Query、qrels、split 与实验记录独立于历史 Case；不恢复 Scenario �
 | 包 | 交付与完成标准 | 状态 |
 |---|---|---|
 | [M5-01 PostgreSQL 完整存取](tasks/m5-01-postgresql-roundtrip.md) | 冻结 Schema、主数据与 dev-v3 原子导入、完整读回、来源/顺序/快照身份保留；真实 PostgreSQL 往返与回滚验证 | accepted 2026-10-05（简化后） |
-| M5-02 数据库接入回答核心 | 复用已验收 DB 加载与身份检查；CLI 可选择数据源；固定输入的文件/DB 排名、上下文、来源与响应回放一致 | 下一包，待准备 |
-| M5-03 FastAPI | 输入、输出和 HTTP 错误适配；复用同一回答核心；成功、空命中和失败状态可测，给出可运行请求示例 | 待 M5-02 验收 |
+| [M5-02 数据库接入回答核心](tasks/m5-02-database-answer-core.md) | 复用已验收 DB 加载与身份检查；CLI 可选择数据源；固定输入的文件/DB 排名、上下文、来源与响应回放一致 | accepted 2026-10-05（最小修复后） |
+| [M5-03 FastAPI](tasks/m5-03-fastapi.md) | 输入、输出和 HTTP 错误适配；复用同一回答核心；成功、空命中和失败状态可测，给出可运行请求示例 | accepted 2026-10-06（最小修复后） |
 
 ## 6. 当前事实与下一交付
 
-- **工程状态：** M1～M4 accepted；2026-10-03 Pre-M5 审计全套 **571 passed、169 subtests passed**，ruff/lock 检查通过。demo、默认评估及 R3 回归通过；五条 v10 回答离线回放通过，未新增模型调用。详细范围与证据见 [审计记录](tasks/pre-m5-audit.md)。
+- **工程状态：** M1～M5 accepted，最新回归见下方 API 验收状态。2026-10-03 Pre-M5 审计全套 **571 passed、169 subtests passed**，ruff/lock 检查通过；demo、默认评估及 R3 回归通过，五条 v10 回答离线回放通过，未新增模型调用。历史范围与证据见 [审计记录](tasks/pre-m5-audit.md)。
 - **检索选型：** R3（`bm25_drop_negation_labels`，H1+H2），回答默认 top_k=4；`demo` 仍为原 BM25 / 六案，`evaluate` 默认 BM25 / dev-v2。四类方法及实验产物保留。R3 同版旧口径 Recall@4=0.96、Precision@4=0.70、nDCG@4=0.9839；这些是 Development 历史结果，不是新规则质量结论。
 - **数据状态：** dev-v3 r2 为 9 Case × 5 Query、45 对旧口径 `human_confirmed`，正例 5 / 2 / 2 / 2 / 4；Case 仍为 draft。新口径待复核配对见 [M4-04](tasks/m4-04-answer-evaluation.md#新口径-ground-truth-待复核draft不改正式文件)，不是 M5 前置任务。
 - **已接受限制：** v10 两处措辞限制及原审阅计数保留在 [M4 报告](../../results/dev-v3-m4-answer-evaluation.md)；不继续调模型。dev-v1 历史哈希原件缺失仍不能证明逐字节迁移，但反复测试失败已于 2026-09-29 修复，详见 [dev-v2 归档说明](../../data/evaluation/dev-v2/README.md#2026-09-29-归档校验维护)。M3-03 早期基线丢失仅限制历史差异归属，不影响当前运行。
 - **存储状态：** M5-01 简化后 accepted。一份固定建表 SQL、一次主数据读取、单事务导入和统一读回内容检查；开发/测试库保留快照 `dev-v3-2026-09-15`，各 244 行业务数据。2026-10-05 全套 **640 passed、169 subtests passed**，storage **69 passed、0 skipped**，ruff/lock/diff 检查通过；未新增模型调用。[运行说明](../development/postgresql.md)。
-- **下一入口：** 准备 M5-02 任务包，复用 `casetrace.storage.load_snapshot` 接入回答核心；数据库读回已完成内容摘要检查，消费方只处理已记录快照的适用性，不再逐字段重验。本轮停在 M5-01 验收，未实施 M5-02。核心接缝见 [M5 交接](handoffs/m4-04-m5-handoff.md)。
+- **回答接缝状态：** M5-02 accepted，已实现文件/数据库选择，CLI 一次短连接读回，复用同一回答核心。2026-10-05 密码回显最小修复后：回答/存储 **220 passed / 0 skipped**，全套 **672 passed、169 subtests passed / 0 skipped**，包含新增 7 项真实 PG 对照；ruff/lock/diff 通过，真实模型调用 0。五 Query 的排名、上下文、来源、实际消息与 v10 回放一致；修复证据见 [M5-02](tasks/m5-02-database-answer-core.md#codex-acceptance)。
+- **API 验收状态：** M5-03 accepted，2026-10-06 用户授权 Codex 最小修复后复验：接口/回答/存储 **263 passed / 0 skipped**，全套 **715 passed、169 subtests passed / 0 skipped**，真实 PG 五 Query 回放及 Uvicorn 冒烟通过，ruff/lock/diff 通过，真实模型调用 0。修复数据库/其它异常分类、文档状态读取与 OpenAPI 示例；核心只新增 `SnapshotError(ValueError)` 标记既有快照前提，保留 CLI 兼容，无新依赖或错误框架。见 [M5-03 验收记录](tasks/m5-03-fastapi.md#codex-acceptance)。
+- **下一入口：** 按 M6 范围准备 Docker / 简单 Web Demo 的小交付任务包，继续保留 CLI 复现、最终实验与 README 收束要求；本轮未实施 M6。
 
 ## 7. Grounded Answer 最终决定与 M5 invariants
 

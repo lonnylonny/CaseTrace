@@ -7,6 +7,7 @@
 - [Current Plan](docs/project/current-plan.md)：唯一当前计划，包含范围、里程碑、当前状态与下一交付。
 - [AGENTS.md](AGENTS.md)：协作、教学与验收规则。
 - [docs/data](docs/data/)：冻结的字段、业务规则、生成约束与数据库设计。
+- [回答 API](docs/development/api.md)：本机 FastAPI 接口的启动、请求与响应。
 - [results](results/README.md)：正式实验产物、错误分析与复现入口。
 
 ## 当前能力
@@ -25,6 +26,7 @@ uv run casetrace demo --query "塑封空洞 molding void" --top-k 3
 uv run casetrace demo --query "BGA 锡球缺失" --json
 uv run casetrace evaluate --method bm25 --output /tmp/casetrace-bm25.json
 uv run casetrace answer --query-id Q005 --check-only   # 只检查输入与证据上下文，不调用模型
+uv run casetrace answer --data-source postgres --query-id Q005 --check-only  # 同一快照改从 PostgreSQL 读回
 uv run casetrace answer --query-id Q005                # 真实模型生成历史参考回答（需凭据）
 ```
 
@@ -33,5 +35,16 @@ uv 使用项目 `.venv`，无需手动激活；`--inexact` 保留另行安装的
 M5 的本机数据库使用 Docker Compose，启动、连接及下载失败恢复见 [PostgreSQL 环境说明](docs/development/postgresql.md)。业务建表和导入进度以 Current Plan 为准。
 
 `demo` 使用 BM25；`evaluate` 支持 BM25、Embedding、Hybrid、Rerank 及 R3（`--method bm25_drop_negation_labels`），默认 qrels 为已确认 dev-v2。Embedding 需要准备[固定版本模型](docs/project/research/m3-02-embedding-model-selection.md)，复现命令见 [results](results/README.md)。`answer` 用 R3 检索 + DeepSeek（`deepseek-flash`，非思考模式）生成历史参考回答，凭据从环境变量或项目根 `.env`（模板见 `.env.example`，`.env` 不入库）读取，不要求 qrels。
+
+`answer` 的案例数据源在 CLI 边界选择：`--data-source file`（默认，读 `--data` / `--reference`）或 `--data-source postgres`（用 `CASETRACE_DATABASE_URL` 连接并以 `--db-schema` 指定 schema，默认 `casetrace`；`--data` / `--reference` 不参与读取）。数据库路线一次短连接读回已记录快照后关闭，复用同一套检索、证据上下文、生成与引用守卫；两条路线在固定输入下给出相同排名、上下文与来源。存储初始化与导入命令见 [PostgreSQL 环境说明](docs/development/postgresql.md)。
+
+M5-03 另提供本机 HTTP 接口（FastAPI，复用同一个回答核心，固定走 PostgreSQL）：
+
+```bash
+uv run --locked uvicorn casetrace.api:app --host 127.0.0.1 --port 8000
+curl --fail-with-body http://127.0.0.1:8000/health
+```
+
+请求字段、响应与 HTTP 状态映射见 [回答 API](docs/development/api.md)；`/docs` 与 `/openapi.json` 有交互文档与契约。
 
 demo 展示异常站点、历史原因与 Evidence 来源；`answer` 生成的回答是历史参考并附来源与具体缺口，软件测试通过不代表检索质量或回答忠实度达标。数据、运行实现与测试分别位于 `data/`、`src/casetrace/`、`tests/`。

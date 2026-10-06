@@ -27,15 +27,24 @@ def main() -> None:
                           help="结果 JSON 的保存路径；先写临时文件再原子替换")
     evaluate.add_argument("--method", default="bm25",
                           help="检索方法名；默认 bm25，可用方法以 runner 的 RETRIEVER_FACTORIES 为准")
-    answer = commands.add_parser("answer", help="按固定 R3 检索并用真实模型生成历史参考回答")
+    answer = commands.add_parser(
+        "answer",
+        help="按固定 R3 检索并用真实模型生成历史参考回答；可选文件或 PostgreSQL 数据源",
+    )
     answer.add_argument("--query", help="当前已知信息原文；与 --known-at 一起给出")
     answer.add_argument("--known-at", type=date.fromisoformat,
                         help="当前已知信息的时点 YYYY-MM-DD；不允许省略或从历史数据推断")
     answer.add_argument("--query-id", help="改用语料中的示例 Query（如 Q005），须显式指定")
+    answer.add_argument("--data-source", choices=("file", "postgres"), default="file",
+                        help="案例数据源；默认 file。postgres 时用 CASETRACE_DATABASE_URL "
+                             "连接并以 --db-schema 指定 schema，--data/--reference 不参与读取")
+    answer.add_argument("--db-schema", default="casetrace",
+                        help="postgres 数据源使用的 schema；默认 casetrace，仅数据库路线使用")
     answer.add_argument("--data", type=Path, default=Path("data/dev/demo-v3.json"),
-                        help="dev-v3 语料；默认解析示例 Query 与快照时点")
+                        help="file 数据源的 dev-v3 语料；默认解析示例 Query 与快照时点")
     answer.add_argument("--reference", type=Path, default=Path(
-        "data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx"))
+        "data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx"),
+        help="file 数据源的主数据 Excel；postgres 路线不读取")
     answer.add_argument("--top-k", type=int, default=4,
                         help="读取的候选条数；默认 4，候选不是已确认相关案例")
     answer.add_argument("--model", default=DEFAULT_MODEL,

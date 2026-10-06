@@ -2,6 +2,8 @@
 
 本模块不调用模型，也不读 qrels、标注理由或候选根因库：
 输入是当前 Query、known_at 与一份记录在案的语料快照，输出分为模型上下文与运行元数据。
+语料可选择文件（dev-v3 JSON + 主数据 Excel）或已读回的数据库快照；两条路线共用
+同一次 R3 检索与同一套元数据，区别只在「谁提供 records / reference / payload」。
 检索方案固定为 M3-07 选定配置，这里不改检索参数、排序、评估默认值或旧产物。
 上下文只含命中的 Case；历史原因挂 Case、检查结果挂 Case + checkpoint_id，不互相推导。
 """
@@ -17,6 +19,17 @@ from casetrace.data.reference import ReferenceData
 from casetrace.demo import check_source_records, load_validated_dataset
 from casetrace.evaluation.runner import build_retriever_from_records
 from casetrace.retrieval.base import SearchHit
+from casetrace.storage.schema import DEFAULT_SCHEMA
+from casetrace.storage.snapshot import LoadedSnapshot
+
+# 数据源标识：写进运行记录的 corpus.data_source；旧记录缺少该字段时按文件来源理解。
+DATA_SOURCE_FILE = "file"
+DATA_SOURCE_POSTGRES = "postgres"
+
+# 库内快照必须与本次请求一致的身份字段；内容检查由导入与 load_snapshot 负责。
+SNAPSHOT_IDENTITY_FIELDS = (
+    "snapshot_id", "known_at", "dataset_sha256", "reference_sha256", "basis",
+)
 
 # M3-07 选定的固定检索方案：BM25 + Query 过滤（H1 否定小句 + H2 标识/标签词）。
 RETRIEVAL_METHOD = "bm25_drop_negation_labels"
@@ -42,6 +55,10 @@ class CorpusSnapshot:
     dataset_sha256: str
     reference_sha256: str
     basis: str
+
+
+class SnapshotError(ValueError):
+    """已知的快照身份或时点前提不满足；仍兼容 CLI 对 ValueError 的处理。"""
 
 
 # dev-v3 已记录的完整可用快照：九条 Case 在 2026-09-15 前已结案且完整可用。
@@ -98,18 +115,51 @@ def _check_query_and_top_k(query: str, known_at: date, top_k: int) -> None:
         raise ValueError(f"top_k | 必须是正整数（拒绝 bool 与小数）；实际 {top_k!r}")
 
 
-def _check_snapshot(
-    snapshot: CorpusSnapshot, known_at: date, dataset_path: Path, reference_path: Path,
-    records: dict, payload: dict,
-) -> None:
-    """检查输入是否落在记录在案的快照前提内；不满足就明确拒绝。"""
+def _snapshot_metadata(recorded) -> dict:
+    """快照描述字段：`CorpusSnapshot` 与库内 `StoredSnapshot` 都提供这五个字段。
+
+    数据库路线传入库内实际读回值，不把文件路径或连接信息混进快照身份。
+    """
+
+    return {
+        "snapshot_id": recorded.snapshot_id,
+        "known_at": recorded.known_at.isoformat(),
+        "basis": recorded.basis,
+        "dataset_sha256": recorded.dataset_sha256,
+        "reference_sha256": recorded.reference_sha256,
+    }
+
+
+def _check_known_at(known_at: date, snapshot: CorpusSnapshot) -> None:
+    """Query 时点必须就是记录在案的可用时点；本版没有通用历史时点过滤。"""
 
     if known_at != snapshot.known_at:
-        raise ValueError(
+        raise SnapshotError(
             f"快照 | known_at {known_at.isoformat()} 不被当前记录的可用性快照支持："
             f"只有 {snapshot.snapshot_id}（{snapshot.known_at.isoformat()}）；"
             "本版不实现通用历史时点过滤"
         )
+
+
+def _check_detection_times(records: dict, snapshot: CorpusSnapshot) -> None:
+    """时点一致性：语料最晚的发现日期不能晚于快照可用时点。"""
+
+    latest = max((detail.detection_time for detail in records["details"]), default=None)
+    if latest is not None and latest > snapshot.known_at:
+        raise SnapshotError(
+            f"时点一致性 | 语料中最晚的发现日期 {latest.isoformat()} 晚于 "
+            f"{snapshot.snapshot_id} 的可用时点 {snapshot.known_at.isoformat()}；"
+            "当前快照约定语料在该时点前完整可用，本版不实现通用时间过滤"
+        )
+
+
+def _check_snapshot(
+    snapshot: CorpusSnapshot, known_at: date, dataset_path: Path, reference_path: Path,
+    records: dict, payload: dict,
+) -> None:
+    """文件路线：检查输入是否落在记录在案的快照前提内；不满足就明确拒绝。"""
+
+    _check_known_at(known_at, snapshot)
     actual_dataset = _sha256_file(dataset_path)
     if actual_dataset != snapshot.dataset_sha256:
         raise ValueError(
@@ -128,49 +178,100 @@ def _check_snapshot(
         raise ValueError("Dataset | review_status | 必须是非空字符串")
     if not records["details"]:
         raise ValueError("Dataset | details | 不能为空")
-    latest = max(detail.detection_time for detail in records["details"])
-    if latest > snapshot.known_at:
-        raise ValueError(
-            f"时点一致性 | 语料中最晚的发现日期 {latest.isoformat()} 晚于 "
-            f"{snapshot.snapshot_id} 的可用时点 {snapshot.known_at.isoformat()}；"
-            "当前快照约定语料在该时点前完整可用，本版不实现通用时间过滤"
+    _check_detection_times(records, snapshot)
+
+
+def _check_loaded_snapshot(
+    loaded: LoadedSnapshot, snapshot: CorpusSnapshot, known_at: date,
+) -> None:
+    """数据库路线：只核对库内描述是否对应本次请求，并保留时点前提检查。
+
+    完整内容、CR/GR 与来源核对已由导入和 `load_snapshot` 承担，这里不重跑、
+    不重复计算摘要，也不调用 `verify_snapshot`。
+    """
+
+    stored = loaded.snapshot
+    mismatches = [
+        f"{field}: 请求 {getattr(snapshot, field)!r}，库内 {getattr(stored, field)!r}"
+        for field in SNAPSHOT_IDENTITY_FIELDS
+        if getattr(stored, field) != getattr(snapshot, field)
+    ]
+    if mismatches:
+        raise SnapshotError(
+            "快照 | 库内描述与本次请求的快照不一致，拒绝回答：" + "；".join(mismatches)
         )
+    _check_known_at(known_at, snapshot)
+    _check_detection_times(loaded.records, snapshot)
 
 
 def prepare_answer_run(
-    query: str, known_at: date, *, dataset_path: Path, reference_path: Path,
+    query: str, known_at: date, *, dataset_path: Path | None = None,
+    reference_path: Path | None = None,
     snapshot: CorpusSnapshot = DEV_V3_SNAPSHOT, top_k: int = DEFAULT_TOP_K,
+    loaded_snapshot: LoadedSnapshot | None = None, db_schema: str = DEFAULT_SCHEMA,
 ) -> AnswerRun:
-    """应用准备入口：校验输入与快照 → 建一次 R3 索引 → 检索 → 运行元数据。
+    """应用准备入口：核对输入与快照前提 → 建一次 R3 索引 → 检索 → 运行元数据。
+
+    数据源由调用方（CLI / API 边界）选定；选定后两条路线共用同一次 R3 检索、
+    同一套排名与元数据组装：
+
+    - 给出已读回的 `loaded_snapshot`（数据库路线）时使用它的对象与元数据，
+      不打开任何文件，`dataset_path` / `reference_path` 可以不传；
+    - 否则走原有文件路线，必须同时给出两份路径，并执行现有文件身份、
+      CR/GR、来源与内容时点检查。
 
     不要求调用方提供 qrels；标签、理由与候选根因库不参与检索，也不进入元数据。
     返回的原始排名就是交给上下文组装的顺序；这里不排序、不筛选、不补名次。
     """
 
     _check_query_and_top_k(query, known_at, top_k)
-    dataset_path, reference_path = Path(dataset_path), Path(reference_path)
-    records, payload, reference = load_validated_dataset(dataset_path, reference_path)
-    check_source_records(records, payload, reference)
-    _check_snapshot(snapshot, known_at, dataset_path, reference_path, records, payload)
+    if loaded_snapshot is None:
+        if dataset_path is None or reference_path is None:
+            raise ValueError(
+                "文件数据源必须同时给出 --data 与 --reference；"
+                "数据库数据源请传入已读回的 loaded_snapshot"
+            )
+        dataset_path, reference_path = Path(dataset_path), Path(reference_path)
+        records, payload, reference = load_validated_dataset(dataset_path, reference_path)
+        check_source_records(records, payload, reference)
+        _check_snapshot(snapshot, known_at, dataset_path, reference_path, records, payload)
+        snapshot_metadata = _snapshot_metadata(snapshot)
+        route_metadata = {
+            "data_source": DATA_SOURCE_FILE,
+            "dataset_path": str(dataset_path),
+            "reference_path": str(reference_path),
+        }
+    else:
+        # 内容与来源检查已随导入和读回完成；这里只核对库内描述是否对应本次请求。
+        _check_loaded_snapshot(loaded_snapshot, snapshot, known_at)
+        records = loaded_snapshot.records
+        reference = loaded_snapshot.reference
+        payload = loaded_snapshot.payload
+        snapshot_metadata = _snapshot_metadata(loaded_snapshot.snapshot)
+        route_metadata = {
+            "data_source": DATA_SOURCE_POSTGRES,
+            "schema": db_schema,
+            "content_digest": loaded_snapshot.snapshot.content_digest,
+            "digest_version": loaded_snapshot.snapshot.digest_version,
+            # 这里保存的是原始导入路径，表示来源位置；本次没有读取这两个文件。
+            "dataset_path": loaded_snapshot.snapshot.dataset_path,
+            "reference_path": loaded_snapshot.snapshot.reference_path,
+        }
+
+    corpus = {
+        **route_metadata,
+        # 两条路线共有的语料描述；draft 状态不因换数据源而升级。
+        "case_count": len(records["cases"]),
+        "review_status": payload["review_status"],
+        "source_cases_are_draft": True,
+    }
 
     retriever = build_retriever_from_records(records, reference, method=RETRIEVAL_METHOD)
     hits = retriever.search(query, top_k=top_k)
 
     metadata = {
-        "snapshot": {
-            "snapshot_id": snapshot.snapshot_id,
-            "known_at": snapshot.known_at.isoformat(),
-            "basis": snapshot.basis,
-            "dataset_sha256": snapshot.dataset_sha256,
-            "reference_sha256": snapshot.reference_sha256,
-        },
-        "corpus": {
-            "dataset_path": str(dataset_path),
-            "reference_path": str(reference_path),
-            "case_count": len(records["cases"]),
-            "review_status": payload["review_status"],
-            "source_cases_are_draft": True,
-        },
+        "snapshot": snapshot_metadata,
+        "corpus": corpus,
         "retrieval": {
             "requested_method": RETRIEVAL_METHOD,
             "top_k": top_k,
@@ -323,7 +424,9 @@ def build_evidence_context(
         details = [item for item in records["details"] if item.case_id == hit.case_id]
         evidences = [item for item in records["evidences"] if item.case_id == hit.case_id]
         raw_source = sources[hit.case_id]
-        source = {key: value for key, value in raw_source.items() if key in SOURCE_FIELDS}
+        # 按 SOURCE_FIELDS 固定字段顺序：数据库读回的字典键顺序可能与文件不同，
+        # 这里统一一次，保证两条数据源路线发出的模型消息逐字一致。
+        source = {key: raw_source[key] for key in SOURCE_FIELDS if key in raw_source}
 
         collected.append(CaseEvidence(
             rank=rank,

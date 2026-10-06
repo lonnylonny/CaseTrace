@@ -23,6 +23,11 @@ dependencies = [
     # 连客户端都构造不出来（ImportError）。这不是可选优化，缺了就调不通。
     "socksio>=1.0.0",
     "psycopg[binary]>=3.2,<4",
+    # M5-03 HTTP 适配：FastAPI 提供应用与请求校验，Uvicorn 提供本机运行入口；
+    # 请求模型直接使用 Pydantic v2，因此显式声明，不依赖 FastAPI 的传递版本。
+    "fastapi>=0.142,<1",
+    "uvicorn>=0.54,<1",
+    "pydantic>=2.13,<3",
 ]
 
 [project.scripts]
@@ -34,6 +39,8 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    # Starlette/FastAPI 的 TestClient 依赖 HTTPX；放 dev 分组，不在运行依赖里强制安装。
+    "httpx>=0.28,<1",
     "pytest>=9.1.1",
 ]
 

@@ -101,7 +101,27 @@ with connect() as connection:
 # loaded.records / loaded.reference / loaded.payload / loaded.snapshot
 ```
 
-已有的 `demo`、`evaluate` 和 `answer` 仍使用文件；回答核心接入数据库属于 M5-02。
+## 回答入口使用数据库
+
+M5-02 起 `casetrace answer` 可选择数据源，两条路线共用同一检索、证据上下文、生成与引用守卫：
+
+```bash
+uv run --locked casetrace answer --query-id Q005 --check-only
+uv run --locked casetrace answer --data-source postgres --query-id Q005 --check-only
+uv run --locked casetrace answer --data-source postgres \
+  --query "焊线脱落，已排除运输碰伤" --known-at 2026-09-15 --check-only
+```
+
+- 默认 `--data-source file` 行为不变（读 `--data` / `--reference`）。
+- `--data-source postgres` 用 `CASETRACE_DATABASE_URL` 连接，`--db-schema` 选择 schema（默认 `casetrace`）；
+  `--data` / `--reference` 不参与读取，示例 Query 也来自库内 payload。
+- 一次运行只读回一次快照：短连接读回后立即关闭，再检索与调用模型；读回失败按运行前提失败处理
+  （stderr 报错、退出码 2、不调用模型、不写回答记录），不会自动建表、导入或退回文件。
+- 回答记录在 `corpus` 中区分 `data_source`：文件路线写 `file`，数据库路线写 `postgres` 并附
+  `schema`、`content_digest`、`digest_version` 与原始导入路径（表示来源位置，不代表本次读了文件）。
+- 旧的 v10 运行记录没有 `data_source`，按文件来源理解，不重写历史产物。
+
+`demo` 与 `evaluate` 仍只使用文件；回答核心的数据库接缝由 M5-02 提供，M5-03 的 FastAPI 复用同一个回答核心。
 
 ## 下载失败后的手动恢复
 
