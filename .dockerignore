@@ -1,0 +1,26 @@
+# 构建上下文只用于产出应用镜像；Dockerfile 已显式 COPY 所需路径，这里排除其余内容。
+# 真实凭据（.env）绝不进入构建上下文，也从不作为构建 ARG/ENV 传入。
+.env
+.env.*
+.git
+.gitignore
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.cache/
+.DS_Store
+tmp/
+results/
+tests/
+docs/
+docker/
+compose.yaml
+AGENTS.md
+CONTEXT.md
+.agents/
+.clinerules/
+.vscode/
+skills-lock.json
+scripts/

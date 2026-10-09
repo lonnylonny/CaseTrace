@@ -38,7 +38,7 @@ DEFAULT_TOP_K = 4
 
 # 来源记录里允许进入模型上下文的字段：哪一页、哪一行、抄的原因与措施原文、结案状态。
 # 其余字段（generation_note、rationale、review_status）属生成／审阅元数据，不进入证据上下文；
-# 依据见 Current Plan §7，字段清单见 docs/project/handoffs/m3-07-m4-retrieval-handoff.md §4。
+# 依据见 docs/design/behavior-contracts.md §3；下方常量列出允许进入上下文的字段。
 SOURCE_FIELDS = ("sheet", "failure_mode_id", "root_cause", "corrective_action", "closure_status")
 
 

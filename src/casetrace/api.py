@@ -4,7 +4,10 @@
 检索、证据上下文、生成与引用守卫仍在 `answer` 核心（`run_answer_question`）里，
 API 不复制业务流程，也不改数据、qrels 或既有 CLI 行为。
 
-任务包约定的边界（docs/project/tasks/m5-03-fastapi.md）：
+M6-02 在同一应用上增加 `GET /` 单页与 `/static/` 资源（`src/casetrace/web/`）：
+页面按模块位置定位，读取时不连接数据库、不构造模型，浏览器用相对地址同源请求 `/answer`。
+
+HTTP 边界（docs/development/api.md）：
 
 - 服务固定走 PostgreSQL：连接沿用 `CASETRACE_DATABASE_URL` / 项目根 `.env`，
   schema 由应用工厂配置；客户端只提交问题，不提交连接、凭据、路径、schema、
@@ -13,17 +16,19 @@ API 不复制业务流程，也不改数据、qrels 或既有 CLI 行为。
   确需生成时才由注入的工厂构造。
 - `POST /answer` 的请求体只有 `query`、`known_at`、`top_k` 三个字段，额外字段拒绝。
 
-接口与真实 PostgreSQL 五 Query 回放的验收记录见任务包。
+接口说明见 docs/development/api.md；真实 PostgreSQL 回放见 tests/storage/。
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import date, datetime
+from pathlib import Path
 import re
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
 
 from casetrace.answer.cli import (
@@ -53,6 +58,12 @@ API_DESCRIPTION = (
     "把当前问题交给固定 R3 检索 + Grounded Answer 核心，返回可复查的完整运行记录。"
     "本机学习展示用；回答是历史参考，不判断当前 Incident 的最终 Root Cause。"
 )
+
+# M6-02 单页与静态资源：按本模块位置定位，因此与 uvicorn 的启动目录无关。
+# 页面只由浏览器用相对地址 `/answer` 发起同源请求，不引入前端构建链或运行依赖。
+WEB_DIR = Path(__file__).resolve().parent / "web"
+INDEX_HTML = WEB_DIR / "index.html"
+STATIC_URL = "/static"
 
 
 class HealthResponse(BaseModel):
@@ -255,6 +266,15 @@ def create_app(
     # 配置只挂在 app.state：写到哪、路由就从哪读，避免出现第二份会漂移的来源。
     app.state.db_schema = db_schema
     app.state.model_factory = model_factory or (lambda: build_model(DEFAULT_MODEL))
+
+    # 静态资源目录按模块位置定位；挂载只登记目录，不读库、不构造模型。
+    app.mount(STATIC_URL, StaticFiles(directory=WEB_DIR), name="static")
+
+    @app.get("/", include_in_schema=False)
+    def index() -> FileResponse:
+        """单页入口：返回本模块旁的 HTML 文件，不连接数据库、不构造模型。"""
+
+        return FileResponse(INDEX_HTML, media_type="text/html")
 
     @app.get("/health", response_model=HealthResponse, summary="进程存活检查")
     def health() -> HealthResponse:

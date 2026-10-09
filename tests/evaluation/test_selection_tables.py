@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 
-SCRIPT = Path(__file__).resolve().parents[2] / "tmp" / "m3_07_selection_tables.py"
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "m3_07_selection_tables.py"
 
 
 @pytest.mark.parametrize(

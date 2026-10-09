@@ -2,7 +2,7 @@
 
 本文件汇总 M3 已验收的**同 benchmark**检索结果：BM25、Embedding、Hybrid、Rerank 四类交付方法，另列 M3-06 的 BM25 Query 过滤变体（R0–R3）作为补充证据。它是只读汇总：不修改代码、`qrels`、标签或任何检索参数，也不产生新的检索观测。
 
-表中每个数字都由 `uv run python tmp/m3_07_selection_tables.py` 从结果 JSON 复算打印（该脚本调用 SD2 的 `check_comparable` / `load_per_query_scores` / `per_query_deltas`，不手工抄哈希）。本文件只登记观测与规则适用结果；**第 7 节记录 2026-09-30 用户拍板的最终方案、最终正式结果与复跑核对。**
+表中每个数字都由 `uv run python scripts/m3_07_selection_tables.py` 从结果 JSON 复算打印（该脚本调用 SD2 的 `check_comparable` / `load_per_query_scores` / `per_query_deltas`，不手工抄哈希）。本文件只登记观测与规则适用结果；**第 7 节记录 2026-09-30 用户拍板的最终方案、最终正式结果与复跑核对。**
 
 ## 1 运行条件与同 benchmark 核对
 
@@ -191,7 +191,7 @@ M3-06 的四个运行与四类方法同 benchmark（第 1 节已用 `check_compa
 
 ### 7.4 复跑核对（2026-09-30）
 
-同命令复跑到 `/tmp/casetrace-dev-v3-m3-07-final-recheck.json`（exit 0，SHA-256 `0f5daf2ba11b0ce6d897506335443ba71a76cf8fed9451b1969e5e7a9fd4c5d3`），与最终结果逐字段比较（复算入口：`uv run python tmp/m3_07_final_recheck.py`）：
+同命令复跑到 `/tmp/casetrace-dev-v3-m3-07-final-recheck.json`（exit 0，SHA-256 `0f5daf2ba11b0ce6d897506335443ba71a76cf8fed9451b1969e5e7a9fd4c5d3`），与最终结果逐字段比较（复算入口：`uv run python scripts/m3_07_final_recheck.py`）：
 
 | 比较项 | 结果 |
 |---|---|
@@ -206,7 +206,7 @@ M3-06 的四个运行与四类方法同 benchmark（第 1 节已用 `check_compa
 
 - 该默认配置目前仍登记在 `runner.EXPERIMENTAL_RETRIEVER_FACTORIES`；是否改名为生产方法属注册表整理，本包不改代码，交接时明示。
 - `retrieval.method` 对 R1 / R2 / R3 都是 `bm25_filtered_query_terms`，只有 `retrieval.query_filter` 能区分三者；M4 引用时必须看 `query_filter`，不能只看方法名。
-- `results/README.md` 的产物索引与复现命令已更新（SD5）；调用路径与字段说明见 [M4 检索交接说明](../../docs/project/handoffs/m3-07-m4-retrieval-handoff.md)。
+- `results/README.md` 的产物索引与复现命令已更新（SD5）；回答核心边界见 [业务与评估约定](../docs/design/behavior-contracts.md#3-grounded-answer-核心约定)。
 
 ## 8 边界与未跑项
 
@@ -215,4 +215,4 @@ M3-06 的四个运行与四类方法同 benchmark（第 1 节已用 `check_compa
 - 耗时均为单次读数，含冷启动与本次缓存状态，不支持效率结论；模型数值容差沿用 M3-02 记录（≤3.331e-16，排名与指标一致）。
 - 已完成：SD5 的 M4 交接与 `uv run casetrace demo`（默认 6 条和 dev-v3 9 条均成功；demo 仍使用原版 BM25）。未跑：Locked Test 对比（M6）。SD4 的最终配置复跑与方案固定见第 7.3–7.4 节。
 - 既有历史限制不变：dev-v1 现存归档哈希与迁移记录不一致按用户决定保留；dev-v3 源 Case 仍为 draft。
-- 复现命令与比较边界见 [results README](README.md#复现与比较)；本文件数字的复算入口是 `uv run python tmp/m3_07_selection_tables.py`。
+- 复现命令与比较边界见 [results README](README.md#复现与比较)；本文件数字的复算入口是 `uv run python scripts/m3_07_selection_tables.py`。

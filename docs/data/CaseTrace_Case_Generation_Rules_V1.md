@@ -1,6 +1,6 @@
 # CaseTrace Case Generation Rules V1
 
-> Data Foundation v1：2026-09-16 已确认完成并冻结。以下规则继续有效；不为补齐自动化生成或校验能力阻塞检索评估，见 [Current Plan](../project/current-plan.md#3-data-foundation-v1-冻结)。
+> Data Foundation v1：2026-09-16 已确认完成并冻结。以下规则继续有效；不为补齐自动化生成或校验能力阻塞检索评估，见 [业务与评估约定](../design/behavior-contracts.md#1-data-foundation-v1-冻结)。
 
 生成结果须通过 CR-01～CR-51，并满足本表；字段枚举及 BOM 定义见《CaseTrace_Data_Structure_V2_No_Scenario.md》。2026-09-19 异常站点修订已获用户确认。
 

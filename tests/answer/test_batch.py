@@ -8,7 +8,7 @@ import pytest
 
 from casetrace.answer.cli import AnswerOutcome
 
-SCRIPT = Path(__file__).resolve().parents[2] / "tmp/m4_04_run_all.py"
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts/m4_04_run_all.py"
 spec = importlib.util.spec_from_file_location("m4_batch", SCRIPT)
 batch = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(batch)

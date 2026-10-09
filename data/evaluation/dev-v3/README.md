@@ -10,7 +10,6 @@
 | qrels SHA-256 | `7c4e85511ba72b58b19eb3134f1935c711e0f3142e58ba118918d96afac7b4dd` |
 | 主数据 | `data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx`，`f5001bdd…1c85` |
 | 前身 | [dev-v2](../dev-v2/README.md)（6 Case × 3 Query、18 对用户已确认标签、M2 / M3-01 / M3-02 正式结果） |
-| 相关任务包 | [M3-03](../../../docs/project/tasks/m3-03-expand-mock-datasets.md) |
 
 dev-v2 语料、dev-v2 qrels 与既有正式结果**保持原字节**，属于旧版本。两版指标不得互相比较，也不得跨版本宣称提升。
 
@@ -35,13 +34,13 @@ dev-v2 语料、dev-v2 qrels 与既有正式结果**保持原字节**，属于�
 - 三个新批号 `DEV_PL_012～014` 与 `DEV_CL_012～014` 未与任何既有 Case 重复，代表当前 Incident 自身的新批，**不进入历史 Case**。
 - 批号是**模拟值**，主数据 Excel 没有批号表；可核对的是"产品 ↔ 客户"与"复用批号 ↔ 语料记录"的一致性。
 - 客户标识目前**不在语料文档索引中**（`build_documents` 未拼接客户），因此客户进 Query 用于还原当时已知事实与可追溯性，不产生词面匹配。若要客户参与检索，需要单独决定是否改动语料文本。
-- 可重复核对的脚本：`uv run python tmp/check_query_enrichment.py`（只读，校验产品存在、客户推导、复用批号一致性、标识数量）。
+- 可重复核对的脚本：`uv run python scripts/check_query_enrichment.py`（只读，校验产品存在、客户推导、复用批号一致性、标识数量）。
 
 语料中记录的 `query_revision` 字段保存本次补足的说明、规则与批号来源；该字段与查询、来源元数据一样不进入检索文本。
 
 ## Ground Truth 确认记录
 
-用户于 **2026-09-25** 通过分级标注矩阵（`dev3groundtruth.xlsx`，快照见 `/tmp/casetrace-m3-03-gt-confirm-1790342482/before/dev3groundtruth.xlsx`）对 dev-v3 全部 45 对作出判断，`qrels.json` 已发布为 `human_confirmed`，`confirmation_scope = dev_v3_query_enriched_corpus_and_all_45_binary_labels`。
+用户于 **2026-09-25** 通过分级标注矩阵（`dev3groundtruth.xlsx`，原始矩阵快照保存在本地开发记录备份）对 dev-v3 全部 45 对作出判断，`qrels.json` 已发布为 `human_confirmed`，`confirmation_scope = dev_v3_query_enriched_corpus_and_all_45_binary_labels`。
 
 **2026-09-25 用户原始标注（逐格原文，保留历史；当前标签另见下方修订）：**
 
@@ -57,7 +56,7 @@ dev-v2 语料、dev-v2 qrels 与既有正式结果**保持原字节**，属于�
 | C008 | 完全无关 | 强相关 | 无关 | 最强相关，同异常同产品同批次 | 无关 |
 | C009 | 完全无关 | 无关 | 都为锡球，很弱关联 | 无关 | 无关 |
 
-**二值口径（用户确认）：** 最强相关 / 强相关 / 弱相关 → Relevant；很弱关联 / 无关 / 完全无关 → Not Relevant。分级只作阅读顺序参考，**不进入指标、不转换为权重**（Current Plan §4）。
+**二值口径（用户确认）：** 最强相关 / 强相关 / 弱相关 → Relevant；很弱关联 / 无关 / 完全无关 → Not Relevant。分级只作阅读顺序参考，**不进入指标、不转换为权重**（业务与评估约定 §2）。
 
 **2026-09-25 四点裁决与当时落库结果（第 3 项已由 2026-09-26 修订取代）：**
 
@@ -74,7 +73,7 @@ dev-v2 语料、dev-v2 qrels 与既有正式结果**保持原字节**，属于�
 
 **当前正例数：** Q001 / Q002 / Q003 / Q004 / Q005 = **5 / 2 / 2 / 2 / 4**（共 15）。全部 45 对 `origin = user_confirmed`。
 
-**与现行规则的对照（如实记录，不阻塞本版）：** 「同产品同批次」（`Q001×C002`）与「仅同产品族」（`Q003×C005`）经用户确认仍为 Relevant；同时用户提出「同产品本身是极弱约束」。这两者在强弱关系上需要后续在相关性规则层（Current Plan §4 / `CONTEXT.md`）澄清，本版按用户逐对判断落库，不改规则文件。
+**与现行规则的对照（如实记录，不阻塞本版）：** 「同产品同批次」（`Q001×C002`）与「仅同产品族」（`Q003×C005`）经用户确认仍为 Relevant；同时用户提出「同产品本身是极弱约束」。这些背景充分条件属于旧口径，与现行业务与评估约定 §2 有差异；本版按用户逐对判断保留，不自动重标。
 
 ## 2026-09-26 用户更正（qrels revision 2）
 
@@ -83,7 +82,6 @@ dev-v2 语料、dev-v2 qrels 与既有正式结果**保持原字节**，属于�
 - **Q001×C007：0 → 1。** 焊线/焊点自焊盘脱开与键合金球自焊盘界面分离是该样例的同义异常表述；依据用户更正与实际表现判为 Relevant，不依赖共同 failure_mode_id，也不要求历史原因相同。
 - **Q005×C004：标签保持 1，修正理由。** C004 是第二焊点颈部断裂、pad 界面完整，不能写成键合界面断裂。保留用户的弱相关裁决，不把共用 failure_mode_id 解释成自动相关规则。
 - 其余 44 对标签、全部 Case / Query 及检索代码保持不变。用户更正发生于验收发现后，未按模型输赢选择标签。
-- 本机 Cline 会话 `1790332739506_ckphe` 的四点答复中，“我的错误，应该是相关”当时被记录为 Q003×C005 的更正；未在可读取的本机会话中找到后来将 Q001×C007 改回 1 的明确记录。不能据此断言用户从未说过；本轮指令已足够作为更正依据。
 - 原 qrels 按字节保存在 [archive/qrels-2026-09-25.json](archive/qrels-2026-09-25.json)，SHA-256 `bd34f2c0ae0462ec868d096da3ebdb2e779d8fe6b8c29ac5447d1ea11a01d942`。原始分级矩阵及初次裁决保留为历史，不再表示当前标签。
 - `qrels_version = dev-qrels-v3` 表示原有支持版本，新增 `qrels_revision = 2` 和修订历史；正式结果以原字节 SHA-256 区分修订。当前两条结果均为 `*-m3-03-r2.json`，不得混用 r1/r2 的指标。
 
@@ -103,7 +101,7 @@ dev-v2 语料、dev-v2 qrels 与既有正式结果**保持原字节**，属于�
 
 **语义审阅范围（如实记录，未自动化的部分不宣称已覆盖）：**
 
-- 已由确定性检查覆盖：版本与哈希绑定、ID 唯一、Query × Case 完整配对、确认状态与 Development 守卫、时点一致性（`tests/evaluation/test_benchmark.py`；Query 取值一致性 `tmp/check_query_enrichment.py`）。
+- 已由确定性检查覆盖：版本与哈希绑定、ID 唯一、Query × Case 完整配对、确认状态与 Development 守卫、时点一致性（`tests/evaluation/test_benchmark.py`；Query 取值一致性 `scripts/check_query_enrichment.py`）。
 - 已记录的用户判断：全部 45 对二值标签及相关逐对裁决；2026-09-26 明确更正 Q001×C007 的同义异常相关性。覆盖表同时记录生成目的，标签确认不代表全部 Case / Evidence 语义检查完成。
 - **未自动化的语义边界：** 同义异常、易混淆对及弱相关边界依赖逐对人工判断，不由 Validator 或来源家族自动推出；本版已记录的裁决见上节。未记录的完整语义审阅不宣称完成，源 Case 的 draft 状态保留。
 - 源 Case 的 `review_status` 仍为 `draft_pending_human_review`，不因 qrels 确认而改变。

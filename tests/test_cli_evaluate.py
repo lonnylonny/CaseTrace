@@ -178,3 +178,62 @@ def test_evaluate_accepts_embedding_with_a_stubbed_retriever(tmp_path, monkeypat
     assert report["retrieval"]["model"] == "stub-model"
     assert report["summary"]["query_count"] == 3
     assert "检索分数不是相关概率" in stdout
+
+
+LOCKED_QRELS_DRAFT_RELATIVE = "data/evaluation/locked-test-v1/qrels.draft.json"
+
+
+def test_evaluate_rejects_the_locked_test_draft_without_writing_a_report(
+    tmp_path, monkeypatch, capsys,
+):
+    """草稿不是 Ground Truth：正式 evaluator 必须拒绝，且不留下半份结果文件。"""
+    output = tmp_path / "should-not-exist.json"
+
+    code, _, stderr = _invoke_cli(
+        monkeypatch, capsys, "evaluate", "--qrels", LOCKED_QRELS_DRAFT_RELATIVE,
+        "--output", str(output),
+    )
+
+    assert code == 2
+    assert "human_confirmed" in stderr
+    assert not output.exists()
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_evaluate_accepts_locked_test_with_a_stubbed_retriever(
+    locked_test_layout, tmp_path, monkeypatch, capsys,
+):
+    """合成夹具走通 CLI：方法选择、版本/split 与快照进入报告；不跑真实 Locked Test。"""
+    from casetrace.evaluation import benchmark as benchmark_module
+    from casetrace.evaluation import runner
+
+    class StubRetriever:
+        def __init__(self, documents):
+            self.case_ids = sorted(documents)
+
+        def search(self, query, *, top_k):
+            return [
+                SearchHit(case_id, 1.0 / rank)
+                for rank, case_id in enumerate(self.case_ids, start=1)
+            ][:top_k]
+
+        def describe(self):
+            return {"method": "bm25", "model": "stub-model", "model_revision": "stub-rev"}
+
+    # CLI 没有 base_dir 参数：把解析基准指向夹具根目录，确保不会读到仓库里的正式语料。
+    monkeypatch.setattr(benchmark_module, "PROJECT_ROOT", locked_test_layout.root)
+    monkeypatch.setitem(runner.RETRIEVER_FACTORIES, "bm25", StubRetriever)
+    output = tmp_path / "locked-test.json"
+
+    code, stdout, _ = _invoke_cli(
+        monkeypatch, capsys, "evaluate", "--qrels", str(locked_test_layout.qrels_path),
+        "--method", "bm25", "--output", str(output),
+    )
+
+    assert code is None
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["benchmark"]["qrels_version"] == "locked-test-qrels-v1"
+    assert report["benchmark"]["split"] == "locked_test"
+    assert report["benchmark"]["availability_snapshot"]["snapshot_id"] == "locked-test-v1-2026-08-31"
+    assert report["summary"]["query_count"] == 1
+    assert "locked_test" in stdout

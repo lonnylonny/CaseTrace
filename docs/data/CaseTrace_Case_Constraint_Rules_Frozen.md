@@ -1,6 +1,6 @@
 # CaseTrace Case Constraint Rules — Frozen
 
-> Data Foundation v1：2026-09-16 已确认完成并冻结。以下规则继续有效；已知校验覆盖缺口不作为 Retrieval Evaluation 的前置任务，见 [Current Plan](../project/current-plan.md#3-data-foundation-v1-冻结)。
+> Data Foundation v1：2026-09-16 已确认完成并冻结。以下规则继续有效；已知校验覆盖缺口不作为 Retrieval Evaluation 的前置任务，见 [业务与评估约定](../design/behavior-contracts.md#1-data-foundation-v1-冻结)。
 
 适用于 V1 已结案 Case。字段、枚举、数据库映射及用于复发判断的 B07 实际生产信息见《CaseTrace_Data_Structure_V2_No_Scenario.md》；合成范围见《CaseTrace_Case_Generation_Rules_V1.md》。不设置 Scenario。
 

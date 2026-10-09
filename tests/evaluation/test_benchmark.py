@@ -146,17 +146,20 @@ def test_absent_source_file_is_reported(benchmark_inputs):
         _load(root)
 
 
-@pytest.mark.parametrize(("field", "value"), [
-    ("qrels_version", "dev-qrels-v1"),
-    ("split", "locked_test"),
+@pytest.mark.parametrize(("field", "value", "pattern"), [
+    # 未知版本：不做前缀或模糊匹配，新增版本必须显式登记。
+    ("qrels_version", "dev-qrels-v1", r"qrels \| qrels_version \| 期望 "),
+    ("qrels_version", "locked-test-qrels-v9", r"qrels \| qrels_version \| 期望 "),
+    # 已知版本配上错误的 split：拒绝错配，不放行“任意版本 + 任意 split”。
+    ("split", "locked_test", r"qrels \| split \| qrels_version 'dev-qrels-v2' 要求 development"),
 ])
-def test_qrels_version_and_split_must_match(benchmark_inputs, field, value):
+def test_qrels_version_and_split_must_match(benchmark_inputs, field, value, pattern):
     root = benchmark_inputs
     qrels = _qrels(root)
     qrels[field] = value
     _save_qrels(root, qrels)
 
-    with pytest.raises(ValueError, match=rf"qrels \| {field} \| 期望 "):
+    with pytest.raises(ValueError, match=pattern):
         _load(root)
 
 
@@ -171,13 +174,15 @@ def test_unconfirmed_qrels_are_rejected(benchmark_inputs, status):
         _load(root)
 
 
-def test_dataset_split_must_be_development(benchmark_inputs):
+def test_dataset_split_must_match_qrels_version(benchmark_inputs):
+    """语料 split 必须与 qrels 版本要求的 split 一致，不能再把 locked_test 当作通用拒绝理由。"""
     root = benchmark_inputs
     dataset = _dataset(root)
     dataset["split"] = "locked_test"
     _save_dataset(root, _qrels(root), dataset)
 
-    with pytest.raises(ValueError, match=r"Dataset \| split \| 期望 development"):
+    with pytest.raises(ValueError,
+                       match=r"Dataset \| split \| qrels_version 'dev-qrels-v2' 要求 development"):
         _load(root)
 
 

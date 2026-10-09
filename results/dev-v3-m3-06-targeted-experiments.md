@@ -19,7 +19,7 @@
 | 变体定义 | `src/casetrace/retrieval/query_filter.py`（SHA-256 `f21f22ac…d1c47a`）；H1 = 含否定线索（`排除/不/未/无/非`）的小句整句不参与计分；H2 = 主数据 ID（`prod_*` / `cus_*` / `dev_*`）与引出 ID 的模板标签词不参与计分 |
 | 变体登记 | `runner.EXPERIMENTAL_RETRIEVER_FACTORIES`，与生产 `RETRIEVER_FACTORIES` 分表；默认方法仍是 `bm25` |
 | 产物 SHA-256 | R0 `e5b6d18a…f0aca9`、R1 `6dbffaca…9ea44d`、R2 `53efe536…899579`、R3 `c02610d9…b9572b`；变体引入前的重跑 `7b90a6da…d422cf` |
-| 探针命令 | `uv run python tmp/m3_06_family_probe.py`（组件级，不跑 pipeline） |
+| 探针命令 | `uv run python scripts/m3_06_family_probe.py`（组件级，不跑 pipeline） |
 
 三次变体运行的 `retrieval.query_filter` 如实记录在各自报告里（开关、否定标记、标签词、ID 正则）。
 
@@ -116,7 +116,7 @@
 uv run pytest -q tests/retrieval/test_query_filter.py tests/evaluation/test_compare.py
 uv run casetrace evaluate --qrels data/evaluation/dev-v3/qrels.json --method bm25 --output /tmp/m3-06-r0.json
 uv run casetrace evaluate --qrels data/evaluation/dev-v3/qrels.json --method bm25_drop_negation_labels --output /tmp/m3-06-r3.json
-uv run python tmp/m3_06_family_probe.py
+uv run python scripts/m3_06_family_probe.py
 ```
 
 比较边界见 [results README](README.md#复现与比较)。

@@ -40,7 +40,7 @@ DEV_V3_DATASET = PROJECT_ROOT / "data/dev/demo-v3.json"
 REFERENCE_FILE = (
     PROJECT_ROOT / "data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx"
 )
-M4_02_RECORD = PROJECT_ROOT / "results/m4/m4-02-q005.json"
+M4_02_RECORD = PROJECT_ROOT / "tests/fixtures/answer/m4-02-q005.json"
 
 
 @pytest.fixture

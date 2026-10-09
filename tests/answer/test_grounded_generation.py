@@ -252,7 +252,7 @@ def test_v1_replay_allowed_but_new_generation_requires_action_field(loaded_conte
 @pytest.mark.parametrize("query_id", ["Q001", "Q003"])
 def test_same_family_background_does_not_force_adoption(query_id):
     root = Path(__file__).resolve().parents[2]
-    old = json.loads((root / f"results/m4/dev-v3-answer-v7/{query_id.lower()}.json").read_text())
+    old = json.loads((root / f"tests/fixtures/answer/dev-v3-answer-v7/{query_id.lower()}.json").read_text())
     run = prepare_answer_run(
         old["query"]["text"], date(2026, 9, 15),
         dataset_path=root / "data/dev/demo-v3.json",

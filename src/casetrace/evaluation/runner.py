@@ -65,6 +65,11 @@ HISTORY_SNAPSHOT = (
     "本版沿用已确认的历史快照约定：全部历史 Case 在每条 Query 的 known_at 之前已结案并完整可用；"
     "未实现通用时间过滤，时点检查只用模型中存在的日期字段。"
 )
+# Locked Test 使用自己的已登记合成快照；文字不描述成 Development 的既有约定。
+LOCKED_TEST_HISTORY_SNAPSHOT = (
+    "本版使用已登记的 Locked Test 合成可用性快照：九条历史 Case 及其完整调查在快照的完整可用日"
+    "之前已结案并完整可用；该快照是用户确认的合成约定，不是真实结案时间，未实现通用时间过滤。"
+)
 NO_RELEVANT_POLICY = (
     "无正例 Query 单列：Recall / nDCG / RR@4 为 None 并从各自均值中排除，Precision 的 0.0 "
     "按函数口径纳入其均值；每个指标分别记录参与的 Query 与排除原因，没有可参与 Query 时汇总为 None。"
@@ -362,8 +367,13 @@ def _git_state() -> tuple[str | None, list[str]]:
 
 
 def _benchmark_document(benchmark: Benchmark) -> dict:
-    """报告中的输入部分：已校验的版本、来源与实际哈希。"""
-    return {
+    """报告中的输入部分：已校验的版本、来源与实际哈希。
+
+    Locked Test 额外带出已校验的可用性快照（snapshot_id、完整可用日、合成依据）；
+    Development 继续使用原约定文字，不把新数据说成 dev-v3 快照。
+    """
+    snapshot = benchmark.availability_snapshot
+    document = {
         "qrels_path": _relative(benchmark.qrels_path, benchmark.base_dir),
         "qrels_version": benchmark.qrels_version,
         "qrels_sha256": benchmark.qrels_sha256,
@@ -376,8 +386,13 @@ def _benchmark_document(benchmark: Benchmark) -> dict:
         },
         "dataset_review_status": benchmark.dataset_review_status,
         "latest_detection": benchmark.latest_detection.isoformat(),
-        "history_snapshot": HISTORY_SNAPSHOT,
+        "history_snapshot": (
+            LOCKED_TEST_HISTORY_SNAPSHOT if snapshot is not None else HISTORY_SNAPSHOT
+        ),
     }
+    if snapshot is not None:
+        document["availability_snapshot"] = snapshot
+    return document
 
 
 def _retrieval_document(benchmark: Benchmark, retriever: Retriever) -> dict:

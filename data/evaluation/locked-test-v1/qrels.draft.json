@@ -1,0 +1,528 @@
+{
+  "qrels_version": "locked-test-qrels-v1",
+  "split": "locked_test",
+  "review_status": "draft_pending_human_review",
+  "status": "draft",
+  "rationale_author": "agent_drafted_pending_user_confirmation",
+  "confirmed_on": null,
+  "confirmation_scope": null,
+  "sources": {
+    "dataset": {
+      "path": "data/locked-test/corpus-v1.json",
+      "sha256": "2fdc390ac65eb023acf7d9e77388321dd5479187dbd27ab11c1d5d58284def18"
+    },
+    "reference": {
+      "path": "data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx",
+      "sha256": "f5001bddd3dff43342a2569ceda836ddb4f5c0caca942c1c4d043d99a9131c85"
+    }
+  },
+  "label_meanings": {
+    "0": "Not Relevant",
+    "1": "Relevant",
+    "null": "草稿阶段不确定，须由用户裁决"
+  },
+  "label_policy": "二值标签依据 Current Plan §4：是否 Relevant 取决于当前已知异常与历史案例的调查参考价值；同批次/同产品/同产品族/同客户等背景不单独决定相关性，共享 failure_mode_id 也不自动等于同异常。",
+  "confirmation_required": "全部 45 对须由用户确认；确认前不发布正式 qrels.json、不冻结、不运行真实 Locked Test 排名。正式 evaluator 会以 review_status 拒绝本草稿。",
+  "pending_questions": [
+    {
+      "query_id": "LQ002",
+      "case_id": "LC004",
+      "question": "LC004 与 LQ002 同为产品 PROD_008，但 LC004 的异常只有 package warpage，与 LQ002 的 die tilt 不同。同产品背景不单独决定相关性，本对是否采用待用户裁决。",
+      "evidence": [
+        "LC004.detail.product_id=PROD_008",
+        "LC004.detail.abnormal_types=00022"
+      ]
+    },
+    {
+      "query_id": "LQ003",
+      "case_id": "LC002",
+      "question": "LC002 与 LQ003 同产品 PROD_007、同生产批 DEV_PL_102、同客户批 DEV_CL_102，但 LC002 的异常是 die tilt，与 LQ003 的 package warpage 不同。同批次背景不自动产生正例，本对是否采用待用户裁决。",
+      "evidence": [
+        "LC002.detail.production_lot=DEV_PL_102",
+        "LC002.detail.abnormal_types=00004",
+        "Query.production_lot=DEV_PL_102"
+      ]
+    }
+  ],
+  "judgments": [
+    {
+      "query_id": "LQ001",
+      "case_id": "LC001",
+      "relevance": 1,
+      "rationale": "双侧都是 PROD_014（LF_WB）在 OQC 发现芯片贴装面倾斜与对角胶层厚度差，异常相同、产品与路线相同，是本次最直接的历史参考。",
+      "evidence": [
+        "Query.product_id=PROD_014",
+        "LC001.detail.product_id=PROD_014",
+        "LC001.detail.abnormal_types=00004"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ001",
+      "case_id": "LC002",
+      "relevance": 1,
+      "rationale": "LC002 的异常同为 die tilt（贴装面倾斜），只是路线（SUBSTRATE_WB）与措辞（声学扫描）不同；规则不要求措辞逐字相同，异常相同即具备调查参考价值。",
+      "evidence": [
+        "Query 描述“芯片贴装面倾斜”",
+        "LC002.detail.abnormal_types=00004",
+        "LC002.source.failure_mode_id=00004"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ001",
+      "case_id": "LC003",
+      "relevance": 1,
+      "rationale": "LC003 的异常集合含 00004 die tilt，与 LQ001 异常相同；其产品与路线不同只作背景补充，不单独决定相关性，但异常参考价值成立。",
+      "evidence": [
+        "LC003.detail.abnormal_types=00004,00022",
+        "LC003.source.failure_mode_id=00004"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ001",
+      "case_id": "LC004",
+      "relevance": 0,
+      "rationale": "LC004 的异常是 package warpage（封装整体翘曲），与 LQ001 的局部 die tilt 不是同一异常；同属几何类异常或同族都不自动等于同异常。",
+      "evidence": [
+        "LC004.detail.abnormal_types=00022",
+        "Query 描述“局部贴装面倾斜”"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ001",
+      "case_id": "LC005",
+      "relevance": 0,
+      "rationale": "LC005 同为 package warpage，且产品与路线均与 LQ001 不同；仅有通用调查方法不构成相关。",
+      "evidence": [
+        "LC005.detail.abnormal_types=00022",
+        "LC005.detail.product_id=PROD_007"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ001",
+      "case_id": "LC006",
+      "relevance": 0,
+      "rationale": "LC006 是 FC 互连开路（bump open），与 LQ001 的 die tilt 机制与站点都不同。",
+      "evidence": [
+        "LC006.detail.abnormal_types=00030",
+        "LC006.detail.product_id=PROD_012"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ001",
+      "case_id": "LC007",
+      "relevance": 0,
+      "rationale": "LC007 同为 FC 开路，与 LQ001 的 die tilt 无关。",
+      "evidence": [
+        "LC007.detail.abnormal_types=00030",
+        "LC007.detail.product_id=PROD_016"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ001",
+      "case_id": "LC008",
+      "relevance": 0,
+      "rationale": "LC008 是 FC 互连短路（bump short），与 LQ001 的 die tilt 无关。",
+      "evidence": [
+        "LC008.detail.abnormal_types=00031",
+        "LC008.detail.product_id=PROD_017"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ001",
+      "case_id": "LC009",
+      "relevance": 0,
+      "rationale": "LC009 同为 FC 短路，与 LQ001 的 die tilt 无关。",
+      "evidence": [
+        "LC009.detail.abnormal_types=00031",
+        "LC009.detail.product_id=PROD_010"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ002",
+      "case_id": "LC001",
+      "relevance": 1,
+      "rationale": "LQ002 与 LC001 是同一异常 die tilt 的不同表达（LC001 用 X-ray 剖面描述，LQ002 用声学扫描描述）；跨产品与路线仍有调查参考价值。",
+      "evidence": [
+        "LC001.detail.abnormal_types=00004",
+        "LC001.source.failure_mode_id=00004"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ002",
+      "case_id": "LC002",
+      "relevance": 1,
+      "rationale": "LC002 的贴装面倾斜同样由声学扫描发现，与 LQ002 的观测方式与异常均一致。",
+      "evidence": [
+        "LC002.detail.abnormal_types=00004",
+        "LC002.detail.product_id=PROD_007"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ002",
+      "case_id": "LC003",
+      "relevance": 1,
+      "rationale": "LC003 与 LQ002 同为产品 PROD_008、同为基板路线，且异常集合含 00004 die tilt；异常相同且背景相同，参考价值最高。",
+      "evidence": [
+        "LC003.detail.product_id=PROD_008",
+        "LC003.detail.abnormal_types=00004,00022"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ002",
+      "case_id": "LC004",
+      "relevance": null,
+      "rationale": "LC004 与 LQ002 同为产品 PROD_008，但 LC004 的异常只有 package warpage，与 LQ002 的 die tilt 不同。同产品背景不单独决定相关性，本对是否采用待用户裁决。",
+      "evidence": [
+        "LC004.detail.product_id=PROD_008",
+        "LC004.detail.abnormal_types=00022"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ002",
+      "case_id": "LC005",
+      "relevance": 0,
+      "rationale": "LC005 为 package warpage，产品与路线也与 LQ002 不同，异常不相同。",
+      "evidence": [
+        "LC005.detail.abnormal_types=00022",
+        "LC005.detail.product_id=PROD_007"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ002",
+      "case_id": "LC006",
+      "relevance": 0,
+      "rationale": "LC006 为 FC 互连开路，与 LQ002 的 die tilt 不同。",
+      "evidence": [
+        "LC006.detail.abnormal_types=00030"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ002",
+      "case_id": "LC007",
+      "relevance": 0,
+      "rationale": "LC007 同为 FC 开路，与 LQ002 无关。",
+      "evidence": [
+        "LC007.detail.abnormal_types=00030"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ002",
+      "case_id": "LC008",
+      "relevance": 0,
+      "rationale": "LC008 为 FC 短路，与 LQ002 无关。",
+      "evidence": [
+        "LC008.detail.abnormal_types=00031"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ002",
+      "case_id": "LC009",
+      "relevance": 0,
+      "rationale": "LC009 同为 FC 短路，与 LQ002 无关。",
+      "evidence": [
+        "LC009.detail.abnormal_types=00031"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ003",
+      "case_id": "LC001",
+      "relevance": 0,
+      "rationale": "LC001 为 die tilt，与 LQ003 的封装整体翘曲不是同一异常。",
+      "evidence": [
+        "LC001.detail.abnormal_types=00004"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ003",
+      "case_id": "LC002",
+      "relevance": null,
+      "rationale": "LC002 与 LQ003 同产品 PROD_007、同生产批 DEV_PL_102、同客户批 DEV_CL_102，但 LC002 的异常是 die tilt，与 LQ003 的 package warpage 不同。同批次背景不自动产生正例，本对是否采用待用户裁决。",
+      "evidence": [
+        "LC002.detail.production_lot=DEV_PL_102",
+        "LC002.detail.abnormal_types=00004",
+        "Query.production_lot=DEV_PL_102"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ003",
+      "case_id": "LC003",
+      "relevance": 1,
+      "rationale": "LC003 的异常集合含 00022 package warpage，与 LQ003 异常相同。",
+      "evidence": [
+        "LC003.detail.abnormal_types=00004,00022",
+        "LC003.source.additional_failure_modes=00022"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ003",
+      "case_id": "LC004",
+      "relevance": 1,
+      "rationale": "LC004 的异常同为 package warpage（封装整体弓形翘曲），跨产品仍有调查参考价值。",
+      "evidence": [
+        "LC004.detail.abnormal_types=00022",
+        "LC004.source.failure_mode_id=00022"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ003",
+      "case_id": "LC005",
+      "relevance": 1,
+      "rationale": "LC005 与 LQ003 同产品 PROD_007、同生产批 DEV_PL_102、同客户批 DEV_CL_102，且异常同为 package warpage；异常与背景同时成立。",
+      "evidence": [
+        "LC005.detail.production_lot=DEV_PL_102",
+        "LC005.detail.abnormal_types=00022"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ003",
+      "case_id": "LC006",
+      "relevance": 0,
+      "rationale": "LC006 为 FC 互连开路，与 LQ003 的翘曲无关。",
+      "evidence": [
+        "LC006.detail.abnormal_types=00030"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ003",
+      "case_id": "LC007",
+      "relevance": 0,
+      "rationale": "LC007 同为 FC 开路，与 LQ003 无关。",
+      "evidence": [
+        "LC007.detail.abnormal_types=00030"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ003",
+      "case_id": "LC008",
+      "relevance": 0,
+      "rationale": "LC008 为 FC 短路，与 LQ003 无关。",
+      "evidence": [
+        "LC008.detail.abnormal_types=00031"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ003",
+      "case_id": "LC009",
+      "relevance": 0,
+      "rationale": "LC009 同为 FC 短路，与 LQ003 无关。",
+      "evidence": [
+        "LC009.detail.abnormal_types=00031"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ004",
+      "case_id": "LC001",
+      "relevance": 0,
+      "rationale": "LC001 为 die tilt，与 LQ004 的 FC 互连开路既不同异常也不同路线。",
+      "evidence": [
+        "LC001.detail.abnormal_types=00004"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ004",
+      "case_id": "LC002",
+      "relevance": 0,
+      "rationale": "LC002 同为 die tilt，与 LQ004 的 FC 开路无关。",
+      "evidence": [
+        "LC002.detail.abnormal_types=00004"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ004",
+      "case_id": "LC003",
+      "relevance": 0,
+      "rationale": "LC003 为 die tilt 与 package warpage，与 LQ004 的 bump open 不同。",
+      "evidence": [
+        "LC003.detail.abnormal_types=00004,00022"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ004",
+      "case_id": "LC004",
+      "relevance": 0,
+      "rationale": "LC004 为 package warpage，与 LQ004 的 bump open 不同。",
+      "evidence": [
+        "LC004.detail.abnormal_types=00022"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ004",
+      "case_id": "LC005",
+      "relevance": 0,
+      "rationale": "LC005 同为 package warpage，与 LQ004 无关。",
+      "evidence": [
+        "LC005.detail.abnormal_types=00022"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ004",
+      "case_id": "LC006",
+      "relevance": 1,
+      "rationale": "LC006 与 LQ004 同为产品 PROD_012（SUBSTRATE_FC），且异常同为 bump open；异常相同、产品与路线相同，参考价值最高。",
+      "evidence": [
+        "LC006.detail.product_id=PROD_012",
+        "LC006.detail.abnormal_types=00030",
+        "Query.product_id=PROD_012"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ004",
+      "case_id": "LC007",
+      "relevance": 1,
+      "rationale": "LC007 的异常同为 bump open（互连未接合开路），跨产品仍有调查参考价值。",
+      "evidence": [
+        "LC007.detail.abnormal_types=00030",
+        "LC007.source.failure_mode_id=00030"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ004",
+      "case_id": "LC008",
+      "relevance": 0,
+      "rationale": "LC008 是 bump short（相邻 bump 桥连），与 LQ004 的 bump open 方向相反；同属 FC 互连族不自动等于同异常。",
+      "evidence": [
+        "LC008.detail.abnormal_types=00031",
+        "Query 描述“互连开路”"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ004",
+      "case_id": "LC009",
+      "relevance": 0,
+      "rationale": "LC009 同为 bump short，与 LQ004 的 bump open 不同。",
+      "evidence": [
+        "LC009.detail.abnormal_types=00031"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ005",
+      "case_id": "LC001",
+      "relevance": 0,
+      "rationale": "LC001 为 die tilt，与 LQ005 的 FC 互连短路无关。",
+      "evidence": [
+        "LC001.detail.abnormal_types=00004"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ005",
+      "case_id": "LC002",
+      "relevance": 0,
+      "rationale": "LC002 同为 die tilt，与 LQ005 无关。",
+      "evidence": [
+        "LC002.detail.abnormal_types=00004"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ005",
+      "case_id": "LC003",
+      "relevance": 0,
+      "rationale": "LC003 为 die tilt 与 package warpage，与 LQ005 的 bump short 不同。",
+      "evidence": [
+        "LC003.detail.abnormal_types=00004,00022"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ005",
+      "case_id": "LC004",
+      "relevance": 0,
+      "rationale": "LC004 为 package warpage，与 LQ005 不同。",
+      "evidence": [
+        "LC004.detail.abnormal_types=00022"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ005",
+      "case_id": "LC005",
+      "relevance": 0,
+      "rationale": "LC005 同为 package warpage，与 LQ005 的 bump short 不同。",
+      "evidence": [
+        "LC005.detail.abnormal_types=00022"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ005",
+      "case_id": "LC006",
+      "relevance": 0,
+      "rationale": "LC006 是 bump open（未接合开路），与 LQ005 的 bump short 方向相反，是同族干扰项。",
+      "evidence": [
+        "LC006.detail.abnormal_types=00030",
+        "Query 描述“焊料搭接短路”"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ005",
+      "case_id": "LC007",
+      "relevance": 0,
+      "rationale": "LC007 同为 bump open，与 LQ005 的 bump short 不同。",
+      "evidence": [
+        "LC007.detail.abnormal_types=00030"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ005",
+      "case_id": "LC008",
+      "relevance": 1,
+      "rationale": "LC008 与 LQ005 同为产品 PROD_017（SUBSTRATE_FC），且异常同为 bump short；异常相同、产品与路线相同。",
+      "evidence": [
+        "LC008.detail.product_id=PROD_017",
+        "LC008.detail.abnormal_types=00031",
+        "Query.product_id=PROD_017"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    },
+    {
+      "query_id": "LQ005",
+      "case_id": "LC009",
+      "relevance": 1,
+      "rationale": "LC009 的异常同为 bump short（相邻 bump 焊料搭接），跨产品仍有调查参考价值。",
+      "evidence": [
+        "LC009.detail.abnormal_types=00031",
+        "LC009.source.failure_mode_id=00031"
+      ],
+      "origin": "agent_drafted_pending_user_confirmation"
+    }
+  ]
+}

@@ -24,7 +24,7 @@ import numpy as np
 
 from casetrace.retrieval.base import SearchHit
 
-# SD1 已固定的模型身份与编码口径，依据见 docs/project/research/m3-02-embedding-model-selection.md。
+# SD1 已固定的模型身份与编码口径，依据见 docs/development/models.md。
 # 固定 revision 才能让「同一结果可复现」成立：模型仓库更新后向量可能改变。
 DEFAULT_MODEL = "BAAI/bge-small-zh-v1.5"
 DEFAULT_REVISION = "7999e1d3359715c523056ef9478215996d62a620"

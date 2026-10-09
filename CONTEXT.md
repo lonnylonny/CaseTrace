@@ -1,6 +1,6 @@
 # CaseTrace
 
-本词汇表用于区分历史质量案例的调查参考价值与当前异常的原因结论。具体相关性规则和评估约定见 [Current Plan](docs/project/current-plan.md#4-retrieval--ground-truth--evaluation-约定)。
+本词汇表用于区分历史质量案例的调查参考价值与当前异常的原因结论。具体相关性规则和评估约定见 [业务与评估约定](docs/design/behavior-contracts.md#2-retrieval--ground-truth--evaluation-约定)。
 
 ## Language
 

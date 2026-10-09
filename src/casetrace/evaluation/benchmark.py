@@ -4,8 +4,11 @@
 标签的人工确认与源 Case 的语义审阅状态分开：源 Case 仍是 draft 不影响已确认 benchmark 生效。
 任何检查失败都抛 ValueError，不降级为不相关、不静默跳过、不改写源文件。
 qrels 中 `sources` 的相对路径以 base_dir 为解析基准（默认仓库根目录）。
-本版沿用已确认的历史快照约定：全部历史 Case 在每条 Query 的 known_at 之前已完整可用；
-校验只用模型中存在的日期字段，不声称已实现通用时间过滤。
+`qrels_version` 与 `split` 按显式配对校验（`dev-qrels-v2/v3 → development`、`locked-test-qrels-v1 → locked_test`），
+拒绝未知版本、错配与 corpus/qrels 的 split 不一致。
+Development 沿用已确认的历史快照约定：全部历史 Case 在每条 Query 的 known_at 之前已完整可用。
+Locked Test 额外校验用户确认的合成可用性快照（`availability_snapshot`），该快照同样不是真实结案时间。
+校验只用模型中存在的日期字段，不声称已实现通用可用时间过滤。
 """
 
 from dataclasses import dataclass
@@ -18,10 +21,19 @@ from casetrace.data.dataset_model import CaseDetail
 from casetrace.data.reference import ReferenceData
 from casetrace.demo import check_source_records, load_validated_dataset
 
-# 受支持的 qrels 版本：新增数据版本必须显式加入本列表，不做前缀或模糊匹配。
-# 列表变化不放松其它检查：来源哈希、完整配对、确认状态与 Development 范围继续生效。
-SUPPORTED_QRELS_VERSIONS = ("dev-qrels-v2", "dev-qrels-v3")
-EXPECTED_SPLIT = "development"
+# 显式版本 → split 配对：新增数据版本必须在这里加一行，不做前缀或模糊匹配，
+# 也不放行“任意版本 + 任意 split”。列表变化不放松其它检查：来源哈希、完整配对、
+# 确认状态与时点检查继续生效。
+QRELS_VERSION_SPLITS = {
+    "dev-qrels-v2": "development",
+    "dev-qrels-v3": "development",
+    "locked-test-qrels-v1": "locked_test",
+}
+SUPPORTED_QRELS_VERSIONS = tuple(QRELS_VERSION_SPLITS)
+DEVELOPMENT_SPLIT = "development"
+LOCKED_TEST_SPLIT = "locked_test"
+# 已登记的 Locked Test 合成快照：只有登记过的 snapshot_id 才被接受，不做模糊匹配。
+SUPPORTED_LOCKED_TEST_SNAPSHOTS = ("locked-test-v1-2026-08-31",)
 REQUIRED_REVIEW_STATUS = "human_confirmed"
 # src/casetrace/evaluation/benchmark.py → 仓库根目录。
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -64,6 +76,8 @@ class Benchmark:
     queries: list[BenchmarkQuery]
     judgments: dict[str, dict[str, int]]
     latest_detection: date
+    # Locked Test 的已校验合成可用性快照；Development 约定沿用原文字，这里为 None。
+    availability_snapshot: dict | None
 
     @property
     def case_ids(self) -> list[str]:
@@ -152,6 +166,62 @@ def _check_point_in_time(queries: list[BenchmarkQuery], details: list[CaseDetail
     return max(detail.detection_time for detail in details)
 
 
+def _check_availability_snapshot(
+    payload: dict, expected_split: str, queries: list[BenchmarkQuery], details: list[CaseDetail],
+) -> dict | None:
+    """Locked Test 校验已登记的合成可用性快照；Development 返回 None、不改动其原约定。
+
+    这里验证的是用户确认的合成约定，不证明真实结案时间，也不实现通用可用时间过滤。
+    """
+    if expected_split != LOCKED_TEST_SPLIT:
+        return None
+    snapshot = payload.get("availability_snapshot")
+    if not isinstance(snapshot, dict):
+        raise ValueError(
+            "Dataset | availability_snapshot | Locked Test 必须提供可用性快照对象；"
+            "它是用户确认的合成约定，不能从 detection_time 推导"
+        )
+    snapshot_id = snapshot.get("snapshot_id")
+    if snapshot_id not in SUPPORTED_LOCKED_TEST_SNAPSHOTS:
+        raise ValueError(
+            f"Dataset | availability_snapshot.snapshot_id | 期望已登记 "
+            f"{'、'.join(SUPPORTED_LOCKED_TEST_SNAPSHOTS)} 之一，实际 {snapshot_id!r}"
+        )
+    recorded = snapshot.get("complete_available_on")
+    try:
+        complete_available_on = date.fromisoformat(recorded) if isinstance(recorded, str) else None
+    except ValueError:
+        complete_available_on = None
+    if complete_available_on is None:
+        raise ValueError(
+            "Dataset | availability_snapshot.complete_available_on | 必须是 YYYY-MM-DD 日期"
+        )
+    basis = snapshot.get("basis")
+    if not isinstance(basis, str) or not basis.strip():
+        raise ValueError(
+            "Dataset | availability_snapshot.basis | 必须写明这是人为合成快照约定，不能留空"
+        )
+    for query in queries:
+        if complete_available_on >= query.known_at:
+            raise ValueError(
+                f"时点一致性 | Query[{query.query_id}] | known_at {query.known_at.isoformat()} "
+                f"必须晚于完整可用日 {complete_available_on.isoformat()}；"
+                "快照只覆盖该日之前已结案的内容"
+            )
+    for detail in details:
+        if detail.detection_time > complete_available_on:
+            raise ValueError(
+                f"时点一致性 | CaseDetail[{detail.detail_id}] | detection_time "
+                f"{detail.detection_time.isoformat()} 晚于完整可用日 "
+                f"{complete_available_on.isoformat()}；发现日期只是必要条件"
+            )
+    return {
+        "snapshot_id": snapshot_id,
+        "complete_available_on": complete_available_on.isoformat(),
+        "basis": basis,
+    }
+
+
 def _parse_judgments(
     payload: dict, query_ids: list[str], case_ids: list[str],
 ) -> dict[str, dict[str, int]]:
@@ -202,13 +272,17 @@ def load_benchmark(qrels_path: Path, *, base_dir: Path | None = None) -> Benchma
     qrels = _read_json_object(qrels_path, "qrels")
 
     qrels_version = qrels.get("qrels_version")
-    if qrels_version not in SUPPORTED_QRELS_VERSIONS:
+    expected_split = QRELS_VERSION_SPLITS.get(qrels_version)
+    if expected_split is None:
         raise ValueError(
             f"qrels | qrels_version | 期望 {'、'.join(SUPPORTED_QRELS_VERSIONS)} 之一，"
             f"实际 {qrels_version!r}"
         )
-    if qrels.get("split") != EXPECTED_SPLIT:
-        raise ValueError(f"qrels | split | 期望 {EXPECTED_SPLIT}，实际 {qrels.get('split')!r}")
+    if qrels.get("split") != expected_split:
+        raise ValueError(
+            f"qrels | split | qrels_version {qrels_version!r} 要求 {expected_split}，"
+            f"实际 {qrels.get('split')!r}；版本与 split 必须显式配对"
+        )
     if qrels.get("review_status") != REQUIRED_REVIEW_STATUS:
         raise ValueError(
             f"qrels | review_status | 正式评估要求 {REQUIRED_REVIEW_STATUS}，"
@@ -227,8 +301,11 @@ def load_benchmark(qrels_path: Path, *, base_dir: Path | None = None) -> Benchma
     records, payload, reference = load_validated_dataset(dataset_source.path, reference_source.path)
     check_source_records(records, payload, reference)
 
-    if payload.get("split") != EXPECTED_SPLIT:
-        raise ValueError(f"Dataset | split | 期望 {EXPECTED_SPLIT}，实际 {payload.get('split')!r}")
+    if payload.get("split") != expected_split:
+        raise ValueError(
+            f"Dataset | split | qrels_version {qrels_version!r} 要求 {expected_split}，"
+            f"实际 {payload.get('split')!r}；qrels 与语料的 split 必须一致"
+        )
     review_status = payload.get("review_status")
     if not isinstance(review_status, str) or not review_status.strip():
         raise ValueError("Dataset | review_status | 必须是非空字符串")
@@ -236,6 +313,9 @@ def load_benchmark(qrels_path: Path, *, base_dir: Path | None = None) -> Benchma
     queries = _parse_queries(payload)
     case_ids = sorted(case.case_id for case in records["cases"])
     latest_detection = _check_point_in_time(queries, records["details"])
+    availability_snapshot = _check_availability_snapshot(
+        payload, expected_split, queries, records["details"],
+    )
     judgments = _parse_judgments(qrels, [query.query_id for query in queries], case_ids)
 
     return Benchmark(
@@ -253,4 +333,5 @@ def load_benchmark(qrels_path: Path, *, base_dir: Path | None = None) -> Benchma
         queries=queries,
         judgments=judgments,
         latest_detection=latest_detection,
+        availability_snapshot=availability_snapshot,
     )

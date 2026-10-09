@@ -1,7 +1,30 @@
+# Rebuildable environment and caches
 .venv/
 .env
+.env.*
+!.env.example
 __pycache__/
 *.py[cod]
 .pytest_cache/
-# Embedding 文档向量缓存：可由文本与模型配置重建，属于派生数据，不入库。
 .cache/
+.ruff_cache/
+.DS_Store
+
+# Local collaboration, teaching and development history
+/AGENTS.md
+/.agents/
+/.clinerules/
+/.vscode/
+/skills-lock.json
+/docs/project/
+/docs/learning/
+/docs/legacy/
+/tmp/
+
+# Historical answer iterations remain local; final evidence is public
+/results/pytest-full.log
+/results/m4/*
+!/results/m4/dev-v3-answer-v10/
+
+# New runs are reviewed before being added to published evidence
+/results/local/

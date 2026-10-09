@@ -415,7 +415,7 @@ def test_cli_failure_status_stays_out_of_stdout(tmp_path, monkeypatch, capsys, s
 def test_cli_same_family_skip_is_not_a_format_failure(
     tmp_path, monkeypatch, capsys, stub_model,
 ):
-    old = json.loads((PROJECT_ROOT / "results/m4/dev-v3-answer-v7/q003.json").read_text())
+    old = json.loads((PROJECT_ROOT / "tests/fixtures/answer/dev-v3-answer-v7/q003.json").read_text())
     payload = json.loads(old["answer_text"])
     payload["skipped_candidates"][1]["reason"] = "C005 为塑封空洞，当前为 BGA 缺球；同族只是背景，不要求单独采用。"
     text = json.dumps(payload, ensure_ascii=False)

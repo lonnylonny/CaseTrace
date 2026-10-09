@@ -1,6 +1,8 @@
 # 本机 PostgreSQL 环境
 
-M5 使用 Docker 中的 PostgreSQL 17，Python 仍通过项目 `uv` 在本机运行。配置见 [`compose.yaml`](../../compose.yaml)；本页只介绍环境，业务建表、导入和验收以 [M5-01](../project/tasks/m5-01-postgresql-roundtrip.md) 为准。
+M5 使用 Docker 中的 PostgreSQL 17，Python 仍通过项目 `uv` 在本机运行。配置见 [`compose.yaml`](../../compose.yaml)；本页介绍环境、业务建表、导入与核对；数据映射见[数据结构](../data/CaseTrace_Data_Structure_V2_No_Scenario.md#5-数据库实现)。
+
+M6-01 起同一个 `compose.yaml` 还提供 `api` 服务：容器路线的完整运行步骤以 [Docker 运行链路](docker.md) 为准，本页保留宿主 Python 的连接与导入说明。
 
 2026-10-05 M5-01 已验收：PostgreSQL 17.11 / arm64，Psycopg 3.3.6；开发库和测试库各保存一份 dev-v3 快照。初始化、原子导入、完整读回与核对均可运行。当前按学习展示范围使用同步连接、固定建表 SQL 和单快照，不建设通用迁移或多版本语料平台。
 
@@ -121,7 +123,7 @@ uv run --locked casetrace answer --data-source postgres \
   `schema`、`content_digest`、`digest_version` 与原始导入路径（表示来源位置，不代表本次读了文件）。
 - 旧的 v10 运行记录没有 `data_source`，按文件来源理解，不重写历史产物。
 
-`demo` 与 `evaluate` 仍只使用文件；回答核心的数据库接缝由 M5-02 提供，M5-03 的 FastAPI 复用同一个回答核心。
+`demo` 与 `evaluate` 仍只使用文件；回答核心的数据库接缝由 M5-02 提供，M5-03 的 FastAPI 复用同一个回答核心。M6-01 起同一批命令可改为在容器内执行，见 [Docker 运行链路](docker.md)。
 
 ## 下载失败后的手动恢复
 

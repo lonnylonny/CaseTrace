@@ -1,50 +1,80 @@
 # CaseTrace
 
-半导体封装历史质量 Case 的 **Retrieval + Evaluation + Grounded Answer** 系统，用可追溯的历史记录辅助调查，不自动判断当前 Incident 的最终 Root Cause。
+面向半导体封装质量调查的 **历史案例检索、评估与可追溯回答系统**，用于 AI Engineering 学习与求职展示。输入当前已知异常，返回值得查看的历史案例、相关依据、历史原因与检查/改善措施，并标明来源和信息缺口；不判断当前事故的最终根因。
 
-## 项目入口
+## 核心能力与技术栈
 
-- [Current Plan](docs/project/current-plan.md)：唯一当前计划，包含范围、里程碑、当前状态与下一交付。
-- [AGENTS.md](AGENTS.md)：协作、教学与验收规则。
-- [docs/data](docs/data/)：冻结的字段、业务规则、生成约束与数据库设计。
-- [回答 API](docs/development/api.md)：本机 FastAPI 接口的启动、请求与响应。
-- [results](results/README.md)：正式实验产物、错误分析与复现入口。
+- **检索与评估**：实现 BM25、Embedding、Hybrid（RRF）和 Rerank，在同版人工确认标签上比较 Recall、Precision、nDCG 与 MRR，保存逐 Query 排名和失败分析。最终采用 R3：BM25 + Query 侧否定小句/标签词过滤。
+- **Grounded Answer**：保留原始 Query，以历史证据生成结构化回答，校验 Case / Evidence 引用；区分成功、空命中及模型、格式、引用失败，支持下载完整运行记录。
+- **完整工程链路**：PostgreSQL 原子导入与快照核对，CLI / FastAPI 共用回答核心，单页 Web Demo，Docker Compose 启动；文件与数据库路线用固定回答回放验证一致性。
 
-## 当前能力
+技术栈：Python 3.12、uv、rank-bm25、Sentence Transformers / PyTorch、DeepSeek（OpenAI 兼容 SDK）、PostgreSQL 17 / psycopg、FastAPI / Pydantic、原生 HTML/CSS/JavaScript、Docker、pytest。
 
-已交付数据模型与确定性校验、BM25 demo、用户确认的旧口径 dev-v3 benchmark、CLI Evaluation、多方法入口、本地 Embedding，以及 Grounded Answer 链路（R3 检索 → 真实模型生成 → 引用守卫 → `casetrace answer` CLI；M1～M4 已验收，Pre-M5 审计通过）。正式进度与后续依赖以 [Current Plan](docs/project/current-plan.md#6-当前事实与下一交付)为准。
-
-## 本地开发
-
-使用 Python 3.12 与 uv，在项目根目录执行：
-
-```bash
-uv sync --locked --inexact
-uv run pytest -q
-uv run casetrace demo
-uv run casetrace demo --query "塑封空洞 molding void" --top-k 3
-uv run casetrace demo --query "BGA 锡球缺失" --json
-uv run casetrace evaluate --method bm25 --output /tmp/casetrace-bm25.json
-uv run casetrace answer --query-id Q005 --check-only   # 只检查输入与证据上下文，不调用模型
-uv run casetrace answer --data-source postgres --query-id Q005 --check-only  # 同一快照改从 PostgreSQL 读回
-uv run casetrace answer --query-id Q005                # 真实模型生成历史参考回答（需凭据）
+```text
+Web Demo → FastAPI ─┐
+CLI ───────────────┴→ 文件 / PostgreSQL 快照 → R3 检索 → 证据上下文
+                                                    → DeepSeek → 引用校验 → 回答与运行记录
+独立评估 CLI：Corpus + Query + 人工确认 qrels → 检索方法 → 排名 / 指标 / 错误分析
 ```
 
-uv 使用项目 `.venv`，无需手动激活；`--inexact` 保留另行安装的学习工具。2026-10-03 全套测试通过（571 passed、169 subtests passed）；历史归档的逐字节溯源限制仍保留，详见 [Pre-M5 审计](docs/project/tasks/pre-m5-audit.md)。
+## 快速启动 Web Demo
 
-M5 的本机数据库使用 Docker Compose，启动、连接及下载失败恢复见 [PostgreSQL 环境说明](docs/development/postgresql.md)。业务建表和导入进度以 Current Plan 为准。
-
-`demo` 使用 BM25；`evaluate` 支持 BM25、Embedding、Hybrid、Rerank 及 R3（`--method bm25_drop_negation_labels`），默认 qrels 为已确认 dev-v2。Embedding 需要准备[固定版本模型](docs/project/research/m3-02-embedding-model-selection.md)，复现命令见 [results](results/README.md)。`answer` 用 R3 检索 + DeepSeek（`deepseek-flash`，非思考模式）生成历史参考回答，凭据从环境变量或项目根 `.env`（模板见 `.env.example`，`.env` 不入库）读取，不要求 qrels。
-
-`answer` 的案例数据源在 CLI 边界选择：`--data-source file`（默认，读 `--data` / `--reference`）或 `--data-source postgres`（用 `CASETRACE_DATABASE_URL` 连接并以 `--db-schema` 指定 schema，默认 `casetrace`；`--data` / `--reference` 不参与读取）。数据库路线一次短连接读回已记录快照后关闭，复用同一套检索、证据上下文、生成与引用守卫；两条路线在固定输入下给出相同排名、上下文与来源。存储初始化与导入命令见 [PostgreSQL 环境说明](docs/development/postgresql.md)。
-
-M5-03 另提供本机 HTTP 接口（FastAPI，复用同一个回答核心，固定走 PostgreSQL）：
+前提：Docker Desktop（或 Docker Engine + Compose）已启动。在仓库根目录执行：
 
 ```bash
-uv run --locked uvicorn casetrace.api:app --host 127.0.0.1 --port 8000
+test -f .env || cp .env.example .env
+```
+
+编辑 `.env`：设置两个数据库密码，并同步各连接 URL 中的应用密码。需要生成回答时填写 `DEEPSEEK_API_KEY`；留空仍可启动、导入和检查证据上下文。模板见 [.env.example](.env.example)。
+
+```bash
+docker compose build api
+docker compose up -d --wait --wait-timeout 60 postgres
+docker compose run --rm api python -m casetrace.storage init
+docker compose run --rm api python -m casetrace.storage import
+docker compose run --rm api python -m casetrace.storage verify
+docker compose up -d --wait --wait-timeout 60 api
 curl --fail-with-body http://127.0.0.1:8000/health
 ```
 
-请求字段、响应与 HTTP 状态映射见 [回答 API](docs/development/api.md)；`/docs` 与 `/openapi.json` 有交互文档与契约。
+打开 <http://127.0.0.1:8000/>，点击“填入示例 Query”后提交。默认快照日期为 `2026-09-15`、`top_k=4`；提交会调用真实模型。交互式 API 文档在 `/docs`。`/health` 仅检查进程存活。
 
-demo 展示异常站点、历史原因与 Evidence 来源；`answer` 生成的回答是历史参考并附来源与具体缺口，软件测试通过不代表检索质量或回答忠实度达标。数据、运行实现与测试分别位于 `data/`、`src/casetrace/`、`tests/`。
+无需模型凭据的链路检查：
+
+```bash
+docker compose run --rm api casetrace answer --data-source postgres --query-id Q005 --check-only
+```
+
+日常停止用 `docker compose down`，数据库卷保留。端口修改、重复导入和故障排查见 [Docker 说明](docs/development/docker.md)；接口契约见 [API 说明](docs/development/api.md)。
+
+## 本地开发与复现
+
+前提：Python 3.12 和 uv；以下命令在源码仓库根目录运行。检索 demo、BM25 评估和 `--check-only` 不需要数据库或模型凭据。
+
+```bash
+uv sync --locked --inexact
+uv run --locked pytest -q
+uv run --locked casetrace demo --query "塑封空洞 molding void" --top-k 3
+uv run --locked casetrace answer --query-id Q005 --check-only
+uv run --locked casetrace evaluate --qrels data/evaluation/dev-v3/qrels.json \
+  --method bm25_drop_negation_labels --output /tmp/casetrace-r3-recheck.json
+uv run --locked python scripts/m3_07_final_recheck.py /tmp/casetrace-r3-recheck.json
+```
+
+`--inexact` 保留本地额外安装的学习工具。真实 PostgreSQL 集成测试需启动数据库并设置 `CASETRACE_TEST_DATABASE_URL`，否则显式跳过，配置见 [数据库说明](docs/development/postgresql.md)。
+
+`demo` 默认是六案 BM25，`evaluate` 默认 dev-v2 / BM25，回答链路固定为 dev-v3 / R3。四类方法的配置、模型准备与复现命令见 [实验入口](results/README.md)。无凭据的已保存回答回放及浏览器验证见 [Web Demo 说明](docs/development/web-demo.md#离线验收不调用模型不计费)。
+
+## 实验结果与边界
+
+| 数据集 | 规模与用途 | 结果入口 |
+|---|---|---|
+| Development dev-v3 | 9 Case × 5 Query，45 对用户确认标签（旧相关性口径）；用于调试和选型 | [四方法比较与 R3 选型](results/dev-v3-m3-07-selection.md) |
+| Locked Test v1 | 独立合成 9 Case × 5 Query，45 对用户确认标签；固定 R3 单次链路检查 | [指标、两个漏检与限制](results/locked-test-v1/README.md) |
+| Grounded Answer v10 | 五条保存的真实回答，主要字段与引用另行审阅 | [回答质量与已知措辞问题](results/dev-v3-m4-answer-evaluation.md) |
+
+R3 在旧口径 Development 上 Recall@4=0.96；Hybrid / Rerank 未体现收益，因此保留简单方案。Locked Test 单次 Recall@4=0.8833，存在两个漏检；两套数据的规模、口径与用途不同，不能直接计算提升。原始产物和失败记录均保留。
+
+数据规模小、全部为合成案例，源 Case 仍为 draft，不证明现场泛化。回答仅支持已登记的 dev-v3 快照；引用可定位不代表语义完全正确，软件测试不代替 AI 质量评估。Locked Test 的一条标签存在用户裁决与通用规则的差异，详见[数据说明](data/evaluation/locked-test-v1/README.md)。本项目按本机学习展示交付，Docker 仅实测 arm64，未实现认证或生产部署。
+
+代码与测试位于 `src/casetrace/`、`tests/`；数据定义见 [docs/data](docs/data/)，业务与评估边界见 [业务与评估约定](docs/design/behavior-contracts.md)。

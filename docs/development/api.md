@@ -2,12 +2,13 @@
 
 M5-03 提供本机学习展示用的 HTTP 接口：把当前问题交给同一套回答核心（R3 检索 → 证据上下文 → 生成 → 引用守卫），返回可复查的完整运行记录。
 
-范围与简化原则以 [Current Plan](../project/current-plan.md) 与 [M5-03 任务包](../project/tasks/m5-03-fastapi.md)为准：
+接口遵守[回答核心约定](../design/behavior-contracts.md#3-grounded-answer-核心约定)，HTTP 边界如下：
 
 - 只做 HTTP 适配，不改数据、qrels、检索、提示词或既有 CLI 行为；
 - 固定走 PostgreSQL（连接沿用 `CASETRACE_DATABASE_URL` / 项目根 `.env`），schema 由服务端工厂配置；
 - 客户端只提交问题，不提交连接、凭据、路径、schema、模型选择或数据源；
-- 不含 CRUD、连接池、缓存、异步改造、流式响应、后台任务、认证或前端页面；默认只绑定 `127.0.0.1`。
+- 不含 CRUD、连接池、缓存、异步改造、流式响应、后台任务、认证或前端构建链；默认只绑定 `127.0.0.1`；
+- M6-02 起同一应用额外托管 `GET /` 与 `/static/*` 单页（同源调用 `/answer`），见 [Web 页面使用说明](web-demo.md)；页面读取不连接数据库、不构造模型。
 
 ## 安装与准备
 
@@ -15,7 +16,7 @@ M5-03 提供本机学习展示用的 HTTP 接口：把当前问题交给同一�
 uv sync --locked --inexact
 ```
 
-数据库连接、初始化与导入见 [PostgreSQL 环境说明](postgresql.md)。回答路线要求目标 schema 已初始化并导入 dev-v3 快照：
+数据库连接、初始化与导入见 [PostgreSQL 环境说明](postgresql.md)；容器路线（`docker compose` 同时启动 PostgreSQL 与 API）见 [Docker 运行链路](docker.md)，两条路线的接口行为一致。回答路线要求目标 schema 已初始化并导入 dev-v3 快照：
 
 ```bash
 uv run --locked python -m casetrace.storage init
@@ -102,6 +103,8 @@ HTTP 与 `status` 的映射：
 
 | 位置 | 内容 |
 |---|---|
-| `src/casetrace/api.py` | `create_app`、默认 `app`、请求／响应模型与 `/health`、`/answer` |
-| `tests/api/` | 无库、无模型的 HTTP 契约与离线状态映射 |
+| `src/casetrace/api.py` | `create_app`、默认 `app`、请求／响应模型、`/health`、`/answer`，以及 M6-02 的 `GET /` 与 `/static/` 挂载 |
+| `src/casetrace/web/` | M6-02 单页与静态资源（`index.html`、`app.css`、`app.js`），见 [Web 页面使用说明](web-demo.md) |
+| `tests/api/` | 无库、无模型的 HTTP 契约、离线状态映射与页面托管契约 |
 | `tests/storage/test_api_integration.py` | 真实 PostgreSQL 五 Query 回放与读取边界 |
+| `scripts/web_demo_smoke.py` | M6-02 离线回放的本地验收入口（真实测试库 + 临时 schema，不调用模型） |

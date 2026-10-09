@@ -1,0 +1,1018 @@
+{
+  "schema_version": "evaluation-result-v2",
+  "generated_at": "2026-10-08T15:12:26+00:00",
+  "benchmark": {
+    "qrels_path": "data/evaluation/locked-test-v1/qrels.json",
+    "qrels_version": "locked-test-qrels-v1",
+    "qrels_sha256": "d6ad943390f9b7136fac60f5dc73c0d9d7c62e8623836a32d7bc2f82c9b93540",
+    "confirmed_on": "2026-10-08",
+    "split": "locked_test",
+    "dataset": {
+      "path": "data/locked-test/corpus-v1.json",
+      "sha256": "2fdc390ac65eb023acf7d9e77388321dd5479187dbd27ab11c1d5d58284def18"
+    },
+    "reference": {
+      "path": "data/reference/封装异常_failure_modes_db_structured_v5_engineering_audited-2.xlsx",
+      "sha256": "f5001bddd3dff43342a2569ceda836ddb4f5c0caca942c1c4d043d99a9131c85"
+    },
+    "dataset_review_status": "draft_pending_human_review",
+    "latest_detection": "2026-08-05",
+    "history_snapshot": "本版使用已登记的 Locked Test 合成可用性快照：九条历史 Case 及其完整调查在快照的完整可用日之前已结案并完整可用；该快照是用户确认的合成约定，不是真实结案时间，未实现通用时间过滤。",
+    "availability_snapshot": {
+      "snapshot_id": "locked-test-v1-2026-08-31",
+      "complete_available_on": "2026-08-31",
+      "basis": "人为合成快照约定：全部九条 Locked Test Case 及其完整调查被设定为在 2026-08-31 当日结束前已结案且可供查看，全部 Detail 的 detection_time 均不晚于该日。它验证的是用户确认的合成约定，不是由 detection_time 推导的真实结案时间，也不表示已实现通用结案/可用时间过滤。"
+    }
+  },
+  "retrieval": {
+    "method": "bm25_filtered_query_terms",
+    "implementation": "rank_bm25.BM25Okapi",
+    "tokenizer": "casetrace.retrieval.bm25.tokenize",
+    "parameters": {
+      "k1": 1.5,
+      "b": 0.75,
+      "epsilon": 0.25
+    },
+    "note": "M3-06 针对性实验变体：索引与历史文本与 bm25 相同，只过滤 Query 词项；不是生产检索方案，是否采纳由 M3-07 按证据决定。分数不是相关概率。",
+    "query_filter": {
+      "drop_negation_clauses": true,
+      "drop_label_terms": true,
+      "negation_markers": [
+        "排除",
+        "不",
+        "未",
+        "无",
+        "非"
+      ],
+      "label_tokens": [
+        "产品",
+        "产批",
+        "及客",
+        "客户",
+        "户批",
+        "涉及",
+        "生产"
+      ],
+      "id_pattern": "(?:prod|cus|dev)_[a-z0-9_]+"
+    },
+    "document_builder": "casetrace.demo.build_documents",
+    "corpus_size": 9,
+    "requested_top_k": 9
+  },
+  "timing": {
+    "unit": "seconds",
+    "clock": "time.perf_counter",
+    "index_build_seconds": 0.0015002500149421394,
+    "per_query": [
+      {
+        "query_id": "LQ001",
+        "seconds": 0.00036325003020465374
+      },
+      {
+        "query_id": "LQ002",
+        "seconds": 0.0001111660385504365
+      },
+      {
+        "query_id": "LQ003",
+        "seconds": 0.00019658298697322607
+      },
+      {
+        "query_id": "LQ004",
+        "seconds": 0.00010837498120963573
+      },
+      {
+        "query_id": "LQ005",
+        "seconds": 0.00016220798715949059
+      }
+    ],
+    "queries_total_seconds": 0.0009415820240974426,
+    "total_seconds": 0.013852167001459748,
+    "boundaries": [
+      "index_build：覆盖历史检索文本构建与检索器构造（建索引）；不含输入校验、逐 Query 计分与报告组装。需要编码的方法（embedding）还包含模型加载与文档编码，命中缓存时只包含缓存读取；细分见顶层 timing.method_details。",
+      "per_query：每条 Query 一次，覆盖该 Query 的检索、返回 ID 守卫与指标计算（qrels 只在此步进场）；按 Query 顺序逐条计分，不并发。",
+      "total：从本次 run_evaluation 进入计到跨 Query 汇总完成；覆盖输入校验、建索引、逐 Query 计分与汇总，不含复现字段的 git 查询与文件哈希、写文件与终端输出。"
+    ],
+    "comparison_note": "耗时与 generated_at 只描述本次运行，不参与确定性比较：比较排名、分数与指标时必须忽略这两个字段。单次读数不足以评价方法效率；同版本方法比较耗时需固定硬件、冷启动与缓存条件并重复测量。"
+  },
+  "metrics": {
+    "ks": [
+      1,
+      3,
+      4
+    ],
+    "reciprocal_rank_k": 4,
+    "summary_metric_keys": [
+      "recall@1",
+      "recall@3",
+      "recall@4",
+      "precision@1",
+      "precision@3",
+      "precision@4",
+      "ndcg@1",
+      "ndcg@3",
+      "ndcg@4",
+      "mrr@4"
+    ],
+    "definitions": {
+      "recall@k": "前 k 条中的相关 Case 数 / 该 Query 的全部正例数；返回不足 k 条用实际条目；无正例为 None。",
+      "precision@k": "前 k 条中的相关 Case 数 / k；返回不足 k 条时分母仍为 k；无正例为 0.0。",
+      "ndcg@k": "二值 gain，按原排名累加 1/log2(rank+1)；IDCG 用第 1 至 min(k, 正例数) 名；无正例为 None。",
+      "rr@4": "前 4 条中首个相关结果的 1/rank；前 4 条无命中为 0.0；无正例为 None。",
+      "mrr@4": "逐 Query rr@4 对参与 Query 的等权平均；没有参与 Query 时为 None。"
+    },
+    "no_relevant_policy": "无正例 Query 单列：Recall / nDCG / RR@4 为 None 并从各自均值中排除，Precision 的 0.0 按函数口径纳入其均值；每个指标分别记录参与的 Query 与排除原因，没有可参与 Query 时汇总为 None。",
+    "comparison_note": "各方法必须在同一 Corpus、Query、已确认 qrels 与指标口径下比较；数据或标注变化后整体重跑。"
+  },
+  "queries": [
+    {
+      "query_id": "LQ001",
+      "query_text": "LF_WB 产品 PROD_014 在 OQC 发现芯片贴装面倾斜，X-ray 剖面显示对角胶层厚度差超出规格，涉及客户 CUS_002、生产批 DEV_PL_109、客户批 DEV_CL_109；同批 leadframe 来料平整度抽检与外观复查均正常，尚未确认原因。",
+      "known_at": "2026-09-30",
+      "relevant_case_ids": [
+        "LC001",
+        "LC002",
+        "LC003"
+      ],
+      "ranked": [
+        {
+          "rank": 1,
+          "case_id": "LC001",
+          "score": 20.702845271522957,
+          "matched_terms": [
+            "leadframe",
+            "lf_wb",
+            "oqc",
+            "x-ray",
+            "倾斜",
+            "出规",
+            "剖面",
+            "厚度",
+            "发现",
+            "同批",
+            "复查",
+            "对角",
+            "层厚",
+            "差超",
+            "平整",
+            "度差",
+            "度抽",
+            "抽检",
+            "整度",
+            "料平",
+            "显示",
+            "来料",
+            "正常",
+            "片贴",
+            "现芯",
+            "胶层",
+            "芯片",
+            "装面",
+            "规格",
+            "贴装",
+            "超出",
+            "面倾"
+          ]
+        },
+        {
+          "rank": 2,
+          "case_id": "LC003",
+          "score": 10.733761197318724,
+          "matched_terms": [
+            "x-ray",
+            "倾斜",
+            "出规",
+            "剖面",
+            "厚度",
+            "发现",
+            "同批",
+            "复查",
+            "对角",
+            "层厚",
+            "度差",
+            "抽检",
+            "显示",
+            "来料",
+            "正常",
+            "片贴",
+            "胶层",
+            "芯片",
+            "装面",
+            "规格",
+            "角胶",
+            "贴装",
+            "超出",
+            "面倾"
+          ]
+        },
+        {
+          "rank": 3,
+          "case_id": "LC004",
+          "score": 6.450589538606686,
+          "matched_terms": [
+            "oqc",
+            "x-ray",
+            "倾斜",
+            "出规",
+            "剖面",
+            "发现",
+            "平整",
+            "度差",
+            "片贴",
+            "现芯",
+            "芯片",
+            "装面",
+            "规格",
+            "贴装",
+            "超出",
+            "面倾"
+          ]
+        },
+        {
+          "rank": 4,
+          "case_id": "LC005",
+          "score": 6.36278983471995,
+          "matched_terms": [
+            "leadframe",
+            "出规",
+            "复查",
+            "平整",
+            "整度",
+            "料平",
+            "来料",
+            "正常",
+            "规格",
+            "超出"
+          ]
+        },
+        {
+          "rank": 5,
+          "case_id": "LC002",
+          "score": 4.494326788358893,
+          "matched_terms": [
+            "oqc",
+            "倾斜",
+            "发现",
+            "同批",
+            "对角",
+            "显示",
+            "来料",
+            "片贴",
+            "胶层",
+            "芯片",
+            "装面",
+            "贴装",
+            "面倾"
+          ]
+        },
+        {
+          "rank": 6,
+          "case_id": "LC007",
+          "score": 2.6821612199583904,
+          "matched_terms": [
+            "oqc",
+            "x-ray",
+            "出规",
+            "发现",
+            "显示",
+            "来料",
+            "规格",
+            "超出"
+          ]
+        },
+        {
+          "rank": 7,
+          "case_id": "LC009",
+          "score": 2.3485053926852246,
+          "matched_terms": [
+            "出规",
+            "发现",
+            "复查",
+            "显示",
+            "正常",
+            "规格",
+            "超出"
+          ]
+        },
+        {
+          "rank": 8,
+          "case_id": "LC006",
+          "score": 2.0096661994979224,
+          "matched_terms": [
+            "x-ray",
+            "发现",
+            "同批",
+            "复查",
+            "显示",
+            "正常"
+          ]
+        },
+        {
+          "rank": 9,
+          "case_id": "LC008",
+          "score": 1.0689952014573176,
+          "matched_terms": [
+            "x-ray",
+            "发现",
+            "显示"
+          ]
+        }
+      ],
+      "scores": {
+        "recall@1": 0.3333333333333333,
+        "precision@1": 1.0,
+        "ndcg@1": 1.0,
+        "recall@3": 0.6666666666666666,
+        "precision@3": 0.6666666666666666,
+        "ndcg@3": 0.7653606369886217,
+        "recall@4": 0.6666666666666666,
+        "precision@4": 0.5,
+        "ndcg@4": 0.7653606369886217,
+        "rr@4": 1.0
+      }
+    },
+    {
+      "query_id": "LQ002",
+      "query_text": "客户反馈基板类产品 PROD_008 内部芯片与载体不平行，声学扫描显示单边胶层偏厚，涉及客户 CUS_003、生产批 DEV_PL_110、客户批 DEV_CL_110；已排除外观损伤，原因尚未确认。",
+      "known_at": "2026-09-30",
+      "relevant_case_ids": [
+        "LC001",
+        "LC002",
+        "LC003"
+      ],
+      "ranked": [
+        {
+          "rank": 1,
+          "case_id": "LC002",
+          "score": 11.27354313220225,
+          "matched_terms": [
+            "偏厚",
+            "单边",
+            "声学",
+            "学扫",
+            "层偏",
+            "扫描",
+            "描显",
+            "显示",
+            "胶层"
+          ]
+        },
+        {
+          "rank": 2,
+          "case_id": "LC003",
+          "score": 4.899237721426702,
+          "matched_terms": [
+            "声学",
+            "学扫",
+            "扫描",
+            "显示",
+            "胶层"
+          ]
+        },
+        {
+          "rank": 3,
+          "case_id": "LC001",
+          "score": 1.8917366054346774,
+          "matched_terms": [
+            "偏厚",
+            "显示",
+            "胶层"
+          ]
+        },
+        {
+          "rank": 4,
+          "case_id": "LC006",
+          "score": 0.4360270027427538,
+          "matched_terms": [
+            "显示"
+          ]
+        },
+        {
+          "rank": 5,
+          "case_id": "LC009",
+          "score": 0.317403368700202,
+          "matched_terms": [
+            "显示"
+          ]
+        },
+        {
+          "rank": 6,
+          "case_id": "LC008",
+          "score": 0.3140843855968015,
+          "matched_terms": [
+            "显示"
+          ]
+        },
+        {
+          "rank": 7,
+          "case_id": "LC007",
+          "score": 0.3068646240687676,
+          "matched_terms": [
+            "显示"
+          ]
+        }
+      ],
+      "scores": {
+        "recall@1": 0.3333333333333333,
+        "precision@1": 1.0,
+        "ndcg@1": 1.0,
+        "recall@3": 1.0,
+        "precision@3": 1.0,
+        "ndcg@3": 1.0,
+        "recall@4": 1.0,
+        "precision@4": 0.75,
+        "ndcg@4": 1.0,
+        "rr@4": 1.0
+      }
+    },
+    {
+      "query_id": "LQ003",
+      "query_text": "PROD_007 生产批 DEV_PL_102（客户批 DEV_CL_102，涉及客户 CUS_003）在客户端复查时发现封装整体翘曲，器件呈碗形变形、焊球共面性超出规格；已排除运输与搬运损伤，包装与外观检查未见磕碰，原因尚未确认。",
+      "known_at": "2026-09-30",
+      "relevant_case_ids": [
+        "LC002",
+        "LC003",
+        "LC004",
+        "LC005"
+      ],
+      "ranked": [
+        {
+          "rank": 1,
+          "case_id": "LC005",
+          "score": 20.66590493054209,
+          "matched_terms": [
+            "体翘",
+            "共面",
+            "出规",
+            "变形",
+            "呈碗",
+            "器件",
+            "复查",
+            "封装",
+            "形变",
+            "性超",
+            "整体",
+            "查时",
+            "焊球",
+            "球共",
+            "碗形",
+            "翘曲",
+            "装整",
+            "规格",
+            "超出",
+            "面性"
+          ]
+        },
+        {
+          "rank": 2,
+          "case_id": "LC004",
+          "score": 8.009982889878705,
+          "matched_terms": [
+            "体翘",
+            "出规",
+            "发现",
+            "封装",
+            "整体",
+            "现封",
+            "翘曲",
+            "装整",
+            "规格",
+            "超出"
+          ]
+        },
+        {
+          "rank": 3,
+          "case_id": "LC003",
+          "score": 6.6368087709517365,
+          "matched_terms": [
+            "共面",
+            "出规",
+            "发现",
+            "器件",
+            "复查",
+            "封装",
+            "整体",
+            "时发",
+            "翘曲",
+            "装整",
+            "规格",
+            "超出",
+            "面性"
+          ]
+        },
+        {
+          "rank": 4,
+          "case_id": "LC009",
+          "score": 4.451095382443908,
+          "matched_terms": [
+            "共面",
+            "出规",
+            "发现",
+            "器件",
+            "复查",
+            "户端",
+            "规格",
+            "超出",
+            "面性"
+          ]
+        },
+        {
+          "rank": 5,
+          "case_id": "LC001",
+          "score": 3.148922568672702,
+          "matched_terms": [
+            "出规",
+            "发现",
+            "变形",
+            "器件",
+            "复查",
+            "规格",
+            "超出"
+          ]
+        },
+        {
+          "rank": 6,
+          "case_id": "LC007",
+          "score": 1.8411877444126055,
+          "matched_terms": [
+            "出规",
+            "发现",
+            "器件",
+            "整体",
+            "规格",
+            "超出"
+          ]
+        },
+        {
+          "rank": 7,
+          "case_id": "LC006",
+          "score": 1.3475222475415054,
+          "matched_terms": [
+            "共面",
+            "发现",
+            "器件",
+            "复查",
+            "面性"
+          ]
+        },
+        {
+          "rank": 8,
+          "case_id": "LC008",
+          "score": 0.628168771193603,
+          "matched_terms": [
+            "发现",
+            "整体"
+          ]
+        },
+        {
+          "rank": 9,
+          "case_id": "LC002",
+          "score": 0.3037613049415349,
+          "matched_terms": [
+            "发现"
+          ]
+        }
+      ],
+      "scores": {
+        "recall@1": 0.25,
+        "precision@1": 1.0,
+        "ndcg@1": 1.0,
+        "recall@3": 0.75,
+        "precision@3": 1.0,
+        "ndcg@3": 1.0,
+        "recall@4": 0.75,
+        "precision@4": 0.75,
+        "ndcg@4": 0.8318724637288826,
+        "rr@4": 1.0
+      }
+    },
+    {
+      "query_id": "LQ004",
+      "query_text": "FC 产品 PROD_012 在 In-process 电性测试发现互连开路，X-ray 显示个别 bump 未与 substrate pad 接合，涉及客户 CUS_005、生产批 DEV_PL_111、客户批 DEV_CL_111；AOI 未发现异物污染，原因尚未确认。",
+      "known_at": "2026-09-30",
+      "relevant_case_ids": [
+        "LC006",
+        "LC007"
+      ],
+      "ranked": [
+        {
+          "rank": 1,
+          "case_id": "LC006",
+          "score": 8.221281071074058,
+          "matched_terms": [
+            "fc",
+            "in-process",
+            "互连",
+            "发现",
+            "开路",
+            "性测",
+            "测试",
+            "电性",
+            "试发",
+            "连开"
+          ]
+        },
+        {
+          "rank": 2,
+          "case_id": "LC008",
+          "score": 5.757918917337497,
+          "matched_terms": [
+            "fc",
+            "in-process",
+            "发现",
+            "开路",
+            "性测",
+            "测试",
+            "电性",
+            "试发"
+          ]
+        },
+        {
+          "rank": 3,
+          "case_id": "LC009",
+          "score": 2.6590538976742293,
+          "matched_terms": [
+            "fc",
+            "互连",
+            "发现",
+            "测试",
+            "试发"
+          ]
+        },
+        {
+          "rank": 4,
+          "case_id": "LC007",
+          "score": 2.151924102849356,
+          "matched_terms": [
+            "fc",
+            "互连",
+            "发现",
+            "开路"
+          ]
+        },
+        {
+          "rank": 5,
+          "case_id": "LC003",
+          "score": 1.1471607523792198,
+          "matched_terms": [
+            "in-process",
+            "发现"
+          ]
+        },
+        {
+          "rank": 6,
+          "case_id": "LC001",
+          "score": 0.4757249199646524,
+          "matched_terms": [
+            "发现"
+          ]
+        },
+        {
+          "rank": 7,
+          "case_id": "LC004",
+          "score": 0.4297880048454035,
+          "matched_terms": [
+            "发现"
+          ]
+        },
+        {
+          "rank": 8,
+          "case_id": "LC002",
+          "score": 0.3037613049415349,
+          "matched_terms": [
+            "发现"
+          ]
+        }
+      ],
+      "scores": {
+        "recall@1": 0.5,
+        "precision@1": 1.0,
+        "ndcg@1": 1.0,
+        "recall@3": 0.5,
+        "precision@3": 0.3333333333333333,
+        "ndcg@3": 0.6131471927654584,
+        "recall@4": 1.0,
+        "precision@4": 0.5,
+        "ndcg@4": 0.8772153153380493,
+        "rr@4": 1.0
+      }
+    },
+    {
+      "query_id": "LQ005",
+      "query_text": "FC 产品 PROD_017 在功能测试发现互连短路，显微复查显示相邻 bump 焊料搭接，涉及客户 CUS_004、生产批 DEV_PL_112、客户批 DEV_CL_112；原因尚未确认。",
+      "known_at": "2026-09-30",
+      "relevant_case_ids": [
+        "LC008",
+        "LC009"
+      ],
+      "ranked": [
+        {
+          "rank": 1,
+          "case_id": "LC009",
+          "score": 26.565783588161928,
+          "matched_terms": [
+            "bump",
+            "fc",
+            "互连",
+            "功能",
+            "发现",
+            "复查",
+            "微复",
+            "搭接",
+            "料搭",
+            "显微",
+            "显示",
+            "查显",
+            "测试",
+            "焊料",
+            "相邻",
+            "短路",
+            "能测",
+            "试发",
+            "连短"
+          ]
+        },
+        {
+          "rank": 2,
+          "case_id": "LC008",
+          "score": 5.6624246519183,
+          "matched_terms": [
+            "bump",
+            "fc",
+            "发现",
+            "显示",
+            "测试",
+            "焊料",
+            "相邻",
+            "试发"
+          ]
+        },
+        {
+          "rank": 3,
+          "case_id": "LC006",
+          "score": 4.333188763905941,
+          "matched_terms": [
+            "bump",
+            "fc",
+            "互连",
+            "发现",
+            "复查",
+            "显示",
+            "测试",
+            "焊料",
+            "试发"
+          ]
+        },
+        {
+          "rank": 4,
+          "case_id": "LC007",
+          "score": 1.9904270719378823,
+          "matched_terms": [
+            "bump",
+            "fc",
+            "互连",
+            "发现",
+            "显示"
+          ]
+        },
+        {
+          "rank": 5,
+          "case_id": "LC001",
+          "score": 1.1572899034356878,
+          "matched_terms": [
+            "发现",
+            "复查",
+            "显示"
+          ]
+        },
+        {
+          "rank": 6,
+          "case_id": "LC003",
+          "score": 0.8656771927914605,
+          "matched_terms": [
+            "发现",
+            "复查",
+            "显示"
+          ]
+        },
+        {
+          "rank": 7,
+          "case_id": "LC002",
+          "score": 0.6075226098830698,
+          "matched_terms": [
+            "发现",
+            "显示"
+          ]
+        },
+        {
+          "rank": 8,
+          "case_id": "LC004",
+          "score": 0.4297880048454035,
+          "matched_terms": [
+            "发现"
+          ]
+        },
+        {
+          "rank": 9,
+          "case_id": "LC005",
+          "score": 0.29554206589076176,
+          "matched_terms": [
+            "复查"
+          ]
+        }
+      ],
+      "scores": {
+        "recall@1": 0.5,
+        "precision@1": 1.0,
+        "ndcg@1": 1.0,
+        "recall@3": 1.0,
+        "precision@3": 0.6666666666666666,
+        "ndcg@3": 1.0,
+        "recall@4": 1.0,
+        "precision@4": 0.5,
+        "ndcg@4": 1.0,
+        "rr@4": 1.0
+      }
+    }
+  ],
+  "summary": {
+    "query_count": 5,
+    "no_relevant_query_ids": [],
+    "metrics": {
+      "recall@1": {
+        "value": 0.3833333333333333,
+        "included_query_ids": [
+          "LQ001",
+          "LQ002",
+          "LQ003",
+          "LQ004",
+          "LQ005"
+        ],
+        "excluded": []
+      },
+      "recall@3": {
+        "value": 0.7833333333333333,
+        "included_query_ids": [
+          "LQ001",
+          "LQ002",
+          "LQ003",
+          "LQ004",
+          "LQ005"
+        ],
+        "excluded": []
+      },
+      "recall@4": {
+        "value": 0.8833333333333334,
+        "included_query_ids": [
+          "LQ001",
+          "LQ002",
+          "LQ003",
+          "LQ004",
+          "LQ005"
+        ],
+        "excluded": []
+      },
+      "precision@1": {
+        "value": 1.0,
+        "included_query_ids": [
+          "LQ001",
+          "LQ002",
+          "LQ003",
+          "LQ004",
+          "LQ005"
+        ],
+        "excluded": []
+      },
+      "precision@3": {
+        "value": 0.7333333333333333,
+        "included_query_ids": [
+          "LQ001",
+          "LQ002",
+          "LQ003",
+          "LQ004",
+          "LQ005"
+        ],
+        "excluded": []
+      },
+      "precision@4": {
+        "value": 0.6,
+        "included_query_ids": [
+          "LQ001",
+          "LQ002",
+          "LQ003",
+          "LQ004",
+          "LQ005"
+        ],
+        "excluded": []
+      },
+      "ndcg@1": {
+        "value": 1.0,
+        "included_query_ids": [
+          "LQ001",
+          "LQ002",
+          "LQ003",
+          "LQ004",
+          "LQ005"
+        ],
+        "excluded": []
+      },
+      "ndcg@3": {
+        "value": 0.8757015659508159,
+        "included_query_ids": [
+          "LQ001",
+          "LQ002",
+          "LQ003",
+          "LQ004",
+          "LQ005"
+        ],
+        "excluded": []
+      },
+      "ndcg@4": {
+        "value": 0.8948896832111106,
+        "included_query_ids": [
+          "LQ001",
+          "LQ002",
+          "LQ003",
+          "LQ004",
+          "LQ005"
+        ],
+        "excluded": []
+      },
+      "mrr@4": {
+        "value": 1.0,
+        "included_query_ids": [
+          "LQ001",
+          "LQ002",
+          "LQ003",
+          "LQ004",
+          "LQ005"
+        ],
+        "excluded": []
+      }
+    }
+  },
+  "reproducibility": {
+    "python": "3.12.14",
+    "packages": {
+      "casetrace": "0.1.0",
+      "rank-bm25": "0.2.2",
+      "openpyxl": "3.1.5",
+      "numpy": "2.5.3",
+      "sentence-transformers": "6.1.0",
+      "transformers": "5.17.0",
+      "torch": "2.14.0"
+    },
+    "git_head": "099615ef8ada0ebc736300e35ca914e296c047b0",
+    "git_dirty": true,
+    "git_status_paths": [
+      ".dockerignore",
+      ".env.example",
+      "Dockerfile",
+      "README.md",
+      "compose.yaml",
+      "data/evaluation/locked-test-v1/",
+      "data/locked-test/",
+      "docs/development/api.md",
+      "docs/development/docker.md",
+      "docs/development/postgresql.md",
+      "docs/development/web-demo.md",
+      "docs/project/current-plan.md",
+      "docs/project/tasks/m6-01-docker-runtime.md",
+      "docs/project/tasks/m6-02-web-demo.md",
+      "docs/project/tasks/m6-03-locked-test-freeze.md",
+      "results/locked-test-v1/",
+      "scripts/",
+      "src/casetrace/api.py",
+      "src/casetrace/evaluation/benchmark.py",
+      "src/casetrace/evaluation/runner.py",
+      "src/casetrace/web/",
+      "tests/api/test_web.py",
+      "tests/conftest.py",
+      "tests/evaluation/test_benchmark.py",
+      "tests/evaluation/test_locked_test_benchmark.py",
+      "tests/test_cli_evaluate.py"
+    ],
+    "source_files": {
+      "src/casetrace/__init__.py": "412a3eb13b885013942b2c89ece5a3c0dd56783ddf7dce8944750ae68dd07330",
+      "src/casetrace/data/constants.py": "6ceca4b9cd2716b6f960a2022b4bb30de82a6ab9e1de45209d4e6010d1e358fd",
+      "src/casetrace/data/dataset_model.py": "bace7dba979338725d6bd9e1e58068e5bcc7d37eddc34e8b3fa77e80711f138e",
+      "src/casetrace/data/reference.py": "54c0fdcba6fc231d8f86d0857f1d1374b7c1199946b1abd3be5e07322336b812",
+      "src/casetrace/data/validators.py": "073297b5957f87b50f490b1abad007bfdc5e6acd823b524980334d01150210cb",
+      "src/casetrace/evaluation/runner.py": "8f508836fd86c9a635a1ba9b9bddbef1bbdaa82bd6202e0d47431f4cc0e6de50",
+      "src/casetrace/evaluation/benchmark.py": "7cf68cf61048f68d65b97bb207f8649a0919cc1420121854f3c49ee3a215142f",
+      "src/casetrace/evaluation/metrics.py": "47e55310fc9ebf9b4afd406295f6833b2c5cfe7db9ca3e5dbb414464e080d191",
+      "src/casetrace/demo.py": "e4752c1bdf4d20929c1e20e496aa64fd5655094a4c6abdd90e9c3b005f6b8f1b",
+      "src/casetrace/retrieval/base.py": "131dacc428ed7fd0c553a75b9125c1e08c08880a8cc3571fda0625cc957ba4dc",
+      "src/casetrace/retrieval/bm25.py": "d6f1a9d556463a55ec1d8b9989efc1b417ded7aa94714603f57db50931afb3eb",
+      "src/casetrace/retrieval/embedding.py": "18ff108f79bac07f52ead3870cb24bf3f17c1e4c3582d26e5292a86078057e48",
+      "src/casetrace/retrieval/hybrid.py": "34bf2ccdc97e69178ac35ee906c479d0fa86ff4b1eb1774ae68e0cf0deed59a6",
+      "src/casetrace/retrieval/query_filter.py": "f21f22ac83f012d1f564000f154a3421894bd42525f85428f03997b51cd1c47a",
+      "src/casetrace/retrieval/rerank.py": "d686fe0f87576456ea8d2dc6287683b9095cf21ea2b3ceee8b6f29a24b74f4ac",
+      "pyproject.toml": "f4419de973d491eacdb1a7af273a49cc014948c0fa7dd8807bf803dca18ecb49",
+      "uv.lock": "9c0e9c19bef778f748490e43d57eb51268ea68c407d4196181a7e02007952b52"
+    },
+    "notes": [
+      "工作区未提交：仅 HEAD 不足以复现，source_files 与 uv.lock 的 SHA-256 是本次实际使用的代码与依赖记录。",
+      "generated_at 只说明记录生成时间，不能作为排名或分数是否可重复的比较字段。"
+    ]
+  }
+}

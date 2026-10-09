@@ -1,6 +1,6 @@
 # Validator — Data Foundation v1 覆盖说明
 
-Data Foundation v1 已完成并冻结，现有异常站点检查已接入。冻结及修复边界见 [Current Plan](../project/current-plan.md#3-data-foundation-v1-冻结)。本文件记录覆盖限制，不新增规则或补齐待办；业务权威来源为[结构](CaseTrace_Data_Structure_V2_No_Scenario.md)、[CR](CaseTrace_Case_Constraint_Rules_Frozen.md)、[GR](CaseTrace_Case_Generation_Rules_V1.md)。
+Data Foundation v1 已完成并冻结，现有异常站点检查已接入。冻结及修复边界见 [业务与评估约定](../design/behavior-contracts.md#1-data-foundation-v1-冻结)。本文件记录覆盖限制，不新增规则或补齐待办；业务权威来源为[结构](CaseTrace_Data_Structure_V2_No_Scenario.md)、[CR](CaseTrace_Case_Constraint_Rules_Frozen.md)、[GR](CaseTrace_Case_Generation_Rules_V1.md)。
 
 ## 当前职责与调用边界
 

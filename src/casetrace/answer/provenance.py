@@ -14,7 +14,7 @@ def implementation_identity() -> dict:
     root = Path(__file__).resolve().parents[3]
     source = root / "src/casetrace"
     paths = [*source.rglob("*.py"), *source.rglob("prompts/*.md"),
-             root / "pyproject.toml", root / "uv.lock", root / "tmp/m4_04_run_all.py"]
+             root / "pyproject.toml", root / "uv.lock", root / "scripts/m4_04_run_all.py"]
     hashes = {str(path.relative_to(root)): sha256(path.read_bytes()).hexdigest()
               for path in sorted(paths) if path.is_file()}
     return {"files_sha256": hashes, "python_version": platform.python_version(),

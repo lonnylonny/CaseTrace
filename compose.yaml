@@ -1,4 +1,5 @@
-# PostgreSQL only; Python runs on the host with uv during M5.
+# CaseTrace 本机运行环境：PostgreSQL（M5 起）与 Answer API（M6-01 起）。
+# 宿主 Python（uv）开发路线继续可用；容器路线的权威说明见 docs/development/docker.md。
 name: casetrace-dev
 
 services:
@@ -23,6 +24,29 @@ services:
       retries: 12
       start_period: 10s
     shm_size: 128mb
+
+  api:
+    build:
+      context: .
+    image: casetrace-api:dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # 容器内用 Compose 服务名连同一网络的数据库；宿主 CLI 仍用 127.0.0.1 地址。
+      CASETRACE_DATABASE_URL: ${CASETRACE_CONTAINER_DATABASE_URL:?Set the container database URL in .env}
+      # 模型凭据只在核心确需生成时使用；缺省为空也能构建、启动、导入与 check-only。
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+    ports:
+      - "127.0.0.1:${CASETRACE_API_PORT:-8000}:8000"
+    healthcheck:
+      # 只证明 HTTP 进程能响应；数据库与模型可用性由导入、verify 和有效请求证明。
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
 
 volumes:
   postgres_data:

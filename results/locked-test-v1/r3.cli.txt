@@ -1,0 +1,26 @@
+评估输入：data/evaluation/locked-test-v1/qrels.json（locked-test-qrels-v1 / locked_test / 确认日 2026-10-08）
+检索方法：bm25_filtered_query_terms；语料 9 条；结果已写入 results/locked-test-v1/r3.json
+
+LQ001  正例：LC001、LC002、LC003
+  完整排名：LC001 > LC003 > LC004 > LC005 > LC002 > LC007 > LC009 > LC006 > LC008
+LQ002  正例：LC001、LC002、LC003
+  完整排名：LC002 > LC003 > LC001 > LC006 > LC009 > LC008 > LC007
+LQ003  正例：LC002、LC003、LC004、LC005
+  完整排名：LC005 > LC004 > LC003 > LC009 > LC001 > LC007 > LC006 > LC008 > LC002
+LQ004  正例：LC006、LC007
+  完整排名：LC006 > LC008 > LC009 > LC007 > LC003 > LC001 > LC004 > LC002
+LQ005  正例：LC008、LC009
+  完整排名：LC009 > LC008 > LC006 > LC007 > LC001 > LC003 > LC002 > LC004 > LC005
+
+recall@1     0.3833  参与 5 条
+recall@3     0.7833  参与 5 条
+recall@4     0.8833  参与 5 条
+precision@1  1.0000  参与 5 条
+precision@3  0.7333  参与 5 条
+precision@4  0.6000  参与 5 条
+ndcg@1       1.0000  参与 5 条
+ndcg@3       0.8757  参与 5 条
+ndcg@4       0.8949  参与 5 条
+mrr@4        1.0000  参与 5 条
+
+结果 schema：evaluation-result-v2；git 状态：脏工作区；检索分数不是相关概率，读数不代表已确认的质量结论。

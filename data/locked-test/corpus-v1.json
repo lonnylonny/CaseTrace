@@ -1,0 +1,623 @@
+{
+  "split": "locked_test",
+  "review_status": "draft_pending_human_review",
+  "cases": [
+    {
+      "case_id": "LC001",
+      "abnormal_description": "OQC X-ray 与剖面检查发现芯片贴装面倾斜，芯片对角位置胶层厚度差超出规格，器件内部芯片一端高于另一端，表现为 die tilt；异常位于 Die Attach 形成的贴装界面。",
+      "root_cause": "结案确认：Die Attach 胶量或胶厚不均，导致芯片贴装面倾斜。",
+      "corrective_action": "控制胶量、胶厚和adhesive状态，并优化贴装位置与压力。",
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P003"
+      ]
+    },
+    {
+      "case_id": "LC002",
+      "abnormal_description": "OQC 声学扫描显示芯片贴装面与载体基准面不平行，一侧胶层偏薄、对角偏厚，扫描影像呈单边倾斜的 die tilt 特征；异常位于 Die Attach 贴装界面。",
+      "root_cause": "结案确认：Die Attach位置/压力参数异常，使芯片贴装面倾斜。",
+      "corrective_action": "优化贴装位置与压力，并稳定 Die Attach 过程。",
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P003"
+      ]
+    },
+    {
+      "case_id": "LC003",
+      "abnormal_description": "In-process 声学扫描同时发现两类几何异常：芯片贴装面明显倾斜，表现为 die tilt；同一器件的封装整体呈弓形翘曲，边缘与中心存在高度差，表现为 package warpage；两者分别位于 Die Attach 贴装界面与塑封后的封装本体。",
+      "root_cause": "结案确认：Die Attach 胶量或胶厚不均造成 die tilt，塑封 Molding收缩与残余应力叠加造成 package warpage。",
+      "corrective_action": "控制胶量、胶厚和adhesive状态，并优化Molding/PMC。",
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P003",
+        "P007"
+      ]
+    },
+    {
+      "case_id": "LC004",
+      "abnormal_description": "OQC 平面度测量发现封装整体呈弓形翘曲，四角与中心高度差异超出规格，塑封体表面不平整，表现为 package warpage；异常位于塑封后的封装本体。",
+      "root_cause": "结案确认：Molding收缩与残余应力导致封装整体翘曲。",
+      "corrective_action": "优化Molding/PMC，并匹配材料CTE。",
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P007"
+      ]
+    },
+    {
+      "case_id": "LC005",
+      "abnormal_description": "客户来料复查时测出封装整体翘曲，器件在常温下呈碗形变形，焊球共面性超出规格，表现为 package warpage；异常与载体来料的几何状态相关。",
+      "root_cause": "结案确认：leadframe/substrate来料翘曲导致封装整体翘曲。",
+      "corrective_action": "控制载体来料平整度，并稳定 Die Attach 过程。",
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P014"
+      ]
+    },
+    {
+      "case_id": "LC006",
+      "abnormal_description": "In-process 电性测试发现部分 FC 器件互连开路，X-ray 显示个别 bump 与 substrate pad 之间未形成有效接合，表现为 bump open；异常位于 Flip Chip Attach 接合界面。",
+      "root_cause": "结案确认：flux/焊料量不足，造成 bump 与 pad 未有效接合。",
+      "corrective_action": "优化FC placement、flux和reflow，并保证接合共面性。",
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P005"
+      ]
+    },
+    {
+      "case_id": "LC007",
+      "abnormal_description": "OQC X-ray 检查发现 FC 器件存在 bump 未接合的开路现象，未接合位置集中在 bump 高度偏低的区域，表现为 bump open；异常位于 Flip Chip Attach 形成的互连界面。",
+      "root_cause": "结案确认：wafer来料bump高度/体积不一致或bump过低，造成接合开路。",
+      "corrective_action": "控制wafer bump一致性，并优化FC placement、flux和reflow。",
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P015"
+      ]
+    },
+    {
+      "case_id": "LC008",
+      "abnormal_description": "In-process 电性测试发现相邻 bump 之间出现桥连接通，X-ray 显示局部焊料外溢并连成整体，表现为 bump short；异常位于 Flip Chip Attach 接合界面。",
+      "root_cause": "结案确认：焊料量过多或reflow塌陷过度，造成相邻 bump 桥连。",
+      "corrective_action": "控制焊料量，并优化FC placement和reflow。",
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P005"
+      ]
+    },
+    {
+      "case_id": "LC009",
+      "abnormal_description": "客户端功能测试发现 FC 器件互连短路，显微复查显示个别 bump 位置偏移后与相邻 bump 焊料搭接，表现为 bump short；异常位于 Flip Chip Attach 接合界面。",
+      "root_cause": "结案确认：FC placement偏移，造成 bump 与相邻 bump 焊料搭接。",
+      "corrective_action": "优化FC placement和reflow，并保证接合共面性。",
+      "investigation_others": null,
+      "abnormal_processes": [
+        "P005"
+      ]
+    }
+  ],
+  "details": [
+    {
+      "detail_id": "LD001",
+      "case_id": "LC001",
+      "product_id": "PROD_014",
+      "customer_lot": "DEV_CL_101",
+      "production_lot": "DEV_PL_101",
+      "production_time": "2026-06-05",
+      "detection_stage": "OQC",
+      "detection_time": "2026-06-12",
+      "abnormal_types": [
+        "00004"
+      ],
+      "affected_qty": 320,
+      "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+    },
+    {
+      "detail_id": "LD002",
+      "case_id": "LC002",
+      "product_id": "PROD_007",
+      "customer_lot": "DEV_CL_102",
+      "production_lot": "DEV_PL_102",
+      "production_time": "2026-06-10",
+      "detection_stage": "OQC",
+      "detection_time": "2026-06-14",
+      "abnormal_types": [
+        "00004"
+      ],
+      "affected_qty": 420,
+      "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+    },
+    {
+      "detail_id": "LD003",
+      "case_id": "LC003",
+      "product_id": "PROD_008",
+      "customer_lot": "DEV_CL_103",
+      "production_lot": "DEV_PL_103",
+      "production_time": "2026-06-18",
+      "detection_stage": "In-process",
+      "detection_time": "2026-06-25",
+      "abnormal_types": [
+        "00004",
+        "00022"
+      ],
+      "affected_qty": 540,
+      "disposition": "本事件纳入处置范围的产品全部隔离，经复查后报废。"
+    },
+    {
+      "detail_id": "LD004",
+      "case_id": "LC004",
+      "product_id": "PROD_008",
+      "customer_lot": "DEV_CL_104",
+      "production_lot": "DEV_PL_104",
+      "production_time": "2026-07-01",
+      "detection_stage": "OQC",
+      "detection_time": "2026-07-08",
+      "abnormal_types": [
+        "00022"
+      ],
+      "affected_qty": 260,
+      "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+    },
+    {
+      "detail_id": "LD005",
+      "case_id": "LC005",
+      "product_id": "PROD_007",
+      "customer_lot": "DEV_CL_102",
+      "production_lot": "DEV_PL_102",
+      "production_time": "2026-06-10",
+      "detection_stage": "Customer",
+      "detection_time": "2026-06-20",
+      "abnormal_types": [
+        "00022"
+      ],
+      "affected_qty": 180,
+      "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+    },
+    {
+      "detail_id": "LD006",
+      "case_id": "LC006",
+      "product_id": "PROD_012",
+      "customer_lot": "DEV_CL_105",
+      "production_lot": "DEV_PL_105",
+      "production_time": "2026-06-22",
+      "detection_stage": "In-process",
+      "detection_time": "2026-06-30",
+      "abnormal_types": [
+        "00030"
+      ],
+      "affected_qty": 700,
+      "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+    },
+    {
+      "detail_id": "LD007",
+      "case_id": "LC007",
+      "product_id": "PROD_016",
+      "customer_lot": "DEV_CL_106",
+      "production_lot": "DEV_PL_106",
+      "production_time": "2026-07-05",
+      "detection_stage": "OQC",
+      "detection_time": "2026-07-15",
+      "abnormal_types": [
+        "00030"
+      ],
+      "affected_qty": 450,
+      "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+    },
+    {
+      "detail_id": "LD008",
+      "case_id": "LC008",
+      "product_id": "PROD_017",
+      "customer_lot": "DEV_CL_107",
+      "production_lot": "DEV_PL_107",
+      "production_time": "2026-07-12",
+      "detection_stage": "In-process",
+      "detection_time": "2026-07-24",
+      "abnormal_types": [
+        "00031"
+      ],
+      "affected_qty": 380,
+      "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+    },
+    {
+      "detail_id": "LD009",
+      "case_id": "LC009",
+      "product_id": "PROD_010",
+      "customer_lot": "DEV_CL_108",
+      "production_lot": "DEV_PL_108",
+      "production_time": "2026-07-20",
+      "detection_stage": "Customer",
+      "detection_time": "2026-08-05",
+      "abnormal_types": [
+        "00031"
+      ],
+      "affected_qty": 220,
+      "disposition": "本事件纳入处置范围的产品全部隔离并报废。"
+    }
+  ],
+  "evidences": [
+    {
+      "checkpoint_id": "LE101",
+      "case_id": "LC001",
+      "checkpoint_type": "Production",
+      "custom_name": null,
+      "result": "Die Attach 设备 EQ_DA_02 记录显示异常批点胶量在异常时段内波动超出控制范围，贴装压力参数与标准值偏离；上芯台与吸嘴复查未发现异物。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE102",
+      "case_id": "LC001",
+      "checkpoint_type": "QC",
+      "custom_name": null,
+      "result": "X-ray 剖面复查确认倾斜方向与点胶偏厚一侧一致；同批 leadframe 来料平整度抽检正常，未发现载体变形。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE103",
+      "case_id": "LC002",
+      "checkpoint_type": "Production",
+      "custom_name": null,
+      "result": "Die Attach 设备 EQ_DA_02 的贴装位置与压力记录在异常时段偏离控制范围，位置偏移方向与倾斜方向一致。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE104",
+      "case_id": "LC002",
+      "checkpoint_type": "Material",
+      "custom_name": null,
+      "result": "同批 die attach adhesive MAT_007 的来料粘度与到货检验记录一致，未发现 adhesive 状态异常。",
+      "relevance": "not_related"
+    },
+    {
+      "checkpoint_id": "LE105",
+      "case_id": "LC003",
+      "checkpoint_type": "QC",
+      "custom_name": null,
+      "result": "声学扫描与 X-ray 剖面确认芯片贴装面倾斜及对角胶层厚度差，同时测出封装整体弓形翘曲量超出规格。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE106",
+      "case_id": "LC003",
+      "checkpoint_type": "Production",
+      "custom_name": null,
+      "result": "塑封设备 EQ_MOLD_03 与后固化记录显示模温与后固化曲线在异常时段偏离设定，收缩条件与翘曲量测结果对应。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE107",
+      "case_id": "LC003",
+      "checkpoint_type": "QC",
+      "custom_name": null,
+      "result": "同批 substrate MAT_003 来料共面性抽检正常，未发现载体来料翘曲，排除来料翘曲作为本次翘曲主因。",
+      "relevance": "not_related"
+    },
+    {
+      "checkpoint_id": "LE108",
+      "case_id": "LC004",
+      "checkpoint_type": "Production",
+      "custom_name": null,
+      "result": "塑封设备 EQ_MOLD_04 的模温与保压记录在异常时段超出控制范围，调整后对照批翘曲量回到规格内。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE109",
+      "case_id": "LC004",
+      "checkpoint_type": "QC",
+      "custom_name": null,
+      "result": "平面度测量复现弓形翘曲；X-ray 剖面未发现芯片贴装面倾斜，排除局部 die tilt 作为主因。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE110",
+      "case_id": "LC005",
+      "checkpoint_type": "Material",
+      "custom_name": null,
+      "result": "该批 substrate MAT_004 的来料共面性复测超出规格，翘曲方向与成品翘曲一致，来料批号与供货记录可追溯。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE111",
+      "case_id": "LC005",
+      "checkpoint_type": "QC",
+      "custom_name": null,
+      "result": "塑封设备与后固化记录正常，模温与固化曲线均在设定范围内，排除塑封条件作为本次翘曲主因。",
+      "relevance": "not_related"
+    },
+    {
+      "checkpoint_id": "LE112",
+      "case_id": "LC006",
+      "checkpoint_type": "Production",
+      "custom_name": null,
+      "result": "Flip Chip Attach 设备 EQ_FCA_01 的 flux 喷涂量与 reflow 温度曲线记录显示异常批用量偏低、峰值温度不足。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE113",
+      "case_id": "LC006",
+      "checkpoint_type": "QC",
+      "custom_name": null,
+      "result": "X-ray 复查确认未接合 bump 的位置与 flux 覆盖不足的区域一致，同批其它区域接合正常。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE114",
+      "case_id": "LC007",
+      "checkpoint_type": "Material",
+      "custom_name": null,
+      "result": "该片 wafer 来料 bump 高度数据分布偏低，超出规格下限的 bump 与未接合位置一致；wafer 批号与来料记录可追溯。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE115",
+      "case_id": "LC007",
+      "checkpoint_type": "AOI",
+      "custom_name": null,
+      "result": "AOI 记录显示该批 bump 高度分布整体偏低，与来料 wafer 测量方向一致。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE116",
+      "case_id": "LC008",
+      "checkpoint_type": "Production",
+      "custom_name": null,
+      "result": "Flip Chip Attach 设备 EQ_FCA_04 的 reflow 峰值温度与焊料量记录在异常时段偏高，桥连位置集中在同一区域。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE117",
+      "case_id": "LC008",
+      "checkpoint_type": "QC",
+      "custom_name": null,
+      "result": "X-ray 切片确认相邻 bump 之间焊料连通，接合界面完整，排除开路类异常。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE118",
+      "case_id": "LC009",
+      "checkpoint_type": "Production",
+      "custom_name": null,
+      "result": "Flip Chip Attach 设备 EQ_FCA_04 的 placement 偏移记录超出规格，偏移方向与搭接位置一致。",
+      "relevance": "related"
+    },
+    {
+      "checkpoint_id": "LE119",
+      "case_id": "LC009",
+      "checkpoint_type": "QC",
+      "custom_name": null,
+      "result": "显微复查确认 bump 桥连方向与 placement 偏移方向一致，同一器件其它 bump 间距正常。",
+      "relevance": "related"
+    }
+  ],
+  "groups": [],
+  "memberships": [],
+  "sources": {
+    "LC001": {
+      "sheet": "failure_modes",
+      "failure_mode_id": "00004",
+      "root_cause": "胶量或胶厚不均",
+      "corrective_action": "控制胶量、胶厚和adhesive状态",
+      "closure_status": "confirmed",
+      "review_status": "draft_pending_human_review",
+      "generation_note": {
+        "date": "2026-10-08",
+        "family": "geometry-tilt-warpage",
+        "synonym_of": null,
+        "coverage": "局部 die tilt 的基准案例；同类异常的措辞父项",
+        "isolated_from_development": true
+      }
+    },
+    "LC002": {
+      "sheet": "failure_modes",
+      "failure_mode_id": "00004",
+      "root_cause": "Die Attach位置/压力参数异常",
+      "corrective_action": "优化贴装位置与压力",
+      "closure_status": "confirmed",
+      "review_status": "draft_pending_human_review",
+      "generation_note": {
+        "date": "2026-10-08",
+        "family": "geometry-tilt-warpage",
+        "synonym_of": "LC001",
+        "coverage": "相同异常的不同表达（基板路线、声学扫描措辞）",
+        "isolated_from_development": true
+      }
+    },
+    "LC003": {
+      "sheet": "failure_modes",
+      "failure_mode_id": "00004",
+      "root_cause": "胶量或胶厚不均",
+      "corrective_action": "控制胶量、胶厚和adhesive状态",
+      "closure_status": "confirmed",
+      "review_status": "draft_pending_human_review",
+      "generation_note": {
+        "date": "2026-10-08",
+        "family": "geometry-tilt-warpage",
+        "synonym_of": null,
+        "coverage": "双异常：die tilt 与 package warpage 各有独立依据",
+        "isolated_from_development": true,
+        "additional_failure_modes": [
+          {
+            "failure_mode_id": "00022",
+            "root_cause": "Molding收缩与残余应力",
+            "corrective_action": "优化Molding/PMC"
+          }
+        ]
+      }
+    },
+    "LC004": {
+      "sheet": "failure_modes",
+      "failure_mode_id": "00022",
+      "root_cause": "Molding收缩与残余应力",
+      "corrective_action": "优化Molding/PMC",
+      "closure_status": "confirmed",
+      "review_status": "draft_pending_human_review",
+      "generation_note": {
+        "date": "2026-10-08",
+        "family": "geometry-tilt-warpage",
+        "synonym_of": null,
+        "coverage": "封装整体翘曲的塑封路线依据；与局部 die tilt 区分",
+        "isolated_from_development": true
+      }
+    },
+    "LC005": {
+      "sheet": "failure_modes",
+      "failure_mode_id": "00022",
+      "root_cause": "leadframe/substrate来料翘曲",
+      "corrective_action": "控制载体来料平整度",
+      "closure_status": "confirmed",
+      "review_status": "draft_pending_human_review",
+      "generation_note": {
+        "date": "2026-10-08",
+        "family": "geometry-tilt-warpage",
+        "synonym_of": null,
+        "coverage": "整体翘曲的来料载体依据；与同批 die tilt 案例共用生产批但异常不同",
+        "isolated_from_development": true
+      }
+    },
+    "LC006": {
+      "sheet": "failure_modes",
+      "failure_mode_id": "00030",
+      "root_cause": "flux/焊料量不足",
+      "corrective_action": "优化FC placement、flux和reflow",
+      "closure_status": "confirmed",
+      "review_status": "draft_pending_human_review",
+      "generation_note": {
+        "date": "2026-10-08",
+        "family": "fc-bump-open-short",
+        "synonym_of": null,
+        "coverage": "FC 互连开路（助焊剂/焊料量）；与 bump short 形成易混淆对照",
+        "isolated_from_development": true
+      }
+    },
+    "LC007": {
+      "sheet": "failure_modes",
+      "failure_mode_id": "00030",
+      "root_cause": "wafer来料bump高度/体积不一致或bump过低",
+      "corrective_action": "控制wafer bump一致性",
+      "closure_status": "confirmed",
+      "review_status": "draft_pending_human_review",
+      "generation_note": {
+        "date": "2026-10-08",
+        "family": "fc-bump-open-short",
+        "synonym_of": null,
+        "coverage": "FC 开路的 wafer 来料依据（跨工序，P015）",
+        "isolated_from_development": true
+      }
+    },
+    "LC008": {
+      "sheet": "failure_modes",
+      "failure_mode_id": "00031",
+      "root_cause": "焊料量过多或reflow塌陷过度",
+      "corrective_action": "控制焊料量",
+      "closure_status": "confirmed",
+      "review_status": "draft_pending_human_review",
+      "generation_note": {
+        "date": "2026-10-08",
+        "family": "fc-bump-open-short",
+        "synonym_of": null,
+        "coverage": "FC 互连短路（焊料量/塌陷）；与 bump open 形成干扰",
+        "isolated_from_development": true
+      }
+    },
+    "LC009": {
+      "sheet": "failure_modes",
+      "failure_mode_id": "00031",
+      "root_cause": "FC placement偏移",
+      "corrective_action": "优化FC placement和reflow",
+      "closure_status": "confirmed",
+      "review_status": "draft_pending_human_review",
+      "generation_note": {
+        "date": "2026-10-08",
+        "family": "fc-bump-open-short",
+        "synonym_of": null,
+        "coverage": "FC 短路的 placement 偏移依据；与同族 open 案例共用产品族",
+        "isolated_from_development": true
+      }
+    }
+  },
+  "queries": [
+    {
+      "query_id": "LQ001",
+      "known_at": "2026-09-30",
+      "text": "LF_WB 产品 PROD_014 在 OQC 发现芯片贴装面倾斜，X-ray 剖面显示对角胶层厚度差超出规格，涉及客户 CUS_002、生产批 DEV_PL_109、客户批 DEV_CL_109；同批 leadframe 来料平整度抽检与外观复查均正常，尚未确认原因。"
+    },
+    {
+      "query_id": "LQ002",
+      "known_at": "2026-09-30",
+      "text": "客户反馈基板类产品 PROD_008 内部芯片与载体不平行，声学扫描显示单边胶层偏厚，涉及客户 CUS_003、生产批 DEV_PL_110、客户批 DEV_CL_110；已排除外观损伤，原因尚未确认。"
+    },
+    {
+      "query_id": "LQ003",
+      "known_at": "2026-09-30",
+      "text": "PROD_007 生产批 DEV_PL_102（客户批 DEV_CL_102，涉及客户 CUS_003）在客户端复查时发现封装整体翘曲，器件呈碗形变形、焊球共面性超出规格；已排除运输与搬运损伤，包装与外观检查未见磕碰，原因尚未确认。"
+    },
+    {
+      "query_id": "LQ004",
+      "known_at": "2026-09-30",
+      "text": "FC 产品 PROD_012 在 In-process 电性测试发现互连开路，X-ray 显示个别 bump 未与 substrate pad 接合，涉及客户 CUS_005、生产批 DEV_PL_111、客户批 DEV_CL_111；AOI 未发现异物污染，原因尚未确认。"
+    },
+    {
+      "query_id": "LQ005",
+      "known_at": "2026-09-30",
+      "text": "FC 产品 PROD_017 在功能测试发现互连短路，显微复查显示相邻 bump 焊料搭接，涉及客户 CUS_004、生产批 DEV_PL_112、客户批 DEV_CL_112；原因尚未确认。"
+    }
+  ],
+  "corpus_version": "locked-test-corpus-v1",
+  "availability_snapshot": {
+    "snapshot_id": "locked-test-v1-2026-08-31",
+    "complete_available_on": "2026-08-31",
+    "basis": "人为合成快照约定：全部九条 Locked Test Case 及其完整调查被设定为在 2026-08-31 当日结束前已结案且可供查看，全部 Detail 的 detection_time 均不晚于该日。它验证的是用户确认的合成约定，不是由 detection_time 推导的真实结案时间，也不表示已实现通用结案/可用时间过滤。",
+    "query_known_at": "2026-09-30"
+  },
+  "generation_basis": "GR-10：产品、工序、批号、时间、数量、Failure Mode、Case.abnormal_processes、Evidence 类型与 relevance、原因/措施候选及证据中的 equipment_id 由 scripts/prepare_locked_test_v1.py 从主数据确定；文本字段只描述这些已确定的事实，脚本不调用任何模型服务。",
+  "generation_review": {
+    "date": "2026-10-08",
+    "script": "scripts/prepare_locked_test_v1.py",
+    "seed": 20260831,
+    "families": [
+      {
+        "family": "geometry-tilt-warpage",
+        "cases": [
+          "LC001",
+          "LC002",
+          "LC003",
+          "LC004",
+          "LC005"
+        ],
+        "policy": "整族仅用于 Locked Test",
+        "note": "家族关系不构成检索相关性"
+      },
+      {
+        "family": "fc-bump-open-short",
+        "cases": [
+          "LC006",
+          "LC007",
+          "LC008",
+          "LC009"
+        ],
+        "policy": "整族仅用于 Locked Test",
+        "note": "家族关系不构成检索相关性"
+      }
+    ],
+    "isolation": "新四条来源 00004 / 00022 / 00030 / 00031 与开发已用来源 00010 / 00016 / 00018 / 00026 / 00028 不重合；新 Case 产品均未出现在开发 Case 或开发 Query 中。这是同一合成知识底座下的来源/家族隔离，小样本不证明真实现场泛化。",
+    "automated_scope": "已由确定性代码覆盖：版本与哈希绑定、ID 唯一、Query × Case 完整配对、确认状态与 split 守卫、批号固定属性（CR-08～10）、异常站点与产品路线并集（CR-49）、生成限制（GR-01/02/04/06）、来源记录与主数据候选一致。",
+    "manual_scope": "未自动化：同义异常、易混淆对与弱相关边界依赖逐对人工判断；qrels 全部 45 对待用户确认，源 Case 的 review_status 保持 draft_pending_human_review。"
+  },
+  "query_basis": {
+    "rule": "每条 Query 写明当时已知的客户、产品、生产批号与客户批号；取值与主数据及语料一致。",
+    "known_at": "2026-09-30",
+    "reused_batches": [
+      {
+        "production_lot": "DEV_PL_102",
+        "customer_lot": "DEV_CL_102",
+        "product_id": "PROD_007",
+        "used_by": "LQ003",
+        "basis": "复用历史批 DEV_PL_102 作已知背景；同产品、同投批时间、同客户批。"
+      }
+    ],
+    "new_batches": [
+      "DEV_PL_109",
+      "DEV_PL_110",
+      "DEV_PL_111",
+      "DEV_PL_112"
+    ],
+    "note": "同批背景不自动产生正例；新批号不与 Development 或本语料的 Case 批号重复。"
+  }
+}

@@ -1,6 +1,6 @@
 # CaseTrace 数据结构 V2（无 Scenario）
 
-> Data Foundation v1：2026-09-16 已确认完成并冻结。字段和关系继续有效；开发顺序与冻结边界见 [Current Plan](../project/current-plan.md#3-data-foundation-v1-冻结)。本文件中的 SQL 映射设计不表示数据库已实现，也不是检索评估的前置任务。
+> Data Foundation v1：2026-09-16 已确认完成并冻结。字段和关系继续有效；开发顺序与冻结边界见 [业务与评估约定](../design/behavior-contracts.md#1-data-foundation-v1-冻结)。本文件中的 SQL 映射设计不表示数据库已实现，也不是检索评估的前置任务。
 
 本文件定义字段、主数据关系及数据库映射；业务校验见 CR-01～CR-51，合成限制见 GR-01～GR-10。V1 仅包含已结案 Case。2026-09-19 用户确认补充异常站点及同站点分组，属于本次明确授权的数据基础修订。
 
@@ -107,7 +107,7 @@ Group 是显式建立、记录关联理由的 Case 集合，可用于技术复�
 
 ### PostgreSQL Schema 范围（设计冻结，M5 实现）
 
-PostgreSQL 是 V1 必做交付，在检索评估与 Grounded Answer 完成后按 [Current Plan](../project/current-plan.md) 的 M5 实现。届时落地能保存和取回完整历史 Case 的表。字段含义沿用本文件及 Excel，
+PostgreSQL 是 V1 必做交付，在检索评估与 Grounded Answer 完成后按 [业务与评估约定](../design/behavior-contracts.md) 的 M5 实现。届时落地能保存和取回完整历史 Case 的表。字段含义沿用本文件及 Excel，
 不重新设计 Case 模型。其余主数据暂保留在 Excel，按实际使用需要接入。
 
 | 表 | 主键与核心关系 | 保存内容 |
