@@ -3,7 +3,7 @@
 用 Docker Compose 在本机启动已验收的 PostgreSQL 与 Answer API，在容器内完成建表、导入、核对和 HTTP 请求。
 本页是容器路线的权威运行说明；宿主 `uv` 开发路线仍见 [PostgreSQL 环境说明](postgresql.md) 与 [回答 API](api.md)。
 
-范围：应用镜像、Compose 服务、容器内数据准备与运行命令。不含公开部署、生产运维或依赖瘦身；Web 页面自 M6-02 起随应用镜像托管（见 [Web 页面](web-demo.md)）。
+范围：应用镜像、Compose 服务、容器内数据准备与运行命令。不含公开部署、生产运维或依赖分组调整；Web 页面自 M6-02 起随应用镜像托管（见 [Web 页面](web-demo.md)）。
 
 ## 前提
 
@@ -102,6 +102,14 @@ docker compose -p casetrace-m6-01-dev --env-file /tmp/casetrace-m6-01.env down -
 - 临时 env 文件里覆盖 `CASETRACE_POSTGRES_PORT`（如 `55432`）与 `CASETRACE_API_PORT`（如 `18000`），避免占用开发端口；
 - 清理只针对自己创建的资源：`down -v` 加上相同的 `-p`，不要对默认 project 执行 `down -v`。
 
+### 镜像与构建缓存
+
+- 同一份构建产物复用于多个验证容器；仅重启容器或重复执行命令时无需重新构建镜像。
+- 临时验收镜像在验收完成后删除；日常使用 `casetrace-api:dev`，更新时最多保留一个 `casetrace-api:rollback` 回退版本。
+- `down -v` 不会清理镜像或构建缓存。先用 `docker system df -v` 核对占用，再用 `docker image rm <本次临时标签>` 删除已完成验收的镜像。
+- 需要清理时，用 `docker builder prune` 回收悬空缓存；该命令作用于当前构建器，可能影响其他项目后续构建速度。更彻底的 `docker builder prune -a` 会回收所有未使用缓存，仅在明确需要时执行；它不会删除现有镜像或数据库卷。
+- 镜像和构建缓存可能共享文件，两个占用数字不能直接相加。
+
 ## 容器地址与宿主地址
 
 | 使用方 | 连接地址 | 说明 |
@@ -147,9 +155,11 @@ curl --fail-with-body http://127.0.0.1:8000/answer \
 
 标签未来可能对应更新的小版本，上表是本次实测身份，不表示以后重新拉取内容相同。
 
+2026-10-10 构建修正：依赖安装前只复制 `pyproject.toml` 和 `uv.lock`，README 随源码复制；直接以运行用户安装依赖、用 `COPY --chown` 设置文件所有者，取消末尾递归 `chown`。修正版 arm64 镜像实测约 **1.62GB**（原约 2.95GB）；README 与源码分别发生小改动后，第三方依赖安装层均命中缓存。
+
 ## 已知限制
 
-- 镜像保留全部运行依赖（含 torch），体积约 2.95GB；本包不做瘦身与依赖分组重构。
+- 镜像保留全部运行依赖（含 torch），修正构建分层后约 1.62GB；尚未进行依赖分组调整。
 - 容器内不承诺 `casetrace demo` 与全部 `evaluate` 输入齐备：镜像只包含 dev-v3 语料与主数据，qrels、实验记录、测试夹具与模型缓存在需要时用只读挂载提供。
 - 只做本机原生架构验证；认证、连接池、CI/CD 或公开部署不在范围内。
 - 回答是历史参考，不判断当前 Incident 的最终 Root Cause；软件回归通过不代表检索或回答质量结论。

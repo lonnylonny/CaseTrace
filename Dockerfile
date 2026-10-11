@@ -19,23 +19,23 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     VIRTUAL_ENV=/app/.venv \
     PATH=/app/.venv/bin:$PATH
 
+RUN useradd --uid 1000 --user-group --create-home --shell /bin/bash casetrace \
+    && mkdir /app && chown casetrace:casetrace /app
+USER casetrace
 WORKDIR /app
 
-# 先装依赖、后拷源码：只有依赖文件变化时才重装；README 是 pyproject 声明的 readme。
-COPY pyproject.toml uv.lock README.md ./
-RUN --mount=type=cache,target=/root/.cache/uv \
+# 依赖层只依赖声明与锁文件；README 随项目复制，修改说明不触发依赖重装。
+COPY --chown=casetrace:casetrace pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/home/casetrace/.cache/uv,uid=1000,gid=1000 \
     uv sync --locked --no-dev --no-install-project
 
 # 源码树与命令需要的 dev-v3 语料、主数据；保持仓库内的相对路径不变。
-COPY src ./src
-COPY data/dev ./data/dev
-COPY data/reference ./data/reference
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev
-
-# 非 root 用户运行；/app 归其所有，便于容器内写运行记录。
-RUN useradd --uid 1000 --user-group --create-home --shell /bin/bash casetrace \
-    && chown -R casetrace:casetrace /app
-USER casetrace
+COPY --chown=casetrace:casetrace README.md ./
+COPY --chown=casetrace:casetrace src ./src
+COPY --chown=casetrace:casetrace data/dev ./data/dev
+COPY --chown=casetrace:casetrace data/reference ./data/reference
+RUN --mount=type=cache,target=/home/casetrace/.cache/uv,uid=1000,gid=1000 \
+    uv sync --locked --no-dev
 
 EXPOSE 8000
 # 默认命令可被 `docker compose run api <命令>` 覆盖。
